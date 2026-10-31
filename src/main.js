@@ -1,0 +1,23 @@
+import App from './App.svelte';
+import './styles.css';
+import './intelligence.css';
+import './roles.css';
+import './clinical.css';
+import './caseReview.css';
+import './reports.css';
+import './admissions.css';
+import './invoice.css';
+import './finance.css';
+import './roleTasks.css';
+import './roleSidebar.css';
+import './responsive.css';
+import './easyAttendance.css';
+import './designSystem.css';
+import './uiPolish.css';
+import './uiStudio.css';
+import './uiComposition.css';
+import './cedarIntelligence.css';
+import './centerSignals.css';
+import { mount } from 'svelte';
+
+mount(App, { target: document.getElementById('app') });

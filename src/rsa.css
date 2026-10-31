@@ -1,0 +1,148 @@
+.app-shell[data-role='rsa'] { --accent:#476b57; --accent-soft:#edf2e8; }
+.app-shell[data-role='resident'] { --accent:#466d58; --accent-soft:#edf4ea; }
+.role-sidebar.rsa { --side-bg:#354f43; --side-accent:#e3ead4; --side-muted:#bfd0be; --side-highlight:#cce3ab; }
+.role-sidebar.resident { --side-bg:#315746; --side-accent:#e7efd9; --side-muted:#bfd3c4; --side-highlight:#cee2b2; }
+.role-sidebar.resident .role-sidebar-focus-number{font-size:23px;letter-spacing:-.045em}
+
+.rsa-page { display:grid; gap:20px; color:var(--ink); }
+.rsa-intro { margin-bottom:0; }
+.rsa-intro .page-desc { max-width:65ch; }
+.rsa-date-chip { display:inline-flex; align-items:center; gap:8px; padding:10px 13px; border:1px solid var(--line); border-radius:999px; color:#526b59; background:#fff; font-size:11px; font-weight:650; white-space:nowrap; }
+.rsa-welcome { min-height:220px; border-radius:18px; overflow:hidden; display:grid; grid-template-columns:minmax(0,1fr) 230px; align-items:center; gap:24px; padding:28px 36px; color:#f5f7f1; background:linear-gradient(115deg,#284b3a,#466d52 65%,#74845d); position:relative; }
+.rsa-welcome::before,.rsa-welcome::after { content:""; position:absolute; border:1px solid #ffffff18; border-radius:50%; pointer-events:none; }
+.rsa-welcome::before { width:320px; height:320px; right:80px; top:-220px; }
+.rsa-welcome::after { width:260px; height:260px; right:-55px; bottom:-195px; }
+.rsa-welcome-copy,.rsa-welcome-mark { position:relative; z-index:1; }
+.rsa-kicker,.rsa-panel-label { display:block; color:#829b7a; font-size:9px; font-weight:750; letter-spacing:.15em; text-transform:uppercase; }
+.rsa-kicker { color:#d0e0bf; }
+.rsa-welcome h2 { max-width:560px; margin:16px 0 8px; font-family:var(--font-display); font-size:clamp(25px,3vw,34px); font-weight:400; line-height:1.15; letter-spacing:-.025em; }
+.rsa-welcome p { max-width:530px; color:#e1e8dc; font-size:12px; line-height:1.7; margin:0; }
+.rsa-welcome-link { display:inline-flex; align-items:center; gap:10px; border:0; border-radius:8px; margin-top:17px; padding:10px 13px; color:#284b3a; background:#e8efdb; font-size:11px; font-weight:700; }
+.rsa-welcome-link:hover { background:#f4f7ed; }
+.rsa-welcome-mark { width:158px; height:158px; justify-self:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; border:1px solid #ffffff42; border-radius:50%; color:#e0e9ce; background:#ffffff0c; }
+.rsa-welcome-mark>span { display:grid; text-align:center; color:#fff; font-size:27px; font-weight:750; line-height:1; }
+.rsa-welcome-mark small { margin-top:6px; color:#d0ddce; font-size:9px; font-weight:500; }
+.rsa-stat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+.rsa-stat-card { position:relative; display:grid; gap:5px; min-height:112px; padding:17px 18px; text-align:left; border:1px solid #e5ebe1; border-radius:13px; background:#fff; box-shadow:0 3px 12px #1d3b2510; color:var(--ink); }
+.rsa-stat-card:hover { border-color:#b7c9b2; transform:translateY(-1px); }
+.rsa-stat-card>span { color:#728373; font-size:10px; font-weight:650; }
+.rsa-stat-card>strong { color:#355642; font-size:27px; letter-spacing:-.045em; line-height:1.1; }
+.rsa-stat-card>small { color:#929e91; font-size:10px; }
+.rsa-stat-card>svg { position:absolute; top:17px; right:17px; color:#8ca18a; }
+.rsa-stat-card.is-due>strong,.rsa-stat-card.is-due>svg { color:#a17944; }
+.rsa-columns { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(270px,.7fr); gap:16px; align-items:start; }
+.rsa-side-stack { display:grid; gap:14px; }
+.rsa-panel { min-width:0; overflow:hidden; }
+.rsa-panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:19px 20px 15px; }
+.rsa-panel-head h2,.rsa-history-head h2 { margin:6px 0 4px; color:var(--ink); font-size:15px; font-weight:700; letter-spacing:-.02em; }
+.rsa-panel-head p,.rsa-history-head p { margin:0; color:#869286; font-size:10px; line-height:1.55; }
+.rsa-panel-head>.text-link { display:inline-flex; align-items:center; gap:5px; padding-top:7px; white-space:nowrap; }
+.rsa-resident-list { padding:0 19px 8px; }
+.rsa-resident-row { display:flex; align-items:center; gap:11px; min-height:62px; border-top:1px solid #edf0ea; }
+.rsa-resident-main { flex:1; min-width:0; display:grid; gap:4px; }
+.rsa-resident-main strong,.rsa-due-row strong { color:#32493a; font-size:11px; font-weight:700; }
+.rsa-resident-main small,.rsa-due-row small { color:#8d998d; font-size:9px; }
+.rsa-resident-main i,.rsa-caseload-card i { color:#aab4aa; font-style:normal; padding:0 2px; }
+.rsa-avatar { width:35px; height:35px; flex:none; display:grid; place-items:center; border:1px solid #dae5d5; border-radius:11px; color:#436248; background:#eef4e8; font-size:10px; font-weight:750; }
+.rsa-avatar.small { width:31px; height:31px; border-radius:9px; font-size:9px; }
+.rsa-avatar.large { width:43px; height:43px; border-radius:13px; font-size:12px; }
+.rsa-status-tag { flex:none; padding:5px 8px; border:1px solid #dce9d8; border-radius:999px; color:#4f744d; background:#f0f6eb; font-size:9px; font-weight:700; white-space:nowrap; }
+.rsa-status-tag.soft { border-color:#e8e3d0; color:#8a744a; background:#f8f4e9; }
+.rsa-status-tag.due { border-color:#efdfc8; color:#9a7040; background:#fbf3e8; }
+.rsa-icon-button { width:29px; height:29px; flex:none; display:grid; place-items:center; border:1px solid transparent; border-radius:8px; color:#829184; background:transparent; }
+.rsa-icon-button:hover { color:#40614a; border-color:#e3eadf; background:#f7faf5; }
+.rsa-count-pill { min-width:26px; height:26px; display:grid; place-items:center; padding:0 7px; border-radius:50%; color:#916e3d; background:#f8f0e3; font-size:10px; font-weight:750; }
+.rsa-due-list { padding:0 17px 12px; }
+.rsa-due-row { display:flex; align-items:center; gap:10px; width:100%; padding:9px 2px; border:0; border-top:1px solid #edf0ea; text-align:left; background:transparent; }
+.rsa-due-row>span:nth-child(2) { flex:1; min-width:0; display:grid; gap:4px; }
+.rsa-due-row>svg { color:#8ba08b; }
+.rsa-due-row:hover strong { color:#34624c; }
+.rsa-clear-note { display:flex; align-items:center; gap:8px; margin:0; padding:12px 2px 5px; color:#68806c; font-size:10px; line-height:1.5; }
+.rsa-panel-foot { margin:0 19px 17px; }
+.rsa-guidance { display:flex; align-items:flex-start; gap:11px; padding:15px 16px; border:1px solid #dce6d7; border-radius:12px; color:#4d684f; background:#f0f5eb; }
+.rsa-guidance-icon { width:30px; height:30px; flex:none; display:grid; place-items:center; border-radius:9px; color:#537756; background:#fff; }
+.rsa-guidance strong,.rsa-checkin-tip strong { display:block; color:#36553f; font-size:11px; }
+.rsa-guidance p,.rsa-checkin-tip p { margin:5px 0 0; color:#718274; font-size:10px; line-height:1.6; }
+.rsa-list-card { overflow:hidden; }
+.rsa-list-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:17px 20px; border-bottom:1px solid #edf0ea; }
+.rsa-list-toolbar>div { display:grid; gap:5px; }
+.rsa-list-toolbar>div>strong { color:#405746; font-size:11px; }
+.rsa-search { min-width:min(340px,50%); min-height:39px; display:flex; align-items:center; gap:9px; padding:0 11px; border:1px solid #e1e7de; border-radius:9px; color:#87958a; background:#fff; }
+.rsa-search:focus-within { border-color:#9db79c; box-shadow:0 0 0 3px #eaf1e6; }
+.rsa-search input { min-width:0; width:100%; padding:0; border:0; outline:0; color:var(--ink); background:transparent; font-size:11px; }
+.rsa-search input::placeholder { color:#a1aca2; }
+.rsa-search kbd { flex:none; padding:3px 5px; border:1px solid #e8ece5; border-radius:4px; color:#95a095; background:#fafbf9; font-size:8px; }
+.rsa-caseload-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:17px; }
+.rsa-caseload-card { min-width:0; padding:15px; border:1px solid #e7ece4; border-radius:12px; background:linear-gradient(180deg,#fff,#fcfdfa); }
+.rsa-card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.rsa-caseload-card h2 { margin:14px 0 5px; color:#32483a; font-size:13px; letter-spacing:-.015em; }
+.rsa-caseload-card>p { margin:0; color:#879388; font-size:9px; }
+.rsa-card-detail { display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:14px 0; margin-top:13px; border-top:1px solid #edf0ea; }
+.rsa-card-detail>span { min-width:0; display:grid; gap:5px; }
+.rsa-card-detail small { color:#95a095; font-size:8px; }
+.rsa-card-detail strong { overflow:hidden; color:#536657; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+.rsa-card-actions { display:flex; gap:7px; }
+.rsa-card-actions .btn { flex:1; justify-content:center; padding:7px 8px; }
+.rsa-empty { min-height:148px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; padding:24px; color:#8a998c; text-align:center; }
+.rsa-empty>span { width:35px; height:35px; display:grid; place-items:center; margin-bottom:2px; border:1px solid #e3eae0; border-radius:11px; color:#789078; background:#f5f8f2; }
+.rsa-empty strong { color:#526755; font-size:11px; }
+.rsa-empty small { max-width:340px; color:#909d91; font-size:10px; line-height:1.55; }
+.rsa-empty.full { grid-column:1/-1; min-height:240px; }
+.rsa-checkin-layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(230px,.65fr); gap:16px; align-items:start; }
+.rsa-form-card { overflow:hidden; }
+.rsa-form-head { display:flex; align-items:flex-start; gap:12px; padding:19px 21px; border-bottom:1px solid #edf0ea; }
+.rsa-form-icon { width:38px; height:38px; flex:none; display:grid; place-items:center; border:1px solid #dbe7d8; border-radius:11px; color:#4c744f; background:#eff5eb; }
+.rsa-form-head h2 { margin:5px 0 4px; color:#32483a; font-size:15px; }
+.rsa-form-head p { margin:0; color:#849184; font-size:10px; line-height:1.55; }
+.rsa-checkin-form { display:grid; gap:16px; padding:19px 21px 21px; }
+.rsa-checkin-form label { display:grid; gap:7px; color:#4c5f50; font-size:10px; font-weight:700; }
+.rsa-checkin-form select,.rsa-checkin-form input,.rsa-checkin-form textarea,.rsa-history-filters select { width:100%; min-height:40px; padding:9px 11px; border:1px solid #dfe6dc; border-radius:8px; color:#34463a; background:#fff; font-size:11px; font-weight:450; }
+.rsa-checkin-form textarea { min-height:82px; resize:vertical; line-height:1.55; }
+.rsa-checkin-form input::placeholder,.rsa-checkin-form textarea::placeholder { color:#a3ada3; }
+.rsa-checkin-form fieldset { min-width:0; padding:0; border:0; }
+.rsa-checkin-form legend { margin-bottom:8px; color:#4c5f50; font-size:10px; font-weight:700; }
+.rsa-status-picks { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.rsa-status-picks button { min-height:40px; display:flex; align-items:center; justify-content:center; gap:7px; padding:7px; border:1px solid #e2e8df; border-radius:8px; color:#66766a; background:#fff; font-size:9px; font-weight:650; }
+.rsa-status-picks button:hover { border-color:#b9cbb4; background:#f8faf6; }
+.rsa-status-picks button.active { border-color:#9db99c; color:#416449; background:#edf4e9; box-shadow:inset 0 0 0 1px #d5e4d0; }
+.rsa-status-picks button.active.attention { border-color:#ddc898; color:#8a7042; background:#faf5e9; box-shadow:inset 0 0 0 1px #efe4c9; }
+.rsa-optional { margin-left:4px; color:#a0aaa0; font-size:9px; font-weight:450; }
+.rsa-field-hint { color:#8d9a8f; font-size:9px; font-weight:450; line-height:1.5; }
+.rsa-feedback { display:flex; align-items:center; gap:7px; margin:0; padding:10px 12px; border:1px solid #d7e7d2; border-radius:8px; color:#406c49; background:#f0f7ed; font-size:10px; }
+.rsa-form-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:13px; border-top:1px solid #edf0ea; }
+.rsa-form-actions>span { color:#8e9a8e; font-size:9px; }
+.rsa-form-actions .btn { display:inline-flex; align-items:center; gap:7px; }
+.rsa-checkin-aside { display:grid; gap:13px; }
+.rsa-today-card { padding:19px; border:1px solid #dce7d8; border-radius:13px; color:#38553e; background:linear-gradient(145deg,#f5f8ef,#eaf1e4); }
+.rsa-today-card>strong { display:block; margin:15px 0 2px; color:#375d42; font-size:39px; letter-spacing:-.07em; line-height:1; }
+.rsa-today-card>strong small { color:#89a083; font-size:18px; letter-spacing:-.03em; }
+.rsa-today-card>p { margin:0 0 15px; color:#718471; font-size:10px; }
+.rsa-progress { height:6px; overflow:hidden; border-radius:99px; background:#dce6d4; }
+.rsa-progress>span { display:block; height:100%; border-radius:inherit; background:#62845d; transition:width .25s; }
+.rsa-progress-caption { display:flex; justify-content:space-between; gap:8px; margin-top:8px; color:#7a8d7b; font-size:8px; }
+.rsa-checkin-tip { display:flex; align-items:flex-start; gap:10px; padding:14px; border:1px solid #e6e8dd; border-radius:11px; color:#8b8055; background:#faf9f2; }
+.rsa-checkin-tip>svg { flex:none; margin-top:1px; }
+.rsa-checkin-tip strong { color:#756741; }
+.rsa-checkin-tip p { color:#8d8468; }
+.rsa-history-card { overflow:hidden; }
+.rsa-history-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:19px 21px; border-bottom:1px solid #edf0ea; }
+.rsa-history-filters { display:flex; align-items:center; gap:8px; }
+.rsa-search.compact { min-width:210px; min-height:36px; }
+.rsa-history-filters select { width:auto; min-height:36px; padding:7px 26px 7px 9px; font-size:10px; }
+.rsa-history-list { padding:0 20px; }
+.rsa-history-row { display:grid; grid-template-columns:42px minmax(150px,1fr) auto minmax(145px,1fr); align-items:center; gap:13px; min-height:72px; padding:11px 0; border-bottom:1px solid #edf0ea; }
+.rsa-history-row:last-child { border-bottom:0; }
+.rsa-history-date { width:36px; height:39px; display:grid; align-content:center; justify-items:center; border:1px solid #e1e9dd; border-radius:9px; color:#4a6b4d; background:#f3f7ef; }
+.rsa-history-date strong { font-size:13px; line-height:1; }
+.rsa-history-date small { margin-top:3px; color:#879985; font-size:8px; }
+.rsa-history-person { min-width:0; display:grid; gap:5px; }
+.rsa-history-person strong { overflow:hidden; color:#3a5140; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.rsa-history-person small { color:#8a988c; font-size:8px; }
+.rsa-history-note { min-width:0; color:#6e7f71; font-size:9px; line-height:1.5; }
+.rsa-history-note small { display:block; margin-top:3px; color:#929d93; }
+.rsa-empty.history-empty { min-height:170px; }
+
+@media(max-width:1100px) { .rsa-caseload-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .rsa-columns { grid-template-columns:minmax(0,1.15fr) minmax(250px,.85fr); } }
+@media(max-width:900px) { .rsa-welcome { grid-template-columns:minmax(0,1fr) 170px; padding:25px; }.rsa-columns,.rsa-checkin-layout { grid-template-columns:1fr; }.rsa-side-stack { grid-template-columns:1fr 1fr; align-items:start; }.rsa-checkin-aside { grid-template-columns:1fr 1fr; } }
+@media(max-width:650px) { .rsa-page { gap:14px; }.rsa-welcome { grid-template-columns:1fr; min-height:0; padding:23px; }.rsa-welcome-mark { position:absolute; right:-4px; bottom:-42px; width:122px; height:122px; opacity:.35; }.rsa-welcome-mark>svg { width:36px; height:36px; }.rsa-welcome-mark>span { font-size:20px; }.rsa-welcome-copy { z-index:2; }.rsa-stat-grid { gap:8px; }.rsa-stat-card { min-height:101px; padding:13px; }.rsa-stat-card>span { max-width:90%; font-size:9px; }.rsa-stat-card>strong { font-size:23px; }.rsa-stat-card>svg { top:12px; right:11px; width:14px; height:14px; }.rsa-side-stack,.rsa-checkin-aside { grid-template-columns:1fr; }.rsa-panel-head { padding:16px 15px 13px; }.rsa-resident-list { padding:0 14px 7px; }.rsa-list-toolbar,.rsa-history-head { align-items:stretch; flex-direction:column; padding:15px; }.rsa-search { min-width:0; width:100%; }.rsa-caseload-grid { grid-template-columns:1fr; padding:12px; }.rsa-history-filters { flex-direction:column; align-items:stretch; }.rsa-search.compact,.rsa-history-filters select { min-width:0; width:100%; }.rsa-history-list { padding:0 14px; }.rsa-history-row { grid-template-columns:38px minmax(0,1fr) auto; gap:9px; min-height:70px; }.rsa-history-note { grid-column:2/-1; padding-bottom:5px; }.rsa-history-row>.rsa-status-tag { grid-column:3; grid-row:1; }.rsa-checkin-form { padding:16px 15px 17px; }.rsa-form-head { padding:16px 15px; }.rsa-form-actions { align-items:stretch; flex-direction:column; }.rsa-form-actions .btn { justify-content:center; }.rsa-status-picks { grid-template-columns:1fr; }.rsa-status-picks button { justify-content:flex-start; padding-left:12px; } }
+@media(max-width:370px) { .rsa-stat-grid { grid-template-columns:1fr; }.rsa-date-chip { width:100%; justify-content:center; } }

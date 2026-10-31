@@ -1,0 +1,36 @@
+.role-sidebar{--side-bg:#173d34;--side-accent:#dce9d4;--side-muted:#a8c8b5;--side-highlight:#bde0a5;background:var(--side-bg);padding:23px 17px 16px}
+.role-sidebar.director{--side-bg:#173d34;--side-accent:#dce9d4;--side-muted:#a8c8b5;--side-highlight:#c5e3af}
+.role-sidebar.coordinator{--side-bg:#173e48;--side-accent:#d7eef0;--side-muted:#a5cbd0;--side-highlight:#afe0df}
+.role-sidebar.therapist{--side-bg:#433946;--side-accent:#f1e3ec;--side-muted:#d6bacf;--side-highlight:#eed0db}
+.role-sidebar.finance{--side-bg:#1b303c;--side-accent:#f2e8cf;--side-muted:#bfc9c4;--side-highlight:#e9d69f}
+.role-sidebar.reception{--side-bg:#3d4c40;--side-accent:#e9ecd8;--side-muted:#c7d2be;--side-highlight:#e5dda9}
+.role-sidebar .brand{padding:0 10px 22px;border-color:#ffffff28}
+.role-sidebar .brand-mark{background:var(--side-accent);color:var(--side-bg)}
+.role-sidebar .brand-sub{color:var(--side-muted)}
+.role-sidebar-identity{display:flex;align-items:center;gap:11px;margin:20px 3px 18px;padding:12px 10px;border:1px solid #ffffff26;border-radius:13px;background:linear-gradient(135deg,#ffffff14,#ffffff06)}
+.role-sidebar-identity-icon{width:35px;height:35px;flex:none;display:grid;place-items:center;border-radius:10px;background:var(--side-accent);color:var(--side-bg)}
+.role-sidebar-identity strong,.role-sidebar-identity small,.role-sidebar-overline{display:block}
+.role-sidebar-overline{font-size:10px;font-weight:800;letter-spacing:.15em;color:var(--side-muted);margin-bottom:3px}
+.role-sidebar-identity strong{font-size:12px;letter-spacing:-.025em;color:#fff}
+.role-sidebar-identity small{font-size:11px;margin-top:3px;color:var(--side-muted)}
+.role-sidebar .role-sidebar-nav{min-height:0;flex:1;overflow-y:auto;align-content:start;display:grid;gap:17px;padding:0 3px 10px 0;scrollbar-width:thin;scrollbar-color:#ffffff4a transparent}
+.role-sidebar-section-label{font-size:10px;letter-spacing:.18em;font-weight:900;text-transform:uppercase;color:var(--side-muted);padding:0 12px;margin-bottom:6px}
+.role-sidebar .nav-btn{min-height:37px;padding:9px 11px;border-radius:10px;color:#e2eae4;font-size:13px;gap:11px}
+.role-sidebar .nav-btn:hover{background:#ffffff15;color:#fff}
+.role-sidebar .nav-btn.active{background:var(--side-accent);color:var(--side-bg);box-shadow:0 8px 20px #00000018}
+.role-sidebar .nav-counter{background:#ffffff25;color:#fff;font-size:11px;padding:3px 6px}
+.role-sidebar .nav-btn.active .nav-counter{background:#00000014;color:var(--side-bg)}
+.role-sidebar .sidebar-bottom{padding:12px 3px 0;margin-top:0;border-top:1px solid #ffffff1c}
+.role-sidebar-focus{display:grid;grid-template-columns:1fr auto;width:100%;text-align:left;border:1px solid #ffffff30;background:linear-gradient(135deg,#ffffff1c,#ffffff0b);color:#fff;border-radius:13px;padding:12px 13px;transition:background .18s,transform .18s}
+.role-sidebar-focus:hover{background:#ffffff26;transform:translateY(-1px)}
+.role-sidebar-focus-top{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.13em;font-weight:900;color:var(--side-highlight)}
+.role-sidebar-focus-number{grid-column:2;grid-row:1/4;align-self:center;font-size:34px;font-weight:800;letter-spacing:-.08em;color:var(--side-accent);line-height:1}
+.role-sidebar-focus-text{grid-column:1;font-size:12px;line-height:1.45;color:#e2eae4;margin-top:8px;max-width:150px}
+.role-sidebar-focus-link{grid-column:1;display:flex;align-items:center;gap:5px;color:var(--side-highlight);font-size:11px;font-weight:800;margin-top:10px}
+.role-sidebar-person{display:flex;align-items:center;gap:10px;padding:14px 5px 3px}
+.role-sidebar-avatar{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;background:var(--side-accent);color:var(--side-bg);font-size:11px;font-weight:900}
+.role-sidebar-person strong,.role-sidebar-person small{display:block}
+.role-sidebar-person strong{font-size:12px;color:#fff}
+.role-sidebar-person small{font-size:10px;color:var(--side-muted);margin-top:3px}
+.role-sidebar .sidebar-footer{padding:11px 5px 0;color:var(--side-muted);font-size:10px}
+@media(max-height:750px){.role-sidebar-identity{margin:12px 3px}.role-sidebar .role-sidebar-nav{gap:10px}.role-sidebar-focus{padding:9px 11px}.role-sidebar-person{padding-top:9px}}

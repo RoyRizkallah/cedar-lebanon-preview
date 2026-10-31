@@ -1,0 +1,127 @@
+/* Composition: continuous work surfaces, not a grid of interchangeable cards. */
+:is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary) {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; overflow:hidden;
+  background:#fffefa; border:1px solid #d8e2d5; border-radius:15px;
+  box-shadow:0 8px 24px #1c37260b;
+}
+:is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>* {
+  min-width:0; min-height:112px; margin:0; padding:19px 21px;
+  background:transparent!important; border:0!important; border-right:1px solid #e1e8df!important;
+  border-radius:0!important; box-shadow:none!important;
+}
+:is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>*:last-child { border-right:0!important; }
+:is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>*::before { display:none!important; }
+:is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>*:hover { background:var(--role-paper)!important; }
+.kpi-grid { margin-bottom:22px; }
+.kpi-number { margin-top:16px; line-height:1; }
+.kpi-foot { margin-top:9px; }
+:is(.finance-stats,.task-stats,.report-metrics) strong { margin:14px 0 7px; }
+.role-kpis button { text-align:left; }
+.record-summary { margin:0 0 18px; }
+.record-summary>div { min-height:106px; }
+
+/* Give worklists and tables a single shared work surface. */
+.data-card,.finance-panel,.task-panel { box-shadow:0 3px 18px #1e392809; }
+.data-card>.toolbar { border-bottom:1px solid #dbe4d9; }
+.registry { border-top:0; }
+.registry-primary { align-items:end; }
+.registry-refine { border-top:1px solid #e0e8de; }
+
+/* Rooms read as two wings with individual rows, bed positions and operations. */
+.rooms-floorboard { padding:0 24px 25px; }
+.wing-zone { border:1px solid #dbe5d9; border-radius:13px; overflow:hidden; background:#fff; margin-top:20px; }
+.wing-zone-head { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:18px 21px 16px; background:linear-gradient(90deg,#eaf1e8,#f7f9f5); border-bottom:1px solid #dbe5d9; }
+.wing-zone-head span { color:var(--accent); font-size:10px; font-weight:700; letter-spacing:.14em; }
+.wing-zone-head h3 { margin:4px 0 0; color:#223f31; font:400 27px/1.1 Georgia,serif; letter-spacing:-.04em; }
+.wing-zone-head p { color:#5a6f5d; font-size:12px; white-space:nowrap; }
+.wing-rows { display:block; }
+.wing-rows .room { display:grid; grid-template-columns:175px minmax(0,1fr) 176px; align-items:center; gap:18px; min-height:124px; padding:17px 20px; margin:0; background:#fffefa; border:0!important; border-bottom:1px solid #e6ece4!important; border-radius:0; box-shadow:none; }
+.wing-rows .room:last-child { border-bottom:0!important; }
+.wing-rows .room:hover { background:#f7faf5; }
+.room-identity { min-width:0; }
+.room-identity>span { display:block; margin-bottom:3px; color:#738272; font-size:10px; font-weight:650; text-transform:uppercase; letter-spacing:.055em; }
+.room-identity>span i { font-style:normal; padding:0 2px; }
+.room-identity>strong { display:block; color:#204834; font-size:26px; font-weight:700; line-height:1.1; letter-spacing:-.055em; }
+.room-identity>small { color:#617365; font-size:11px; }
+.room-identity .room-note { padding:5px 0 0; margin:0; font-size:11px; line-height:1.35; }
+.wing-rows .room-beds { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; padding:0; align-self:stretch; align-items:center; }
+.wing-rows .room-beds:has(.bed:only-child) { grid-template-columns:minmax(0,1fr); }
+.wing-rows .bed { align-self:center; min-height:73px; padding:11px 12px; border:1px solid #dce8d7; border-radius:9px; }
+.wing-rows .bed.occupied { background:#edf3e9; }
+.wing-rows .bed>span { color:#708371; font-size:11px; }
+.wing-rows .bed>strong { font-size:13px; }
+.wing-rows .bed>button { font-size:11px; }
+.room-operations { display:flex; flex-direction:column; gap:5px; align-items:stretch; padding-left:15px; border-left:1px solid #e5ebe2; }
+.room-operations .room-status-row { display:block; padding:0; }
+.room-operations .room-status-row label { display:block; margin-bottom:6px; font-size:11px; }
+.room-operations .room-status { width:100%; min-height:34px; }
+.room-operations .room-edit { justify-content:flex-start; font-size:11px; min-height:28px; }
+
+@media(max-width:1050px) {
+  .wing-rows .room { grid-template-columns:140px minmax(0,1fr) 150px; gap:12px; padding:15px; }
+  .wing-rows .bed { padding:8px; }
+  .rooms-floorboard { padding:0 15px 17px; }
+}
+@media(max-width:850px) {
+  .wing-rows .room { grid-template-columns:130px minmax(0,1fr); }
+  .room-operations { grid-column:1/-1; flex-direction:row; align-items:end; justify-content:space-between; padding:10px 0 0; border-left:0; border-top:1px solid #e5ebe2; }
+  .room-operations .room-status-row { flex:0 1 220px; }
+  .room-operations .room-edit { padding:8px 0; }
+}
+@media(max-width:700px) {
+  :is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  :is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>* { min-height:116px; padding:15px 16px; border-bottom:1px solid #e1e8df!important; }
+  :is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>*:nth-child(2n) { border-right:0!important; }
+  :is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary)>*:nth-last-child(-n+2) { border-bottom:0!important; }
+  .wing-zone-head { padding:16px; }
+  .wing-rows .room { grid-template-columns:1fr; gap:12px; padding:15px 16px; }
+  .room-identity { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; }
+  .room-identity>span { grid-column:1/-1; }
+  .room-identity>strong { grid-column:1; }
+  .room-identity>small { grid-column:2; text-align:right; }
+  .room-identity .room-note { grid-column:1/-1; }
+  .wing-rows .room-beds { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+  .wing-rows .bed { min-height:70px; }
+  .room-operations { grid-column:auto; }
+}
+@media(max-width:390px) {
+  .wing-rows .room-beds { grid-template-columns:1fr; }
+  .wing-rows .bed { min-height:52px; }
+  .wing-zone-head p { max-width:100px; white-space:normal; text-align:right; }
+}
+@media print {
+  :is(.kpi-grid,.finance-stats,.task-stats,.report-metrics,.role-kpis,.record-summary) { box-shadow:none; }
+  .wing-zone { break-inside:avoid; }
+  .wing-rows .room { break-inside:avoid; }
+}
+
+/* The patient identity, rather than a generic page banner, leads the dossier. */
+.content[data-page='patients'] .page-intro { min-height:0!important; padding:3px 0 16px!important; margin-bottom:20px!important; background:none!important; border:0!important; border-bottom:1px solid #d7e1d6!important; border-radius:0!important; box-shadow:none!important; }
+.content[data-page='patients'] .page-intro::before,.content[data-page='patients'] .page-intro::after { display:none!important; }
+.content[data-page='patients'] .page-intro .eyebrow { color:var(--accent)!important; }
+.content[data-page='patients'] .page-title { margin:5px 0 0!important; color:var(--ink)!important; font-size:25px!important; line-height:1.1!important; }
+.content[data-page='patients'] .page-title .serif { color:var(--accent)!important; }
+.content[data-page='patients'] .page-desc { display:none; }
+.content[data-page='patients'] .intro-actions .btn-primary { background:var(--accent)!important; border-color:var(--accent)!important; color:white!important; }
+.content[data-page='patients'] .record-masthead { border-radius:12px; }
+.content[data-page='patients'] .record-tabs { border-radius:9px; }
+
+/* A ledger is one continuous journal, with entries separated by ruled lines. */
+.finance-journal { display:block; padding:0 0 7px; border-top:1px solid #dce5dc; }
+.finance-journal>article { margin:0; border:0!important; border-bottom:1px solid #dce5dc!important; border-radius:0!important; background:#fffefa; }
+.finance-journal>article:hover { background:#f9fbf7; }
+.finance-journal-title { display:grid; grid-template-columns:95px minmax(0,1fr) auto; align-items:center; gap:16px; padding:15px 22px; background:#f5f8f3!important; }
+.finance-journal-title strong { white-space:normal; font-size:15px; }
+.finance-journal-kind { text-align:center; border-radius:4px; }
+.finance-journal-lines { padding:7px 22px 16px 133px; }
+.finance-journal-lines>div { border-bottom:1px solid #edf1eb; }
+.finance-journal-lines>div:last-child { border-bottom:0; }
+.finance-journal-lines>div.finance-journal-columns { color:#58705c; }
+@media(max-width:700px) {
+  .content[data-page='patients'] .page-intro { padding:0 0 12px!important; }
+  .content[data-page='patients'] .page-title { font-size:22px!important; }
+  .content[data-page='patients'] .intro-actions { margin-top:9px!important; }
+  .finance-journal-title { grid-template-columns:1fr auto; gap:6px 10px; padding:13px 15px; }
+  .finance-journal-kind { grid-column:1/-1; justify-self:start; }
+  .finance-journal-lines { padding:5px 15px 13px; }
+}

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+.netlify/
+.tools/
+.sites-runtime/
+.sites-checkout/
+.openai/
+*.log
+.chrome-*/
+*-preview.png
+proposal-page-2.png
+mobile-cdp.png

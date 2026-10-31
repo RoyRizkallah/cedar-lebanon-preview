@@ -1,0 +1,121 @@
+/* Cedar studio layer — a distinctive, practical workspace across all roles. */
+.app-shell { --role-deep:#173e34; --role-glow:#477a60; --role-paper:#e7eee2; --role-gold:#e8d6ac; }
+.app-shell[data-role='coordinator'] { --role-deep:#173f4b; --role-glow:#477f87; --role-paper:#e8f0ef; --role-gold:#d3e5dc; }
+.app-shell[data-role='therapist'] { --role-deep:#453848; --role-glow:#89718a; --role-paper:#f0eaf0; --role-gold:#e9d7d8; }
+.app-shell[data-role='finance'] { --role-deep:#1a3547; --role-glow:#4d7790; --role-paper:#e7edf1; --role-gold:#dfdcc1; }
+.app-shell[data-role='reception'] { --role-deep:#3d4c37; --role-glow:#788969; --role-paper:#eef0e6; --role-gold:#ebdfba; }
+.content { background: radial-gradient(circle at 10% 0,#ffffff90,transparent 34%),#f3f2ec; }
+
+/* The operational pages have a recognizable cover with space for their main action. */
+.content:not([data-page='overview']):not([data-page='assist']) .page-intro {
+  position:relative; display:flex; align-items:center; min-height:174px; padding:30px 34px;
+  margin:0 0 22px; border:1px solid #ffffff1c; border-radius:20px; overflow:hidden;
+  background:radial-gradient(circle at 92% 25%,var(--role-glow),transparent 38%),linear-gradient(120deg,var(--role-deep),#172e2c);
+  box-shadow:0 15px 34px #1b32251c;
+}
+.content:not([data-page='overview']):not([data-page='assist']) .page-intro::before {
+  content:'CEDAR'; position:absolute; right:24px; bottom:-38px; color:#fff; opacity:.055;
+  font:400 112px/1 Georgia,serif; letter-spacing:-.085em; pointer-events:none;
+}
+.content:not([data-page='overview']):not([data-page='assist']) .page-intro::after {
+  top:30px; left:0; bottom:auto; width:4px; height:calc(100% - 60px); background:var(--role-gold);
+}
+.content:not([data-page='overview']):not([data-page='assist']) .page-intro>div { position:relative; z-index:1; }
+.content:not([data-page='overview']):not([data-page='assist']) .page-intro .eyebrow { color:var(--role-gold); }
+.content:not([data-page='overview']):not([data-page='assist']) .page-intro .eyebrow::before { background:var(--role-gold); }
+.content:not([data-page='overview']):not([data-page='assist']) .page-title { color:#fffdf5; font-size:clamp(37px,3vw,47px); margin:9px 0 9px; }
+.content:not([data-page='overview']):not([data-page='assist']) .page-title .serif { color:var(--role-gold); }
+.content:not([data-page='overview']):not([data-page='assist']) .page-desc { color:#e2ebe3; font-size:14px; max-width:74ch; }
+.content:not([data-page='overview']):not([data-page='assist']) .intro-actions { align-self:center; }
+.content:not([data-page='overview']):not([data-page='assist']) .intro-actions .btn-outline { background:#ffffff15; border-color:#ffffff55; color:#fff; box-shadow:none; }
+.content:not([data-page='overview']):not([data-page='assist']) .intro-actions .btn-outline:hover { background:#ffffff28; border-color:#fff; }
+.content:not([data-page='overview']):not([data-page='assist']) .intro-actions .btn-primary { background:var(--role-gold); color:var(--role-deep); border-color:var(--role-gold); font-weight:700; }
+.content:not([data-page='overview']):not([data-page='assist']) .intro-actions .btn-primary:hover { filter:brightness(1.08); }
+
+/* Scorecards are aligned as a single operating summary. */
+.kpi-grid,.finance-stats,.task-stats,.report-metrics { gap:12px; }
+:is(.kpi,.finance-stats article,.task-stats article,.report-metrics article) { background:#fffefa; border:1px solid #dbe1d6; border-radius:15px; box-shadow:0 3px 0 #dce4d7,0 11px 20px #1b36200b; }
+:is(.kpi,.finance-stats article,.task-stats article,.report-metrics article)::before { height:4px; width:48px; }
+.kpi { min-height:132px; padding:18px 21px; }
+.kpi-number { font-size:37px; font-weight:650; }
+.kpi-icon { width:32px; height:32px; }
+.finance-stats article,.task-stats article,.report-metrics article { min-height:134px; }
+:is(.finance-stats,.task-stats,.report-metrics) strong { font-size:33px; }
+
+/* Section surfaces and data controls get a deliberate, quieter hierarchy. */
+:is(.panel,.data-card,.finance-panel,.task-panel,.report-panel,.record-panel) { border-radius:17px; border-color:#d8e0d4; box-shadow:0 8px 26px #1e39280b; }
+:is(.panel-head,.toolbar,.finance-panel-head,.task-panel-head,.report-panel-head) { background:#fffefa; }
+.toolbar-title,.panel-title { font-size:18px; font-weight:650; }
+.registry { background:#f5f7f2; border-top:1px solid #e2e9df; }
+.registry-primary { gap:13px; }
+.registry-search>span,.registry-sort>span,.registry-fields label>span { font-size:12px; font-weight:650; color:#3c5542; }
+.registry-search>div,.registry select,.registry input[type=date] { border-color:#cdd9ca; box-shadow:0 1px 0 #ffffffa3; }
+.registry-search>div:focus-within,.registry select:focus,.registry input[type=date]:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent); }
+.registry-refine summary { color:var(--accent); font-weight:700; }
+.registry-result { font-size:12px; }
+.registry-result strong { font-size:14px; }
+.registry-hint { color:#69786c; }
+:is(.data-table,.finance-table-wrap table,.record-table,.report-table) th { background:#edf2eb; color:#2f503a; font-size:11px; letter-spacing:.045em; }
+:is(.data-table,.finance-table-wrap table,.record-table,.report-table) tbody tr:nth-child(even) { background:#fbfcf8; }
+:is(.data-table,.finance-table-wrap table,.record-table,.report-table) tbody tr:hover { background:#eef5eb; }
+.finance-tabs button,.reports-tabs button,.record-tabs button { font-weight:600; }
+
+/* The room board is the main work surface, with larger cards and real management tools. */
+.room-layout { display:block; }
+.room-layout>.data-card { width:100%; }
+.room-layout>.side-stack { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr); gap:16px; margin-top:18px; align-items:stretch; }
+.room-layout>.side-stack>.panel,.room-layout>.side-stack>.subtle-note { margin:0; }
+.room-layout>.side-stack>.subtle-note { display:flex; align-items:center; padding:22px; }
+.rooms-grid { grid-template-columns:repeat(auto-fit,minmax(265px,1fr)); gap:14px; padding:22px; }
+.room { padding:0; background:#fffefa; border:1px solid #d9e3d8; border-top:4px solid #77a27f; border-radius:14px; box-shadow:0 5px 16px #1b39240c; overflow:hidden; }
+.room[data-readiness='Preparing'] { border-top-color:#c6a468; }
+.room[data-readiness='Maintenance'] { border-top-color:#b98b82; }
+.room-topline { display:flex; justify-content:space-between; gap:8px; padding:15px 17px 3px; color:var(--accent); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+.room-count { color:#7b897a; white-space:nowrap; letter-spacing:0; text-transform:none; font-weight:600; }
+.room-head { display:flex; justify-content:space-between; align-items:start; gap:12px; padding:5px 17px 14px; border-bottom:1px solid #e3e9e0; }
+.room-head>div { display:flex; flex-direction:column; gap:2px; }
+.room-head>div>span { color:#203e30; font-size:26px; font-weight:700; letter-spacing:-.05em; line-height:1.1; }
+.room-head small { color:#607368; font-size:11px; font-weight:500; }
+.room-edit { display:inline-flex; align-items:center; gap:4px; border:0; padding:6px 0; background:none; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.room-edit:hover { text-decoration:underline; }
+.room-note { padding:11px 17px 0; color:#526557; font-size:12px; line-height:1.5; }
+.room-status-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 17px; }
+.room-status-row label { color:#5a6b5d; font-size:12px; font-weight:650; }
+.room-status { width:55%; min-height:35px; margin:0; padding:6px 10px; font-size:12px; border-color:#cfdccc; }
+.room-beds { display:grid; gap:7px; padding:0 17px 17px; }
+.room .bed { min-height:51px; border-radius:8px; background:#f6f8f3; }
+.room .bed.occupied { background:#eaf1e5; }
+.room .bed>strong { color:#204937; font-size:13px; }
+.room .bed button { min-height:32px; }
+.room .bed-release { color:#a04435; }
+.optional-label { margin-left:5px; color:#7c887d; font-size:11px; font-weight:400; }
+
+@media(max-width:1050px) {
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro { padding:26px 27px; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-title { font-size:39px; }
+  .rooms-grid { grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); }
+}
+@media(max-width:700px) {
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro { display:block; min-height:0; padding:24px 23px 23px; margin-bottom:18px; border-radius:17px; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro::before { right:-6px; bottom:-18px; font-size:76px; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro::after { top:24px; height:calc(100% - 48px); }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-title { font-size:32px; line-height:1.12; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-desc { font-size:13px; }
+  .content:not([data-page='overview']):not([data-page='assist']) .intro-actions { display:flex; flex-wrap:wrap; margin-top:18px; }
+  .content:not([data-page='overview']):not([data-page='assist']) .intro-actions .btn { flex:1 1 auto; justify-content:center; }
+  .kpi { min-height:125px; padding:16px; }
+  .room-layout>.side-stack { grid-template-columns:1fr; }
+  .rooms-grid { grid-template-columns:1fr; padding:14px; }
+  .room-topline { padding-top:14px; }
+}
+@media(max-width:380px) {
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro { padding:22px 18px; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-title { font-size:29px; }
+  .room-count { font-size:9px; }
+}
+@media print {
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro { background:none; box-shadow:none; border:0; padding:0; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-title { color:#173e34; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-desc { color:#3c5542; }
+  .content:not([data-page='overview']):not([data-page='assist']) .page-intro::before,.content:not([data-page='overview']):not([data-page='assist']) .page-intro::after { display:none; }
+}

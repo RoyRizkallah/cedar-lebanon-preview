@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: cedar-lebanon-preview
+    runtime: static
+    buildCommand: npm ci && npm run build:review
+    staticPublishPath: ./dist

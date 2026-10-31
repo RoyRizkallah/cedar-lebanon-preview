@@ -1,0 +1,26 @@
+@media (max-width: 600px) {
+  html, body, #app { width: 100%; max-width: 100%; overflow-x: hidden; }
+  .app-shell { display: block; width: 100vw; }
+  .main, .topbar, .content { width: 100vw; max-width: 100vw; }
+  .app-shell, .main, .content, .page-intro, .overview-hero, .dashboard-grid, .panel { min-width: 0; width: 100%; }
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { min-width: 0; }
+  .kpi-label, .kpi-foot { overflow-wrap: anywhere; }
+  .dashboard-grid, .two-col, .ai-layout, .patient-layout { grid-template-columns: minmax(0, 1fr); }
+  .intro-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0; }
+  .intro-actions .btn { min-width: 0; white-space: normal; line-height: 1.3; padding: 9px; }
+  .topbar { min-width: 0; gap: 7px; }
+  .topbar-left, .topbar-right { min-width: 0; gap: 7px; }
+  .topbar-right .avatar { display: none; }
+  .breadcrumb { font-size: 10px; white-space: nowrap; }
+  .demo-pill { font-size: 8px; padding: 7px; white-space: nowrap; }
+  .hero-copy h2, .hero-copy p { max-width: 100%; overflow-wrap: break-word; }
+  .schedule-row { min-width: 0; }
+  .schedule-name, .schedule-meta { overflow-wrap: anywhere; }
+  .calendar-top { overflow-x: auto; }
+  .date-chip { flex: none; }
+  .rooms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ai-panel { min-width: 0; }
+  .prompt-box { min-width: 0; }
+  .prompt-box .btn { padding: 8px 10px; }
+}
