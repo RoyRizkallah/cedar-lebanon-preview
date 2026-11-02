@@ -47,7 +47,7 @@ function bookFrom(state, program, assignment, fromDay, staffId) {
       while ((busy = clash(state, { ...base, patientId, start: hhmm(start) })) && start + session.minutes <= LAST_END) start = minutesOf(busy.start) + busy.minutes;
       if (!busy && start + session.minutes > LAST_END) { miss('It would run past 18:00'); continue; }
       if (busy) { miss(busy.provider === provider ? `${staffName(provider)} is fully booked that day` : 'The patient is busy then'); continue; }
-      const made = book(state, { ...base, start: hhmm(start), patientId }, 'system');
+      const made = book(state, { ...base, start: hhmm(start), patientId, quiet: true }, 'system');
       Object.assign(made, { bookedBy: staffId, programId: program.id, programSessionId: session.id });
       continue;
     }
@@ -56,7 +56,7 @@ function bookFrom(state, program, assignment, fromDay, staffId) {
     if (own && (!shared || own.id !== shared.id)) { miss('The patient is busy then'); continue; }
     if (shared) { if (!shared.patientIds.includes(patientId)) shared.patientIds.push(patientId); continue; }
     try {
-      const made = book(state, { ...base, start: session.time, patientIds: [patientId] }, 'system');
+      const made = book(state, { ...base, start: session.time, patientIds: [patientId], quiet: true }, 'system');
       Object.assign(made, { bookedBy: staffId, programId: program.id, programSessionId: session.id });
     } catch { miss(`${staffName(provider) || 'The leader'} is busy then`); }
   }

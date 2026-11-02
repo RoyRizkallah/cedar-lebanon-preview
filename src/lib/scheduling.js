@@ -62,7 +62,8 @@ export function book(state, fields, staffId) {
   if (other) throw new Error(`This time overlaps another booking for ${other.provider === appointment.provider ? staffName(appointment.provider) : 'this patient'}.`);
   Object.assign(appointment, { id: nextId('A', state.appointments), status: 'Booked', bookedBy: staffId, bookedAt: new Date().toISOString() });
   state.appointments.push(appointment);
-  log(state, staffId, `Booked ${appointment.service} on ${appointment.date} at ${appointment.start}`, '#/schedule');
+  // Program bookings arrive in dozens; the program assignment is logged once instead.
+  if (!fields.quiet) log(state, staffId, `Booked ${appointment.service} on ${appointment.date} at ${appointment.start}`, '#/schedule');
   return appointment;
 }
 

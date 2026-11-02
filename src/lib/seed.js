@@ -6,7 +6,7 @@ import { seedCare } from './seedCare.js';
 import { seedPrograms } from './seedPrograms.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 const ROOMS = ['101', '102', '103', '104', '105', '106'].map(id => ({ id, name: `Room ${id}`, beds: 2 }));
 
@@ -236,5 +236,48 @@ export function seed(now = new Date()) {
   seedPrograms(state, today);
   wallet({ patientId: residents[1].id, type: 'purchase', amountCents: 2400, description: '1 × Toiletries pack', date: day(-1), recordedBy: 'georgio', requestId: 'R-0003' });
   state.activity.push({ id: 'AC-1', at: ago(3), by: 'melyssa', text: 'Created inquiry for Georges Abi Nader from WhatsApp', link: '#/pipeline' });
+
+  // Everyone's day: the meetings and chores a centre runs on, beyond what the records generate.
+  const name = index => residents[index]?.clinicalName || 'a resident';
+  [
+    ['amer', 0, 'todo', 'Sign the Beirut Pharma supply contract', '#/finance/expenses'],
+    ['amer', 2, 'meeting', 'Partners’ meeting with Ahmed: November numbers', '#/dashboard'],
+    ['ahmed', 0, 'meeting', 'Weekly case review, 14:00', '#/sessions'],
+    ['ahmed', 3, 'todo', 'Approve the December group timetable', '#/programs'],
+    ['clinical-director', 0, 'meeting', 'Supervision with Nabila: two case files', '#/patients'],
+    ['nabila', 1, 'todo', `Prepare relapse-prevention worksheet for ${name(1)}`, '#/patients'],
+    ['nazha', 0, 'todo', 'Prepare props for playback theatre', '#/programs/PRG-0002'],
+    ['nazha', 1, 'meeting', 'Share drama observations at case review', '#/programs'],
+    ['fadia', 1, 'todo', 'Order next week’s blister packs from the pharmacy', '#/medication'],
+    ['melyssa', 1, 'todo', 'Send the November staff rota to every team', '#/schedule'],
+    ['rabih', -1, 'todo', 'Close the October books', '#/finance/journal'],
+    ['rabih', 5, 'todo', 'Send monthly statements to insurers and employers', '#/finance/payers'],
+    ['kteish', 0, 'todo', 'Reconcile petty cash with Georgio', '#/finance/bank'],
+    ['mazen', 0, 'todo', 'Approve this week’s kitchen order from Shady', '#/requests'],
+    ['mazen', 1, 'todo', 'Sign off the deep clean in room 106', '#/rooms'],
+    ['john', 0, 'todo', 'Agree gym clearances for new residents with Fadia', '#/patients'],
+    ['zeina', 0, 'todo', 'Plan next week’s movement and yoga sessions', '#/schedule'],
+    ['tony-j', 1, 'todo', 'Book the tennis court for Thursday', '#/schedule'],
+    ['tony-am', 0, 'todo', 'Update personal training plans', '#/patients'],
+    ['raymond', 2, 'todo', 'Check boxing gloves and wraps', '#/schedule'],
+    ['omar', 0, 'meeting', 'Evening handover to the night RSA, 20:00', '#/requests'],
+    ['omar', 1, 'todo', 'Walk the floor with the new RSA rota', '#/patients'],
+    ['georgio', 0, 'todo', 'Count petty cash before Kteish’s check', '#/requests'],
+    ['alaa', 0, 'todo', 'Evening check-ins with your residents', '#/requests'],
+    ['dania', 0, 'todo', 'Evening check-ins with your residents', '#/requests'],
+    ['imad', 0, 'todo', 'Help Fadia with the 20:00 round', '#/medication']
+  ].forEach(([owner, offset, kind, title, link]) => task({ kind, title, owner, due: day(offset), link }));
+
+  // What the team did since yesterday, for the Today feed.
+  [
+    [1, 'fadia', 'Recorded the 08:00 medication round', '#/medication'],
+    [2, 'nazha', 'Added "Letters not sent" to Expression & reconnection', '#/programs/PRG-0002'],
+    [5, 'mazen', 'Set room 106 to cleaning', '#/rooms'],
+    [7, 'clinical-director', `Filed a session note for ${name(0)}`, '#/sessions'],
+    [9, 'omar', 'Logged the evening check-in round', '#/requests'],
+    [20, 'rabih', 'Approved the Beirut Pharma bill', '#/finance/expenses'],
+    [26, 'john', `Cleared ${name(2)} for the gym`, '#/patients'],
+    [30, 'georgio', `Bought toiletries for ${name(1)} from petty cash`, '#/requests']
+  ].forEach(([hours, by, text, link], index) => state.activity.push({ id: `AC-S${index + 1}`, at: ago(hours), by, text, link }));
   return state;
 }

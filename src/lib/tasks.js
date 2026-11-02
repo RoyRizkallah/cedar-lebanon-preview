@@ -28,7 +28,7 @@ export function tasksFor(state, staffId, now = new Date()) {
   for (const task of state.tasks) {
     if (task.owner !== staffId || task.status !== 'open') continue;
     const inquiry = task.inquiryId && state.inquiries.find(item => item.id === task.inquiryId);
-    push({ id: task.id, taskId: task.id, kind: task.kind, title: task.title, sub: inquiry ? inquiry.name : patientName(state, task.patientId), due: task.due, link: task.link, done: true });
+    push({ id: task.id, taskId: task.id, kind: task.kind, title: task.title, sub: inquiry ? inquiry.name : patientName(state, task.patientId) || (task.kind === 'meeting' ? 'Meeting' : 'To do'), due: task.due, link: task.link, done: true });
   }
 
   for (const inquiry of state.inquiries) {

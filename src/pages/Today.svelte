@@ -3,8 +3,9 @@
   import FormView from '../components/FormView.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
   import { tasksFor, completeTask, reviewPrescription } from '../lib/tasks.js';
-  import { staffById, canSeeTab } from '../lib/people.js';
-  import { fmtDay, fmtDate, todayISO, minutesOf, hhmm } from '../lib/dates.js';
+  import { staffById, staffName, canSeeTab } from '../lib/people.js';
+  import { houseToday, milestonesFor, floorNotes, teamFeed, daysAway } from '../lib/today.js';
+  import { fmtDay, fmtDate, fmtAgo, todayISO, minutesOf, hhmm } from '../lib/dates.js';
   import { go, say } from '../lib/ui.svelte.js';
 
   let { args = [] } = $props();
@@ -23,7 +24,13 @@
     if (patient) return clinical ? patient.clinicalName : patient.fullName;
     return db.inquiries.find(i => i.id === item.inquiryId)?.name || '';
   };
-  const ICONS = { 'inquiry-followup': 'phone', 'followup-call': 'phone', review: 'clock', note: 'pen', admission: 'door', form: 'document', sign: 'pen', request: 'bag', prescription: 'pill' };
+  const house = $derived(houseToday(db, me, session.now));
+  const milestones = $derived(milestonesFor(db, me, session.now));
+  const floor = $derived(floorNotes(db, me, session.now));
+  const feed = $derived(teamFeed(db, me, session.now));
+  const MILESTONE_ICONS = { stay: 'flag', program: 'heart', discharge: 'door', arrival: 'enter' };
+  const when = date => { const d = daysAway(date, session.now); return d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : fmtDay(date); };
+  const ICONS = { todo: 'check-circle', meeting: 'users', 'inquiry-followup': 'phone', 'followup-call': 'phone', review: 'clock', note: 'pen', admission: 'door', form: 'document', sign: 'pen', request: 'bag', prescription: 'pill' };
   const columns = $derived([
     { key: 'overdue', title: 'Overdue', hint: 'Past their date', items: work.overdue },
     { key: 'today', title: 'Today', hint: 'Due before you leave', items: work.today },
@@ -61,6 +68,15 @@
     </div>
   </section>
 
+  {#if house.length}
+    <section class="house" aria-label="In the house">
+      <h2 class="house-title">In the house</h2>
+      {#each house as item (item.id)}
+        <a class="chip" class:warn={item.tone === 'warn'} class:urgent={item.tone === 'urgent'} href={item.link}><strong class="num">{item.value}</strong><span><b>{item.label}</b><small>{item.note}</small></span></a>
+      {/each}
+    </section>
+  {/if}
+
   {#if agenda.length}
     <section class="ribbon panel" aria-label="Your day">
       <div class="ribbon-head"><h2>Your day</h2><a href="#/schedule" class="faint">Open schedule</a></div>
@@ -94,17 +110,44 @@
       </div>
     {/each}
   </section>
+
+  <section class="around">
+    <div class="panel">
+      <div class="panel-head"><h3>Milestones this week</h3><span class="faint" style="font-size: 12px">{milestones.length}</span></div>
+      <ul class="feed">
+        {#each milestones as item (`${item.kind}${item.patientId}${item.date}${item.text}`)}
+          <li><span class="dot-icon m-{item.kind}"><Icon name={MILESTONE_ICONS[item.kind]} size={14} /></span><a class="grow" href={item.link || `#/patients/${item.patientId}`}><strong>{item.text}</strong><small>{item.sub}</small></a><span class="stamp">{when(item.date)}</span></li>
+        {:else}<li class="faint">A quiet week: no milestones.</li>{/each}
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>From the floor</h3><span class="faint" style="font-size: 12px">Last two days</span></div>
+      <ul class="feed">
+        {#each floor as item (`${item.kind}${item.at}${item.patientId}`)}
+          <li><span class="dot-icon" class:warn={item.tone === 'warn'}><Icon name={item.kind === 'checkin' ? 'alert' : 'pen'} size={14} /></span><a class="grow" href={`#/patients/${item.patientId}`}><strong>{item.text}</strong><small>{item.sub}</small></a><span class="stamp">{staffName(item.by)}</span></li>
+        {:else}<li class="faint">Nothing flagged on the floor.</li>{/each}
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Team activity</h3><span class="faint" style="font-size: 12px">Since yesterday</span></div>
+      <ul class="feed">
+        {#each feed as item (item.id)}
+          <li><span class="avatar sm">{staffById(item.by)?.initials || '·'}</span><a class="grow" href={item.link || '#/'}><strong>{staffName(item.by)}</strong><small>{item.text}</small></a><span class="stamp">{fmtAgo(item.at)}</span></li>
+        {:else}<li class="faint">No activity from the team yet.</li>{/each}
+      </ul>
+    </div>
+  </section>
 </main>
 
 {#if note}<FormView {...note} onclose={() => { note = null; }} />{/if}
 
 <style>
-  .greeting { position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 17px; flex-wrap: wrap; padding: 25px 27px; margin-bottom: 14px; border-radius: 22px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
+  .greeting { position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 17px; flex-wrap: wrap; padding: 18px 22px; margin-bottom: 12px; border-radius: 22px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .greeting::after { content: ""; position: absolute; right: -90px; top: -110px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.3), transparent 65%); pointer-events: none; }
   .hello { position: relative; z-index: 1; }
   .date { color: var(--lime); font-weight: 750; font-size: 14px; }
-  .greeting h1 { color: #fff; font-size: 34px; letter-spacing: -0.04em; margin-top: 4px; }
-  .line { color: var(--on-ink-2); font-size: 16px; margin-top: 8px; max-width: 52ch; }
+  .greeting h1 { color: #fff; font-size: 28px; letter-spacing: -0.04em; margin-top: 4px; }
+  .line { color: var(--on-ink-2); font-size: 14px; margin-top: 4px; max-width: 52ch; }
   .tally { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, auto); gap: 10px; }
   .tally div { min-width: 104px; padding: 10px 11px; border-radius: 14px; background: rgb(255 255 255 / 0.07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
   .tally strong { display: block; font-size: 23px; font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1.1; }
@@ -148,6 +191,34 @@
   .task footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .when { font-size: 12px; font-weight: 750; color: var(--text-3); }
   .clear { padding: 15px 10px 18px; text-align: center; color: var(--text-3); font-weight: 650; }
-  @media (max-width: 1100px) { .lanes { grid-template-columns: 1fr; } .tally { grid-template-columns: repeat(2, auto); } }
+  /* In the house: one line of live counts under the greeting */
+  .house { display: flex; align-items: stretch; gap: 8px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+  .house-title { flex: none; align-self: center; font-size: 13px; font-weight: 800; color: var(--text-2); margin-right: 4px; }
+  .chip { flex: 1 0 auto; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 10px; border-radius: 14px; background: var(--paper); box-shadow: var(--shadow-1); color: var(--text); text-decoration: none; }
+  .chip:hover { box-shadow: var(--shadow-2); text-decoration: none; }
+  .chip strong { min-width: 34px; height: 34px; padding: 0 6px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--leaf); color: var(--moss); font-size: 17px; font-weight: 800; }
+  .chip.warn strong { background: var(--warn-soft); color: var(--warn); }
+  .chip.urgent strong { background: var(--urgent-soft); color: var(--urgent); }
+  .chip span { display: flex; flex-direction: column; line-height: 1.2; }
+  .chip b { font-size: 13px; font-weight: 750; }
+  .chip small { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+
+  /* Around you: milestones, the floor and the team, side by side under the lanes */
+  .around { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin-top: 12px; align-items: start; }
+  .feed { list-style: none; margin: 0; padding: 0 14px 10px; display: flex; flex-direction: column; }
+  .feed li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+  .feed li:last-child { border-bottom: 0; }
+  .feed a { display: flex; flex-direction: column; min-width: 0; color: inherit; text-decoration: none; }
+  .feed a:hover strong { text-decoration: underline; }
+  .feed strong { font-size: 13px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed small { font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stamp { flex: none; font-size: 11.5px; font-weight: 700; color: var(--text-3); }
+  .dot-icon { width: 28px; height: 28px; flex: none; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: var(--sunk); color: var(--text-2); }
+  .dot-icon.warn { background: var(--warn-soft); color: var(--warn); }
+  .m-stay { background: var(--leaf); color: var(--moss); }
+  .m-program { background: var(--info-soft); color: var(--info); }
+  .m-discharge { background: var(--warn-soft); color: var(--warn); }
+  .m-arrival { background: var(--strong); color: var(--on-strong); }
+  @media (max-width: 1100px) { .around { grid-template-columns: 1fr; } .lanes { grid-template-columns: 1fr; } .tally { grid-template-columns: repeat(2, auto); } }
   @media (max-width: 700px) { .greeting { padding: 18px 15px; } .greeting h1 { font-size: 25px; } .tally { width: 100%; grid-template-columns: repeat(2, 1fr); } .ribbon { overflow-x: auto; } .track { min-width: 720px; } }
 </style>
