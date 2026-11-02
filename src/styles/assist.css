@@ -1,0 +1,16 @@
+/* Cedar Assist: the one place the brand lime leads, so drafted help is easy to tell apart from records. */
+.assist { margin: 18px 0 4px; border: 1px solid var(--lime-line); border-radius: var(--r-md); background: linear-gradient(180deg, var(--lime-soft), var(--paper) 120%); }
+.assist-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.assist-head strong { display: block; font-size: var(--t-md); }
+.assist-head span { display: block; color: var(--text-2); font-size: var(--t-sm); }
+.assist-mark { width: 30px; height: 30px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: var(--ink-fixed); color: var(--lime); flex: none; }
+.assist-body { display: flex; flex-direction: column; gap: 10px; padding: 0 16px 14px; }
+.assist .textarea { background: var(--paper); }
+.assist .btn.listening { border-color: var(--urgent); color: var(--urgent); }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--urgent); font-size: var(--t-sm); font-weight: 600; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--urgent); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+/* Fields Cedar drafted stay marked until someone edits them. */
+.form-row.drafted { position: relative; }
+.form-row.drafted::before { content: ""; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--lime); }
+.drafted-tag { display: inline-block; align-self: flex-start; margin-top: 4px; padding: 1px 7px; border-radius: 999px; background: var(--lime-soft); color: var(--moss); font-size: 11px; font-weight: 600; }

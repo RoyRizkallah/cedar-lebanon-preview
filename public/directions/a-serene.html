@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction A · Serene</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8f5;--paper:#fff;--ink:#17201a;--t2:#5b665e;--t3:#94a097;--line:#e7ece6;--lime:#7cfc00;--leaf:#e9fbd6;--moss:#2f6b00;--sky:#eaf2ff;--blue:#2e5fb8;--rose:#fdeee9;--red:#c2410c;--amber:#fff4e0;--brown:#946200}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:500 14px/1.5 Figtree,system-ui,sans-serif}
+.app{display:grid;grid-template-columns:92px 1fr;min-height:100vh}
+.rail{background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 0}
+.rail img{width:44px;margin-bottom:18px}
+.rail a{width:60px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-radius:18px;color:var(--t3);font-size:11px;font-weight:600;text-decoration:none}
+.rail a svg{width:22px;height:22px}
+.rail a.on{background:var(--leaf);color:var(--moss)}
+.main{padding:28px 44px 60px}
+.top{display:flex;align-items:center;gap:16px;margin-bottom:30px}
+.search{flex:1;max-width:520px;display:flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-radius:23px;background:var(--paper);box-shadow:0 1px 0 var(--line),0 8px 24px rgba(23,32,26,.04);color:var(--t3)}
+.me{margin-left:auto;display:flex;align-items:center;gap:10px;font-weight:700}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#b6f56b,#7cfc00);display:grid;place-items:center;font-weight:800;color:#183000}
+h1{font-size:34px;letter-spacing:-.03em;margin:0;font-weight:800}
+.sub{color:var(--t2);margin:6px 0 0}
+.head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.btn{height:46px;padding:0 22px;border-radius:23px;border:0;font:700 14px Figtree;cursor:pointer}
+.btn.primary{background:var(--ink);color:#fff;box-shadow:0 10px 24px rgba(23,32,26,.18)}
+.btn.soft{background:var(--paper);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+/* Money strip */
+.money{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:26px}
+.m{background:var(--paper);border-radius:24px;padding:20px 22px;box-shadow:0 1px 0 var(--line),0 12px 30px rgba(23,32,26,.04)}
+.m .l{color:var(--t2);font-weight:600;font-size:13px}
+.m .v{font-size:30px;font-weight:800;letter-spacing:-.03em;margin-top:6px}
+.m .n{color:var(--t3);font-size:12.5px;margin-top:2px}
+.m.hero{background:linear-gradient(140deg,#17201a 0%,#22351c 100%);color:#fff;position:relative;overflow:hidden}
+.m.hero .l,.m.hero .n{color:#b9c7b4}.m.hero .v{color:var(--lime);font-size:38px}
+.m.hero:after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(124,252,0,.35),transparent 70%)}
+.split{display:flex;height:8px;border-radius:8px;overflow:hidden;margin-top:14px;background:#2c3b29}
+.split i:first-child{background:var(--lime)}.split i:last-child{background:#c5f59a}
+.filters{display:flex;gap:8px;margin-bottom:18px}
+.chip{height:38px;padding:0 16px;border-radius:19px;background:var(--paper);display:flex;align-items:center;gap:6px;color:var(--t2);font-weight:600;box-shadow:0 1px 0 var(--line)}
+.chip.on{background:var(--ink);color:#fff}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.col{background:#eef2ec;border-radius:28px;padding:10px}
+.ch{display:flex;align-items:center;gap:10px;padding:12px 12px 14px}
+.ch b{font-size:16px;font-weight:800}.cnt{background:var(--paper);border-radius:12px;padding:1px 9px;font-weight:700;font-size:12px}
+.ch .sum{margin-left:auto;font-weight:800}
+.card{background:var(--paper);border-radius:20px;padding:16px 16px 14px;margin-bottom:10px;box-shadow:0 1px 0 var(--line),0 6px 16px rgba(23,32,26,.04)}
+.card .nm{font-size:15.5px;font-weight:800;display:flex;justify-content:space-between}
+.card .meta{color:var(--t2);font-size:13px;margin-top:2px}
+.tags{display:flex;gap:6px;margin:10px 0 0}
+.tag{font-size:12px;font-weight:700;padding:3px 10px;border-radius:10px}
+.tag.u{background:var(--rose);color:var(--red)}.tag.r{background:var(--amber);color:var(--brown)}.tag.p{background:var(--sky);color:var(--blue)}
+.clock{height:5px;border-radius:5px;background:#eef2ec;margin:12px 0 10px;overflow:hidden}.clock i{display:block;height:100%;border-radius:5px;background:var(--lime)}
+.clock i.late{background:#f97316}
+.foot{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:12.5px;font-weight:600}
+.foot .val{margin-left:auto;color:var(--ink);font-weight:800;font-size:14px}
+.mini{width:24px;height:24px;border-radius:50%;background:var(--leaf);color:var(--moss);display:grid;place-items:center;font-size:11px;font-weight:800}
+.tagline{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;font-weight:700}
+</style></head><body>
+<div class="app">
+<nav class="rail"><img src="/logo-mark.png" alt="">
+<a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V5m0 15h17M8 16v-5m5 5V8m5 8V4"/></svg>Home</a>
+<a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 13h5l2 3h4l2-3h5"/></svg>Leads</a>
+<a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>Pipeline</a>
+<a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/></svg>Patients</a>
+<a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Schedule</a>
+<a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18"/></svg>Finance</a>
+</nav>
+<main class="main">
+<div class="top"><div class="search">⌕ Search patients, inquiries, anything…</div><div class="me"><div class="av">M</div>Melyssa</div></div>
+<div class="head"><div><h1>Pipeline</h1><p class="sub">Eight people on their way to Cedar. Drag a card when they move forward.</p></div>
+<div style="display:flex;gap:10px"><button class="btn soft">Declined</button><button class="btn primary">+ New inquiry</button></div></div>
+<section class="money">
+<div class="m hero"><div class="l">Potential revenue in play</div><div class="v">$25,200</div><div class="n">per month · inquiry + assessment</div><div class="split"><i style="width:38%"></i><i style="width:62%"></i></div></div>
+<div class="m"><div class="l">New inquiry</div><div class="v">$9,700</div><div class="n">3 people</div></div>
+<div class="m"><div class="l">Assessment</div><div class="v">$15,500</div><div class="n">3 people</div></div>
+<div class="m"><div class="l">In agreement</div><div class="v">$14,500</div><div class="n">2 admitting now</div></div>
+<div class="m"><div class="l">Admitted, 90 days</div><div class="v">57%</div><div class="n">of inquiries</div></div>
+</section>
+<div class="filters"><span class="chip on">Everyone</span><span class="chip">Urgent</span><span class="chip">Review due</span><span class="chip">Inpatient</span><span class="chip">Detox</span></div>
+<div class="board">
+<div class="col"><div class="ch"><b>New inquiry</b><span class="cnt">3</span><span class="sum">$9,700</span></div>
+<div class="card"><div class="nm">Omar Itani</div><div class="meta">Detox + Inpatient · Opioids</div><div class="tags"><span class="tag u">Urgent</span></div><div class="clock"><i style="width:10%"></i></div><div class="foot"><span class="mini">M</span>5h in stage<span class="val">$8,500</span></div></div>
+<div class="card"><div class="nm">Rita Saad <span title="no calls">☏̸</span></div><div class="meta">Outpatient · Cannabis</div><div class="tags"><span class="tag r">Review due</span><span class="tag p">Message only</span></div><div class="clock"><i class="late" style="width:100%"></i></div><div class="foot"><span class="mini">M</span>2 days in stage<span class="val">$1,200</span></div></div>
+<div class="card"><div class="nm">Georges Abi Nader</div><div class="meta">Inpatient · Alcohol</div><div class="clock"><i style="width:6%"></i></div><div class="foot"><span class="mini">M</span>3h in stage<span class="val">$0</span></div></div>
+</div>
+<div class="col"><div class="ch"><b>Assessment</b><span class="cnt">3</span><span class="sum">$15,500</span></div>
+<div class="card"><div class="nm">Chadi Merhi</div><div class="meta">Inpatient · Cocaine</div><div class="foot" style="margin-top:12px"><span class="mini">M</span>40h in stage<span class="val">$6,000</span></div></div>
+<div class="card"><div class="nm">Joelle Karam</div><div class="meta">Detox · Benzodiazepines</div><div class="foot" style="margin-top:12px"><span class="mini">M</span>3 days in stage<span class="val">$3,500</span></div></div>
+<div class="card"><div class="nm">Bassel Hamdan</div><div class="meta">Inpatient · Alcohol</div><div class="foot" style="margin-top:12px"><span class="mini">M</span>4 days in stage<span class="val">$6,000</span></div></div>
+</div>
+<div class="col"><div class="ch"><b>Agreement</b><span class="cnt">2</span><span class="sum">$14,500</span></div>
+<div class="card"><div class="nm">Fadi Chamoun</div><div class="meta">Detox + Inpatient · Alcohol</div><div class="tags"><span class="tag p">Admission 1 of 5</span></div><div class="foot" style="margin-top:12px"><span class="mini">M</span>3 days in stage<span class="val">$8,500</span></div></div>
+<div class="card"><div class="nm">Hiba Moussa</div><div class="meta">Inpatient · Amphetamines</div><div class="tags"><span class="tag p">Admission 4 of 5</span><span class="tag p">Message only</span></div><div class="foot" style="margin-top:12px"><span class="mini">M</span>6 days in stage<span class="val">$6,000</span></div></div>
+</div>
+</div>
+</main></div>
+<div class="tagline">A · Serene — calm, airy, health-app</div>
+</body></html>

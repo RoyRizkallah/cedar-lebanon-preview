@@ -1,0 +1,104 @@
+@import '@fontsource-variable/figtree/index.css';
+
+/* Serene: calm, airy, a health app. Ink from the logo carries weight; cedar lime marks what is yours, now, or good. */
+:root {
+  --lime: #7cfc00;
+  --lime-press: #6fe300;
+  --on-lime: #142800;
+  --ink-fixed: #17201a;
+  --on-ink: #f3f7f1;
+  --on-ink-2: #b9c7b4;
+
+  --font: 'Figtree Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: var(--font);
+
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-md: 14px;
+  --t-lg: 16px;
+  --t-xl: 20px;
+  --t-2xl: 30px;
+
+  --r-sm: 12px;
+  --r-md: 20px;
+  --r-lg: 26px;
+  --rail: 268px;
+  --topbar: 84px;
+
+  --whatsapp: #1f9d55;
+  --instagram: #c13584;
+  --facebook: #1877f2;
+  --email: #5e5ce6;
+  --website: #0e7490;
+  --phone: #6b7280;
+}
+
+:root, :root[data-theme='light'] {
+  color-scheme: light;
+  --ink: #17201a;
+  --canvas: #f6f8f5;
+  --paper: #ffffff;
+  --subtle: #f9fbf8;
+  --sunk: #eef2ec;
+  --line: #e7ece6;
+  --line-strong: #d6ddd4;
+  --text: #17201a;
+  --text-2: #5b665e;
+  --text-3: #94a097;
+  --moss: #2f6b00;
+  --leaf: #e9fbd6;
+  --lime-soft: #e9fbd6;
+  --lime-line: #c9f2a0;
+  --urgent: #c2410c;
+  --urgent-soft: #fdeee9;
+  --warn: #946200;
+  --warn-soft: #fff4e0;
+  --info: #2e5fb8;
+  --info-soft: #eaf2ff;
+  --ok: #2f6b00;
+  --ok-soft: #e9fbd6;
+  --strong: #17201a;
+  --on-strong: #ffffff;
+  --scrim: rgb(23 32 26 / 0.32);
+  --glass: rgb(246 248 245 / 0.86);
+  --shadow-1: 0 1px 0 #e7ece6, 0 10px 28px rgb(23 32 26 / 0.045);
+  --shadow-2: 0 1px 0 #e7ece6, 0 16px 40px rgb(23 32 26 / 0.07);
+  --shadow-pop: 0 30px 70px rgb(23 32 26 / 0.18), 0 6px 16px rgb(23 32 26 / 0.08);
+  --focus: 0 0 0 3px var(--paper), 0 0 0 5px #8fd14f;
+  --hero: linear-gradient(140deg, #17201a 0%, #22351c 100%);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ink: #eef3ec;
+  --canvas: #0e130f;
+  --paper: #161d17;
+  --subtle: #1a221b;
+  --sunk: #1f2820;
+  --line: #263027;
+  --line-strong: #344036;
+  --text: #eef3ec;
+  --text-2: #a8b4a6;
+  --text-3: #75806f;
+  --moss: #a6eb63;
+  --leaf: #1f3214;
+  --lime-soft: #1f3214;
+  --lime-line: #35521a;
+  --urgent: #ff8a65;
+  --urgent-soft: #3a1c13;
+  --warn: #f2bd63;
+  --warn-soft: #33270f;
+  --info: #8fb4ff;
+  --info-soft: #182540;
+  --ok: #a6eb63;
+  --ok-soft: #1f3214;
+  --strong: #eef3ec;
+  --on-strong: #142014;
+  --scrim: rgb(0 0 0 / 0.55);
+  --glass: rgb(14 19 15 / 0.86);
+  --shadow-1: 0 1px 0 #263027, 0 10px 28px rgb(0 0 0 / 0.25);
+  --shadow-2: 0 1px 0 #263027, 0 16px 40px rgb(0 0 0 / 0.35);
+  --shadow-pop: 0 30px 70px rgb(0 0 0 / 0.6), 0 6px 16px rgb(0 0 0 / 0.4);
+  --focus: 0 0 0 3px var(--paper), 0 0 0 5px var(--lime);
+  --hero: linear-gradient(140deg, #1d3214 0%, #12200c 100%);
+}

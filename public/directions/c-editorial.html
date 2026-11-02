@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction C · Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fbfbf9;--ink:#0f110f;--t2:#575c55;--t3:#8c9189;--line:#0f110f1a;--lime:#7cfc00;--red:#e2461c}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:500 14.5px/1.5 'Hanken Grotesk',system-ui,sans-serif}
+header{display:flex;align-items:center;gap:28px;padding:0 48px;height:72px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;font:800 20px 'Bricolage Grotesque';letter-spacing:-.02em}.brand img{width:34px}
+nav{display:flex;gap:4px}nav a{padding:8px 14px;font-weight:700;color:var(--t2);border-radius:999px}nav a.on{background:var(--ink);color:var(--paper)}
+.right{margin-left:auto;display:flex;align-items:center;gap:12px}.k{border:2px solid var(--ink);border-radius:999px;padding:6px 14px;font-weight:700}
+.av{width:38px;height:38px;border-radius:50%;background:var(--lime);display:grid;place-items:center;font-weight:800;border:2px solid var(--ink)}
+main{padding:36px 48px 70px}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:end;margin-bottom:34px}
+h1{font:800 76px/0.92 'Bricolage Grotesque';letter-spacing:-.045em;margin:0}
+h1 em{font-style:normal;background:var(--lime);padding:0 10px;border-radius:10px}
+.lede{font-size:17px;color:var(--t2);max-width:46ch}
+.big{border:2px solid var(--ink);border-radius:22px;padding:22px 26px;background:var(--ink);color:var(--paper)}
+.big .l{font-weight:700;color:#b9bdb5}.big .v{font:800 64px/1 'Bricolage Grotesque';letter-spacing:-.04em;color:var(--lime);margin:8px 0}
+.big .row{display:flex;gap:26px;border-top:1px solid #ffffff2a;padding-top:12px;margin-top:10px}.big .row div{font-weight:700}.big .row span{display:block;color:#b9bdb5;font-size:12px;font-weight:600}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);border:2px solid var(--ink);border-radius:18px;overflow:hidden;margin-bottom:30px}
+.strip>div{padding:16px 20px;border-left:2px solid var(--ink)}.strip>div:first-child{border-left:0}
+.strip .l{font-weight:700;color:var(--t2);font-size:13px}.strip .v{font:800 28px 'Bricolage Grotesque';letter-spacing:-.03em}
+.toolbar{display:flex;gap:8px;margin-bottom:20px}.pill{border:2px solid var(--ink);border-radius:999px;padding:6px 14px;font-weight:700}.pill.on{background:var(--ink);color:var(--paper)}
+.btn{margin-left:auto;background:var(--lime);border:2px solid var(--ink);border-radius:999px;padding:8px 20px;font:800 14px 'Hanken Grotesk';box-shadow:4px 4px 0 var(--ink)}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.ch{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+.ch b{font:800 26px 'Bricolage Grotesque';letter-spacing:-.03em}.ch .c{font-weight:800;color:var(--t3)}.ch .sum{margin-left:auto;font:800 18px 'Bricolage Grotesque'}
+.card{border:2px solid var(--ink);border-radius:18px;padding:16px 18px;margin-bottom:12px;background:#fff}
+.card.u{box-shadow:5px 5px 0 var(--red)}
+.nm{font:800 19px 'Bricolage Grotesque';letter-spacing:-.02em}.meta{color:var(--t2)}
+.tags{display:flex;gap:6px;margin-top:10px}.tag{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;border:2px solid var(--ink)}
+.tag.u{background:var(--red);color:#fff;border-color:var(--red)}.tag.r{background:#ffe08a}.tag.p{background:#e8e8e3}
+.clock{height:8px;border:2px solid var(--ink);border-radius:8px;margin:12px 0 10px;overflow:hidden}.clock i{display:block;height:100%;background:var(--lime)}.clock i.late{background:var(--red)}
+.foot{display:flex;align-items:center;font-weight:700;color:var(--t2);font-size:13px}.foot .val{margin-left:auto;color:var(--ink);font:800 18px 'Bricolage Grotesque'}
+.tagline{position:fixed;right:18px;bottom:18px;background:var(--ink);color:var(--lime);padding:10px 16px;border-radius:14px;font-weight:800}
+</style></head><body>
+<header><div class="brand"><img src="/logo-mark.png" alt="">Cedar Rehab</div>
+<nav><a>Today</a><a>Leads</a><a class="on">Pipeline</a><a>Admissions</a><a>Patients</a><a>Schedule</a><a>Finance</a><a>More ▾</a></nav>
+<div class="right"><span class="k">⌕ Ctrl K</span><div class="av">M</div></div></header>
+<main>
+<section class="hero">
+<div><h1>Eight people <em>on their way</em> to Cedar.</h1><p class="lede">Drag a card when someone moves forward. Agreements continue in Admissions.</p></div>
+<div class="big"><div class="l">Potential revenue in play, per month</div><div class="v">$25,200</div>
+<div class="row"><div>$9,700<span>New inquiry · 3</span></div><div>$15,500<span>Assessment · 3</span></div><div>$14,500<span>In agreement · 2</span></div></div></div>
+</section>
+<div class="strip"><div><div class="l">Leads waiting</div><div class="v">5</div></div><div><div class="l">Urgent</div><div class="v" style="color:var(--red)">1</div></div><div><div class="l">Review due (48h)</div><div class="v">1</div></div><div><div class="l">Admitted, 90 days</div><div class="v">57%</div></div></div>
+<div class="toolbar"><span class="pill on">Everyone</span><span class="pill">Urgent</span><span class="pill">Review due</span><span class="pill">Detox</span><button class="btn">+ New inquiry</button></div>
+<div class="board">
+<div><div class="ch"><b>New inquiry</b><span class="c">3</span><span class="sum">$9,700</span></div>
+<div class="card u"><div class="nm">Omar Itani</div><div class="meta">Detox + Inpatient · Opioids</div><div class="tags"><span class="tag u">Urgent</span></div><div class="clock"><i style="width:10%"></i></div><div class="foot">Melyssa · 5h<span class="val">$8,500</span></div></div>
+<div class="card"><div class="nm">Rita Saad</div><div class="meta">Outpatient · Cannabis</div><div class="tags"><span class="tag r">Review due</span><span class="tag p">Message only</span></div><div class="clock"><i class="late" style="width:100%"></i></div><div class="foot">Melyssa · 2 days<span class="val">$1,200</span></div></div>
+<div class="card"><div class="nm">Georges Abi Nader</div><div class="meta">Inpatient · Alcohol</div><div class="clock"><i style="width:6%"></i></div><div class="foot">Melyssa · 3h<span class="val">$0</span></div></div></div>
+<div><div class="ch"><b>Assessment</b><span class="c">3</span><span class="sum">$15,500</span></div>
+<div class="card"><div class="nm">Chadi Merhi</div><div class="meta">Inpatient · Cocaine</div><div class="foot" style="margin-top:10px">Melyssa · 40h<span class="val">$6,000</span></div></div>
+<div class="card"><div class="nm">Joelle Karam</div><div class="meta">Detox · Benzodiazepines</div><div class="foot" style="margin-top:10px">Melyssa · 3 days<span class="val">$3,500</span></div></div>
+<div class="card"><div class="nm">Bassel Hamdan</div><div class="meta">Inpatient · Alcohol</div><div class="foot" style="margin-top:10px">Melyssa · 4 days<span class="val">$6,000</span></div></div></div>
+<div><div class="ch"><b>Agreement</b><span class="c">2</span><span class="sum">$14,500</span></div>
+<div class="card"><div class="nm">Fadi Chamoun</div><div class="meta">Detox + Inpatient · Alcohol</div><div class="tags"><span class="tag p">Admission 1/5</span></div><div class="foot" style="margin-top:10px">Melyssa · 3 days<span class="val">$8,500</span></div></div>
+<div class="card"><div class="nm">Hiba Moussa</div><div class="meta">Inpatient · Amphetamines</div><div class="tags"><span class="tag p">Admission 4/5</span><span class="tag p">Message only</span></div><div class="foot" style="margin-top:10px">Melyssa · 6 days<span class="val">$6,000</span></div></div></div>
+</div></main>
+<div class="tagline">C · Editorial — bold, high-contrast, top navigation</div>
+</body></html>

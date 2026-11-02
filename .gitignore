@@ -12,3 +12,13 @@ dist/
 *-preview.png
 proposal-page-2.png
 mobile-cdp.png
+.superpowers/
+artifacts/*/.chrome-profile/
+artifacts/*/.frame.html
+
+# Screenshots and agent scratch: local review material, not source
+artifacts/
+.agent-work/
+
+# The owner's source forms stay out of this public repo
+*.docx

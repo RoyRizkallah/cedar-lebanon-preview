@@ -1,7 +1,7 @@
 {
-  "name": "cedar-lebanon-workspace",
+  "name": "cedar-rehab-crm",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -9,17 +9,10 @@
     "build:review": "vite build --mode review",
     "preview": "vite preview --host 127.0.0.1",
     "start": "node server/index.mjs",
-    "test:analytics": "node scripts/test-analytics.mjs",
-    "test:center-intelligence": "node scripts/test-center-intelligence.mjs",
-    "test:roles": "node scripts/test-roles.mjs",
-    "test:workspace": "node scripts/test-workspace.mjs",
-    "test:clinical": "node scripts/test-clinical.mjs",
-    "test:patient-ai": "node scripts/test-patient-intelligence.mjs",
-    "test:finance": "node scripts/test-finance.mjs",
-    "test:filters": "node scripts/test-registry.mjs",
-    "test:rooms": "node scripts/test-rooms.mjs"
+    "test": "node scripts/run-tests.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/figtree": "^5.3.0",
     "svelte": "^5.0.0"
   },
   "devDependencies": {

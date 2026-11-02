@@ -1,0 +1,32 @@
+import { loadState, STORAGE_KEY } from './persist.js';
+import { seed } from './seed.js';
+import { homePage, staffById } from './people.js';
+
+const storage = typeof localStorage === 'undefined' ? null : localStorage;
+const read = key => { try { return storage?.getItem(key) ?? null; } catch { return null; } };
+const write = (key, value) => { try { storage?.setItem(key, value); } catch { /* private mode: keep working in memory */ } };
+
+export const db = $state(loadState(read(STORAGE_KEY)));
+// ?as=<staff id> opens the preview as that person (used for review links and screenshots).
+const asParam = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('as');
+export const session = $state({ staffId: staffById(asParam) ? asParam : read('cedar-rehab-staff') || 'amer', now: new Date() });
+
+// Every change goes through commit so it is saved and the screen refreshes together.
+export function commit(change) {
+  const result = change(db);
+  write(STORAGE_KEY, JSON.stringify($state.snapshot(db)));
+  return result;
+}
+
+export function switchStaff(staffId) {
+  session.staffId = staffId;
+  write('cedar-rehab-staff', staffId);
+  if (typeof location !== 'undefined') location.hash = `#/${homePage(staffId)}`;
+}
+
+export function resetData() {
+  const fresh = seed();
+  for (const key of Object.keys(db)) delete db[key];
+  Object.assign(db, fresh);
+  write(STORAGE_KEY, JSON.stringify(fresh));
+}

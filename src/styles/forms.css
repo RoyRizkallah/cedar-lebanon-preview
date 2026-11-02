@@ -1,0 +1,35 @@
+/* Forms keep the paper layout the team knows: label on the left, answer on the right. */
+.form-drawer .drawer-body { padding-top: 8px; }
+.confidential { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; padding: 8px 12px; border-radius: var(--r-sm); background: var(--sunk); color: var(--text-2); font-size: var(--t-xs); }
+.form-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px 18px; padding: 16px 0 18px; border-bottom: 1px solid var(--line); }
+.form-header .field > span { font-size: var(--t-xs); color: var(--text-2); font-weight: 600; }
+.form-header .readonly-value { font-weight: 600; }
+.form-section { padding-top: 22px; }
+.form-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 6px; }
+.form-section-head h3 { font-size: var(--t-md); }
+.form-row { display: grid; grid-template-columns: minmax(180px, 34%) 1fr; gap: 6px 20px; padding: 12px 0; border-top: 1px solid var(--line); align-items: start; }
+.form-row.table-row { grid-template-columns: 1fr; }
+.form-label { display: flex; flex-direction: column; gap: 2px; padding-top: 7px; font-weight: 600; font-size: var(--t-sm); }
+.form-label small { color: var(--text-3); font-weight: 400; font-size: var(--t-xs); }
+.form-label .req { color: var(--urgent); margin-left: 3px; }
+.form-control { min-width: 0; padding-top: 2px; }
+.form-control .readonly-value, .form-control > span { display: inline-block; padding-top: 6px; }
+.form-section.locked .form-section-head { opacity: 0.55; }
+.lock-note { display: flex; align-items: center; gap: 8px; padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); color: var(--text-2); background: var(--subtle); }
+.form-rule { margin-top: 22px; padding: 12px 14px; border-left: 3px solid var(--lime); background: var(--subtle); color: var(--text-2); font-size: var(--t-sm); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.form-table .table td { padding: 6px 8px; }
+.form-table .input, .form-table .select { height: 32px; font-size: var(--t-sm); min-width: 110px; }
+.form-table .append-row td { background: var(--subtle); }
+.sig { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sig img { height: 44px; width: auto; padding: 2px 6px; border-radius: 6px; background: #fff; border-bottom: 1px solid var(--line-strong); }
+.sig > span { display: flex; flex-direction: column; font-size: var(--t-sm); }
+.auto-note { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; padding: 10px 14px; border-radius: var(--r-sm); background: var(--lime-soft); font-size: var(--t-sm); }
+
+/* A list of forms with their state, used on patient tabs */
+.form-list > li { gap: 14px; }
+.form-list .num-badge { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--sunk); font-weight: 700; font-size: var(--t-xs); flex: none; }
+
+@media (max-width: 700px) {
+  .form-row { grid-template-columns: 1fr; }
+  .form-label { padding-top: 0; }
+}

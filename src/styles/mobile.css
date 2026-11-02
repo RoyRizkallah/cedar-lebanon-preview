@@ -1,0 +1,104 @@
+/* ---------- Phone: its own layout, not a squeezed desktop ----------
+   A floating ink dock at the thumb, the full menu as a sheet of tiles,
+   every drawer and dialog rising from the bottom, and a compact header. */
+
+.tabbar, .phone-brand, .phone-title { display: none; }
+
+@media (max-width: 720px) {
+  :root { --dock: 68px; --dock-gap: 10px; --safe-b: env(safe-area-inset-bottom, 0px); }
+  html { -webkit-tap-highlight-color: transparent; }
+  .content { padding: 4px 14px calc(var(--dock) + var(--dock-gap) * 3 + var(--safe-b)); animation-duration: 0.25s; }
+
+  /* Header: logo, the page name, and only the controls that matter on the move */
+  .topbar { height: 60px; gap: 6px; padding: 0 12px; padding-top: env(safe-area-inset-top, 0px); }
+  .topbar .menu-btn { display: none; }
+  .phone-brand { display: inline-flex; flex: none; }
+  .phone-brand img { width: 34px; height: 34px; }
+  .phone-title { display: block; flex: 1; min-width: 0; margin-left: 4px; font-size: 17px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .spacer { display: none; }
+  .topbar .search-trigger { flex: none; width: 42px; height: 42px; padding: 0; justify-content: center; border-radius: 50%; }
+  .topbar .search-trigger .grow, .topbar .search-trigger kbd { display: none; }
+  .topbar .icon-btn { width: 42px; height: 42px; }
+  .topbar .profile { padding: 3px; }
+  .topbar .profile > :not(.avatar) { display: none; }
+  .profile-menu { position: fixed; top: 64px; left: 10px; right: 10px; width: auto; max-height: calc(100vh - 64px - var(--dock) - 40px); }
+  .notifications { top: 64px !important; left: 10px; right: 10px !important; width: auto !important; max-height: calc(100vh - 64px - var(--dock) - 40px); overflow-y: auto; }
+
+  /* The dock */
+  .tabbar {
+    position: fixed; z-index: 75; left: 10px; right: 10px; bottom: calc(var(--dock-gap) + var(--safe-b)); height: var(--dock);
+    display: flex; align-items: stretch; gap: 2px; padding: 6px; border-radius: 26px;
+    background: var(--ink-fixed); color: var(--on-ink-2); box-shadow: 0 14px 40px rgb(10 20 12 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+  .tab { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 20px; background: none; color: inherit; font: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .tab:hover { text-decoration: none; }
+  .tab-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 30px; border-radius: 15px; transition: background 0.2s; }
+  .tab-label { font-size: 11px; font-weight: 700; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .tab[aria-current="page"] { color: var(--on-ink); }
+  .tab[aria-current="page"] .tab-icon { background: var(--lime); color: var(--on-lime); box-shadow: 0 0 18px rgb(124 252 0 / 0.45); }
+  .tab-count { position: absolute; top: -5px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--paper); color: var(--text); font-size: 10.5px; font-weight: 800; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--ink-fixed); }
+  .tab-count.hot { background: #ef5a24; color: #fff; }
+
+  /* More: the whole menu as a sheet of tiles above the dock */
+  .sidebar {
+    position: fixed; z-index: 70; top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: auto; max-height: 86vh;
+    padding: 12px 14px calc(var(--dock) + var(--dock-gap) * 2 + var(--safe-b)); border: 0; border-radius: 30px 30px 0 0;
+    transform: translateY(100%); visibility: hidden; transition: transform 0.3s cubic-bezier(.2,.8,.2,1), visibility 0.3s;
+  }
+  .sidebar::before { content: ""; display: block; width: 44px; height: 5px; margin: 0 auto 12px; border-radius: 3px; background: var(--line-strong); }
+  .sidebar.open { transform: none; visibility: visible; box-shadow: 0 -20px 50px rgb(10 20 12 / 0.25); }
+  .sidebar .brand { padding: 0 6px 12px; }
+  .sidebar .brand img { width: 34px; height: 34px; }
+  .nav { gap: 16px; }
+  .nav-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .nav-cat { grid-column: 1 / -1; padding: 0 4px; }
+  .nav-item { flex-direction: column; justify-content: center; gap: 6px; margin: 0; min-height: 84px; padding: 12px 6px 10px; border-radius: 20px; background: var(--subtle); text-align: center; font-size: 12.5px; line-height: 1.2; }
+  .nav-item::before { display: none; }
+  .nav-item .grow { flex: none; }
+  .nav-item .item-icon { width: 38px; height: 38px; border-radius: 13px; align-items: center; justify-content: center; background: var(--paper); box-shadow: var(--shadow-1); }
+  .nav-item[aria-current="page"] { background: var(--leaf); }
+  .nav-item[aria-current="page"]::after { left: auto; right: 10px; top: 12px; margin: 0; width: 8px; height: 8px; }
+  .nav-item .count { position: absolute; top: 8px; left: 8px; }
+
+  /* Drawers and dialogs rise from the bottom as sheets */
+  .drawer, .drawer.wide, .dialog {
+    top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-height: 94vh; transform: none;
+    border-radius: 28px 28px 0 0; animation: sheet 0.3s cubic-bezier(.2,.8,.2,1);
+  }
+  .drawer { height: 94vh; }
+  .drawer::before, .dialog::before { content: ""; flex: none; width: 44px; height: 5px; margin: 10px auto 0; border-radius: 3px; background: var(--line-strong); }
+  .drawer-head { padding: 14px 18px 12px; }
+  .drawer-head h2 { font-size: 21px; }
+  .drawer-body { padding: 4px 18px 24px; }
+  .drawer-foot { padding: 12px 14px calc(12px + var(--safe-b)); flex-wrap: wrap; }
+  .drawer-foot .btn { flex: 1 1 auto; }
+  .scrim { z-index: 60; }
+
+  /* Page heads: shorter, so the work starts above the fold */
+  .page-head { padding: 18px 18px 20px; margin-bottom: 16px; border-radius: 24px; gap: 12px; }
+  .page-head h1 { font-size: 25px; }
+  .page-head p { font-size: 13.5px; margin-top: 4px; }
+  .page-head::before { width: 130px; height: 104px; bottom: -22px; right: -18px; opacity: 0.3; }
+  .page-head .actions { width: 100%; }
+  .page-head .actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  /* Lists and tables: swipe sideways inside their card, never the page */
+  .table-wrap { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .table th, .table td { padding-left: 12px; padding-right: 12px; }
+  .toolbar { gap: 8px; }
+  .toolbar .seg { flex: 1 1 100%; }
+
+  .toast { bottom: calc(var(--dock) + var(--dock-gap) * 2 + var(--safe-b)); max-width: calc(100vw - 28px); padding: 12px 18px; }
+
+  /* Inputs at 16px so phones never zoom in on focus */
+  .input, .select, textarea, select, input:not([type=checkbox]):not([type=radio]) { font-size: 16px; }
+}
+
+/* Thumbs, not cursors: every control is at least 44px to hit */
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .btn.sm { min-height: 38px; }
+  .nav-item, .popover button, .popover a { min-height: 44px; }
+}
+
+@keyframes sheet { from { transform: translateY(40px); opacity: 0; } }

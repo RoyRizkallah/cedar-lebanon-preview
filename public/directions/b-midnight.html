@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction B · Midnight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090a;--glass:rgba(255,255,255,.045);--glass2:rgba(255,255,255,.07);--edge:rgba(255,255,255,.09);--t1:#f2f5ef;--t2:#a2aba0;--t3:#6b7468;--lime:#8dff2e;--red:#ff6b4a;--amber:#ffb84d;--blue:#7aa7ff}
+*{box-sizing:border-box}
+body{margin:0;color:var(--t1);font:500 14px/1.5 Inter,system-ui,sans-serif;background:
+radial-gradient(900px 500px at 75% -10%,rgba(141,255,46,.16),transparent 60%),
+radial-gradient(700px 500px at -10% 110%,rgba(46,120,255,.10),transparent 60%),var(--bg);min-height:100vh}
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.side{padding:24px 16px;border-right:1px solid var(--edge);background:rgba(0,0,0,.25);backdrop-filter:blur(20px)}
+.brand{display:flex;align-items:center;gap:10px;font:700 18px Sora;margin-bottom:28px;padding-left:6px}.brand img{width:34px}.brand span{color:var(--lime)}
+.side .g{color:var(--t3);font-size:11.5px;font-weight:600;letter-spacing:.04em;margin:18px 10px 6px}
+.side a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;color:var(--t2);font-weight:600}
+.side a.on{background:linear-gradient(90deg,rgba(141,255,46,.16),rgba(141,255,46,.02));color:var(--t1);box-shadow:inset 0 0 0 1px rgba(141,255,46,.25)}
+.side a .d{width:7px;height:7px;border-radius:50%;background:var(--t3)}.side a.on .d{background:var(--lime);box-shadow:0 0 10px var(--lime)}
+.main{padding:28px 40px 60px}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+.search{flex:1;max-width:520px;height:44px;border-radius:14px;background:var(--glass);border:1px solid var(--edge);display:flex;align-items:center;padding:0 16px;color:var(--t3)}
+.me{margin-left:auto;display:flex;align-items:center;gap:10px;font-weight:600}
+.av{width:38px;height:38px;border-radius:12px;background:var(--lime);color:#0d1a00;display:grid;place-items:center;font-weight:800}
+h1{font:700 40px Sora;letter-spacing:-.03em;margin:0}
+.sub{color:var(--t2);margin:6px 0 0}
+.head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px}
+.btn{height:44px;padding:0 20px;border-radius:14px;font:700 14px Inter;border:1px solid var(--edge);background:var(--glass);color:var(--t1)}
+.btn.primary{background:var(--lime);color:#0d1a00;border-color:transparent;box-shadow:0 0 30px rgba(141,255,46,.35)}
+.money{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:14px;margin-bottom:28px}
+.m{border-radius:20px;padding:22px;background:var(--glass);border:1px solid var(--edge);backdrop-filter:blur(16px)}
+.m .l{color:var(--t2);font-size:13px;font-weight:600}.m .v{font:700 30px Sora;letter-spacing:-.03em;margin-top:8px}.m .n{color:var(--t3);font-size:12.5px;margin-top:4px}
+.m.hero{background:linear-gradient(150deg,rgba(141,255,46,.18),rgba(141,255,46,.03) 60%),var(--glass);border-color:rgba(141,255,46,.3)}
+.m.hero .v{font-size:46px;color:var(--lime);text-shadow:0 0 30px rgba(141,255,46,.35)}
+.spark{display:flex;align-items:flex-end;gap:5px;height:42px;margin-top:14px}.spark i{flex:1;border-radius:4px 4px 0 0;background:rgba(141,255,46,.25)}.spark i.hi{background:var(--lime)}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.col{border-radius:22px;padding:8px;background:rgba(255,255,255,.025);border:1px solid var(--edge)}
+.ch{display:flex;align-items:center;gap:10px;padding:14px 12px}.ch b{font:700 15px Sora}.ch .c{color:var(--t3)}.ch .sum{margin-left:auto;font-weight:700;color:var(--lime)}
+.bar{height:3px;border-radius:3px;margin:0 12px 10px;background:linear-gradient(90deg,var(--lime),transparent)}
+.card{border-radius:16px;padding:16px;margin-bottom:8px;background:var(--glass2);border:1px solid var(--edge)}
+.card.u{border-color:rgba(255,107,74,.45);box-shadow:0 0 0 1px rgba(255,107,74,.15),0 10px 30px rgba(255,107,74,.08)}
+.nm{font-weight:700;font-size:15px;display:flex;justify-content:space-between}.meta{color:var(--t2);font-size:13px}
+.tags{display:flex;gap:6px;margin-top:10px}.tag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.06)}
+.tag.u{color:var(--red);background:rgba(255,107,74,.12)}.tag.r{color:var(--amber);background:rgba(255,184,77,.12)}.tag.p{color:var(--blue);background:rgba(122,167,255,.12)}
+.clock{height:4px;border-radius:4px;background:rgba(255,255,255,.06);margin:12px 0 10px;overflow:hidden}.clock i{display:block;height:100%;background:var(--lime);box-shadow:0 0 10px var(--lime)}.clock i.late{background:var(--red);box-shadow:0 0 10px var(--red)}
+.foot{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:12.5px}.foot .val{margin-left:auto;color:var(--t1);font-weight:700;font-size:14px}
+.tagline{position:fixed;right:18px;bottom:18px;background:var(--lime);color:#0d1a00;padding:10px 16px;border-radius:14px;font-weight:800}
+</style></head><body>
+<div class="app">
+<aside class="side"><div class="brand"><img src="/logo-mark.png" alt=""><div><span>Cedar</span> Rehab</div></div>
+<div class="g">MY WORK</div><a><i class="d"></i>Today</a><a><i class="d"></i>Reports</a>
+<div class="g">INTAKE</div><a><i class="d"></i>Leads</a><a class="on"><i class="d"></i>Pipeline</a><a><i class="d"></i>Admissions</a>
+<div class="g">CARE</div><a><i class="d"></i>Patients</a><a><i class="d"></i>Sessions</a><a><i class="d"></i>Rooms & beds</a>
+<div class="g">FINANCE</div><a><i class="d"></i>Finance</a></aside>
+<main class="main">
+<div class="top"><div class="search">Search or jump to…</div><div class="me"><div class="av">M</div>Melyssa</div></div>
+<div class="head"><div><h1>Pipeline</h1><p class="sub">8 people moving toward admission</p></div><div style="display:flex;gap:10px"><button class="btn">Declined</button><button class="btn primary">+ New inquiry</button></div></div>
+<section class="money">
+<div class="m hero"><div class="l">Potential revenue in play</div><div class="v">$25,200<span style="font-size:16px;color:var(--t2)"> /mo</span></div><div class="n">New inquiry + assessment · leads, last 14 days ↓</div><div class="spark"><i style="height:30%"></i><i style="height:55%"></i><i style="height:20%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:25%"></i><i style="height:80%"></i><i style="height:50%"></i><i style="height:65%"></i><i style="height:40%"></i><i style="height:90%" class="hi"></i><i style="height:75%" class="hi"></i></div></div>
+<div class="m"><div class="l">New inquiry</div><div class="v">$9,700</div><div class="n">3 people</div></div>
+<div class="m"><div class="l">Assessment</div><div class="v">$15,500</div><div class="n">3 people</div></div>
+<div class="m"><div class="l">In agreement</div><div class="v">$14,500</div><div class="n">2 admitting · 57% admitted (90d)</div></div>
+</section>
+<div class="board">
+<div class="col"><div class="ch"><b>New inquiry</b><span class="c">3</span><span class="sum">$9,700</span></div><div class="bar"></div>
+<div class="card u"><div class="nm">Omar Itani</div><div class="meta">Detox + Inpatient · Opioids</div><div class="tags"><span class="tag u">Urgent</span></div><div class="clock"><i style="width:10%"></i></div><div class="foot">Melyssa · 5h<span class="val">$8,500</span></div></div>
+<div class="card"><div class="nm">Rita Saad</div><div class="meta">Outpatient · Cannabis</div><div class="tags"><span class="tag r">Review due</span><span class="tag p">Message only</span></div><div class="clock"><i class="late" style="width:100%"></i></div><div class="foot">Melyssa · 2d<span class="val">$1,200</span></div></div>
+<div class="card"><div class="nm">Georges Abi Nader</div><div class="meta">Inpatient · Alcohol</div><div class="clock"><i style="width:6%"></i></div><div class="foot">Melyssa · 3h<span class="val">$0</span></div></div></div>
+<div class="col"><div class="ch"><b>Assessment</b><span class="c">3</span><span class="sum">$15,500</span></div><div class="bar" style="opacity:.6"></div>
+<div class="card"><div class="nm">Chadi Merhi</div><div class="meta">Inpatient · Cocaine</div><div class="foot" style="margin-top:12px">Melyssa · 40h<span class="val">$6,000</span></div></div>
+<div class="card"><div class="nm">Joelle Karam</div><div class="meta">Detox · Benzodiazepines</div><div class="foot" style="margin-top:12px">Melyssa · 3d<span class="val">$3,500</span></div></div>
+<div class="card"><div class="nm">Bassel Hamdan</div><div class="meta">Inpatient · Alcohol</div><div class="foot" style="margin-top:12px">Melyssa · 4d<span class="val">$6,000</span></div></div></div>
+<div class="col"><div class="ch"><b>Agreement</b><span class="c">2</span><span class="sum">$14,500</span></div><div class="bar" style="opacity:.3"></div>
+<div class="card"><div class="nm">Fadi Chamoun</div><div class="meta">Detox + Inpatient · Alcohol</div><div class="tags"><span class="tag p">Admission 1/5</span></div><div class="foot" style="margin-top:12px">Melyssa · 3d<span class="val">$8,500</span></div></div>
+<div class="card"><div class="nm">Hiba Moussa</div><div class="meta">Inpatient · Amphetamines</div><div class="tags"><span class="tag p">Admission 4/5</span><span class="tag p">Message only</span></div><div class="foot" style="margin-top:12px">Melyssa · 6d<span class="val">$6,000</span></div></div></div>
+</div></main></div>
+<div class="tagline">B · Midnight — premium dark, glass, lime glow</div>
+</body></html>

@@ -1,92 +1,135 @@
-# Cedar Lebanon staff workspace
+# Cedar Rehab — staff workspace
 
-A local Svelte frontend with a Node server, built from the workflow ideas in `RecoveryOS_Visual_Proposal.pdf`. The visual design is original. The current release is an interactive **fictional-data preview** for reviewing Cedar's staff workflows. It is not a production patient record system.
+A CRM and patient workspace for Cedar Rehab (Addiction Rehabilitation & Prevention Center), built from:
 
-## Render review build
+- the owner's clinical forms (`Cedar_Rehab_Clinical_Forms.docx`)
+- the owner's physical therapy & fitness forms (`Cedar_Rehab_Fitness_Forms.docx`)
+- the requirements meeting of 31 October 2026
 
-Render uses `render.yaml` to run `npm ci && npm run build:review` and publish `dist` as a static site. Keep the preview limited to fictional information: the role switcher demonstrates workspaces but does not authenticate users. Each reviewer's changes are stored in that reviewer's browser and do not sync between devices.
+The design is in `docs/superpowers/specs/2026-11-02-cedar-rehab-crm-design.md`.
 
-The public review keeps the source-linked, verified patient summaries and admissions calculations. Optional local-model synthesis and PDF/DOCX text extraction require the local Node server and are unavailable in this static review build. TXT, MD, CSV, and JSON text files remain readable in the browser.
+**This is a preview with fictional patients.** Records are kept in the browser (`localStorage`, with uploaded files in IndexedDB), so nothing is shared between devices. Switching people with "Preview: view the workspace as" is not a sign-in. Messages to WhatsApp, Instagram, Facebook and email are recorded as "queued" rather than sent. Real patient use needs a secure backend, logins, enforced permissions, audit, encryption and backups first.
 
-## Run locally
+## Run it
 
 ```sh
 npm install
-npm run dev
-```
-
-The Vite development server prints its local address. For document reading and the optional local AI endpoints, use the Node server:
-
-```sh
+npm run dev          # development server
 npm run build
-npm start
+npm start            # serves dist/ at http://localhost:4173 (npm start -- 4174 for another port)
 ```
 
-Open `http://localhost:4173/` for the workspace or `http://localhost:4173/design-preview.html` for the original static HTML design proposal. The live workspace contains the current role pages and filter controls. Nothing is deployed or published by these commands.
+Add `?as=<id>` to the address to open the workspace as that person, for example `?as=melyssa`, `?as=amer` or `?as=georgio`. The ids are in [src/lib/people.js](src/lib/people.js).
 
-If another preview already occupies port 4173, run `npm start -- 4174` and open `http://localhost:4174/`. Use the Node server for the full preview, including document reading and patient-review endpoints.
+## Who sees what
 
-## Walk through the preview
+People and roles follow the owner's org chart ([docs/org-chart.md](docs/org-chart.md)). Access is set by role, so a new hire gets the right pages by being given a role.
 
-Use the **View as** role and staff controls in the top bar. Each role has a visibly distinct sidebar with its own navigation groups, live work counts, and assigned-work shortcut. Each workspace also has its own home, actions, and assigned work:
-
-| Workspace | Main work |
+| Person | Pages |
 | --- | --- |
-| Director | Center overview, all operations, clinical records, case reviews, resident wallets, finance, reports, admissions intelligence |
-| Coordinator | Intake decisions, dedicated handoff queue, patient coordination, case reviews, rooms, follow-ups, operations reports |
-| Therapist | Assigned caseload, care-plan worklist, clinical report library, notes, team comments, case reviews, sessions, attendance, follow-ups |
-| Finance | Invoices, payment register, manual resident wallet top-ups, supplier expenses, journal and trial balance, bank reconciliation, payer accounts, financial reports |
-| Reception | First inquiries, intake scheduling, assigned arrivals board, room readiness |
-| RSA | Assigned residential residents, daily support check-ins, resident website requests, and recording fulfilled or offline purchases against resident wallets |
-| Resident | Personal wallet balance, deposit and purchase history, and an item request form with live request status in the local preview |
+| Amer Khattab · General Manager | Dashboard, Today, Reports, Leads, Pipeline, Follow-ups, Admissions, Insights, patients (overview, documents, wallet), Rooms, Schedule, Visits & incidents, Resident support, Accounts. Approves bills. |
+| Ahmed Khattab · Clinical & Program Director | Dashboard, Today, Reports, the whole intake side, every patient tab, Sessions, Medication, Rooms, Schedule, Visits & incidents, Resident support. No Accounts. |
+| Wael · Clinical Director | Today, Reports (care), Admissions, clinical forms 1–7, Sessions, Medication, Rooms, Schedule. Reviews incidents and countersigns. |
+| Nabila · Junior Psychologist | Today, Admissions (her step), her assigned patients, Sessions, Schedule |
+| Nazha · Drama Therapist | Today, patients (clinical), group notes, drama therapy sessions, Schedule |
+| Fadia · Head Nurse | Today, Admissions (nursing step), patients (medical, fitness clearance, prescriptions), Medication, Rooms, Schedule |
+| Melyssa · Admin & Admissions Manager | Today, Reports, Leads, Pipeline, Follow-ups, Admissions, Insights, patients (overview, follow-up log, documents, wallet), Rooms, Schedule, Resident support. No Accounts. |
+| Rabih · Head of Finance | Accounts, Reports (finance), wallets. Approves bills. |
+| Kteish · Accountant | Accounts, Reports (finance), wallets |
+| Mazen · Head of Operations | Rooms (manages them), Reports (operations), Resident support (purchasing), Visits & incidents |
+| John · Head of PT & Fitness | Today, patients (fitness forms 1–6, medical), Sessions, Schedule |
+| Zeina, Tony J., Tony AM, Raymond · trainers | Today, patients (fitness), session attendance logs, their own sessions on the Schedule |
+| Omar · Senior RSA | Every resident (overview, wallet), Rooms, Visits & incidents, Resident support. Alerted to incidents and late returns. |
+| Georgio, Alaa, Dania, Imad · RSAs | Their own residents. Georgio holds petty cash, so purchases are his. Imad, a certified nurse, can record doses under Fadia. |
+| Resident (Karim H., Lara K.) | Their own space: wallet, purchases and item requests |
 
-The role selector is a **preview control**, not authentication. Role checks and assignments in the browser demonstrate intended boundaries only.
+Clinical forms are never shown to Melyssa, Finance, Operations or the RSA team, including through direct links.
 
-Press **Ctrl K** (or **Command K**) to find a page or an assigned patient. Use the arrow keys and Enter to open a result. On phones, **Switch patient** opens the compact directory. Dialogs and the mobile navigation keep keyboard focus inside until closed; Escape closes them and returns focus to the opening control. The UI respects reduced-motion settings and uses local system fonts.
+## How the work flows
 
-### Connected workflows
+1. **Leads.** Every message from WhatsApp, Instagram, Facebook, email, the website and phone lands in one inbox. From there, staff reply, use the standard clarification reply, turn the message into an inquiry, or close it.
+2. **Pipeline.** Inquiries move from New Inquiry to Assessment to Agreement, by dragging or with "Move to".
+   - Each inquiry records the contact person, called-by, drug of choice, years of use, previous detox, communication preference (including "Not comfortable talking on the phone"), urgency and potential revenue (0 when no offer has been made).
+   - Each card shows how long it has been in its stage. After 48 hours in New Inquiry it shows "Review due".
+   - Follow-up calls are booked at 1 week and 1 month. They stop on admission or decline.
+   - Marking an inquiry urgent alerts Amer, Ahmed, Wael and the contact person in the app, with the email and WhatsApp copies queued.
+3. **Admissions.** Reaching Agreement opens five steps:
+   - Nursing (Fadia).
+   - Psychologist session (Nabila). This is booked automatically at the earliest free slot.
+   - Financial arrangement.
+   - Signed agreement, signed on screen or uploaded as a scan.
+   - Room and bed.
 
-- **Admission to care:** capture an inquiry, track contact and document checks, record a staff decision, plan arrival, then create the linked patient record.
-- **Clinical work:** review a patient's overview and timeline; update care goals; write signed notes and team comments; draft and finalize printable reports; record attendance; register documents and local attachments; track consent.
-- **Patient case review:** open a patient's **AI review** tab to gather the current profile, admission context, care plan, notes, team comments, existing reports, linked sessions, attendance, follow-ups, document text, and consent register. The review shows source IDs, document coverage, missing content, and a formatted report draft with print/PDF support. A therapist or director can save that draft in the patient's Reports tab; a coordinator can use the review for handoffs. Reviews are marked stale when the underlying record changes. A detailed, calculated report works without a model. With a local model configured, Cedar adds a source-linked synthesis that staff must verify. It does not diagnose or make treatment decisions.
-- **Rooms and placement:** directors and coordinators can add single or twin rooms, edit wing, number, access, readiness and housekeeping notes, and remove empty rooms. Capacity updates across the workspace. Occupied beds block unsafe room removal, capacity reduction and maintenance status. Reception can inspect readiness without changing rooms.
-- **Scheduling and aftercare:** link sessions to patients and record attendance from the calendar; complete an aftercare contact and assign its next task.
-- **Resident support:** directors and coordinators assign an RSA in the patient form. Each RSA sees only assigned residential residents, records dated practical check-ins, and can fulfill or decline requests from those residents. RSAs can also record an offline purchase after staff provides the item.
-- **Resident web orders:** a resident submits an item, quantity, and optional details from My orders, then follows its status. They can cancel while it is pending. The assigned RSA or a director records the actual cost only after purchase and handover; declined or cancelled requests are never charged. A pending request does not reserve or deduct funds.
-- **Resident wallets:** Finance or a director records funds received outside the website. Fulfilled and offline purchases reduce the available balance, and a purchase cannot exceed it. The resident's view shows their own balance, request status, and purchase history. These wallet entries are separate from the center's accounting ledger in this fictional preview.
-- **Finance:** create invoices with funding and terms, record receipts with method and reference, and inspect payer balances. Capture supplier bills, approve them, record payments, and match fictional bank statement lines. The general ledger creates balanced entries from invoices, receipts and expenses; it includes manual adjustments, reversals, a chart of accounts, and a trial balance. Unpaid invoices can be voided with a visible reversing entry. CSV exports are available on the finance pages.
-- **Reports:** inspect operational, admissions, care-delivery, and financial views according to role; export their CSV data.
-- **Cedar Intelligence:** investigate admissions trends using calculated figures, clear date windows, record counts, and an exportable evidence log. The figures come from fictional historical inquiry data.
+   Admitting the person creates the patient file and their wallet, and starts the discharge plan.
+4. **Patients.** Each patient file has tabs: overview, the 8 clinical forms (Form 8 is under "Follow-up log"), medical (clearance, nursing, external psychiatrist, prescriptions), the 6 fitness forms, documents and signatures, and wallet and requests.
+5. **Schedule.** The week view books the earliest free slot from tomorrow, Monday to Saturday, 09:00 to 17:00, and never double-books a person or a patient. Fadia records external psychiatrist appointments and the prescriptions they send. A session without a note becomes overdue after 24 hours.
+6. **Today.** Each person sees only their own work: overdue, today and coming up.
+7. **Dashboard.** The partners' dashboard shows:
+   - Potential revenue: inquiry, assessment and combined, with agreement shown separately.
+   - Census, occupancy and the amount agreed per month.
+   - Leads by channel and first-reply time.
+   - Pipeline conversion.
+   - Session notes on time, intake within 72 hours, overdue treatment plans and risk.
+   - Aftercare outcomes and fitness attendance.
 
-For the model-written parts of patient reviews and admissions intelligence, run a local Ollama-compatible model at `127.0.0.1:11434` and set `CEDAR_LOCAL_MODEL` to its model name before `npm start`. No external AI API is used. The model receives only the fictional record sources sent from this browser to the local Node server. Its output remains a draft with source links and human review.
+### Everything else a centre runs on
 
-TXT, MD, CSV, and JSON attachments are read in the browser. PDF and DOCX text extraction requires the local Node server plus Python with `pypdf` and `python-docx` installed. The preview reads up to 16,000 characters per file; scanned PDFs need OCR before their content can be reviewed. Unreadable or truncated material is shown explicitly.
+- **Finance (Amer, Rabih, Kteish):**
+  - **Invoices and payments:** an invoice comes from each patient's agreed monthly amount, with one click for the whole month. Payments are recorded against invoices, and an unpaid invoice can be voided with a reversing entry.
+  - **Bills:** supplier bills are approved by Amer or Rabih, then paid.
+  - **Books:** a balanced journal with manual entries, a trial balance, bank reconciliation and payer balances.
+  - **Export:** CSV on every list.
+- **Sessions:** the week's individual sessions, groups and fitness sessions, with attendance and whether each note is filed, due or overdue. Note content stays in the patient file.
+- **Medication (Fadia, and Imad under her supervision):**
+  - Daily rounds from active medications: given, refused, missed or held. A refused or missed dose alerts Wael.
+  - Urine drug screens. A positive screen alerts Ahmed and Wael.
+- **Rooms & beds:**
+  - A board of every bed: occupied, held for an admission, or free, with planned discharge dates.
+  - Mazen, Melyssa and the partners add, edit and remove rooms, and set them to ready, cleaning or maintenance. A room with patients in it can't be removed or put under maintenance.
+- **Visits & incidents:**
+  - Family visits and day leave, with overdue returns flagged.
+  - Anyone can report an incident; Ahmed and Wael review it, and Omar is told.
+- **Resident support:** RSA requests, daily check-ins, and purchases from petty cash (Georgio) with the invoice scan.
+- **A resident's own space:** wallet balance, purchase history and item requests, with live status.
+- **Reports:** operations, admissions, care delivery and finance, each printable and exportable.
+- **Insights:** Cedar Intelligence picks out what stands out in leads and the pipeline. Like Cedar Assist, it is calculated in the browser.
+- **Patient files:**
+  - The phase journey and day of stay.
+  - Team comments.
+  - A printable case report that names the source of every line.
+- **Everywhere:**
+  - **Ctrl K:** search patients, inquiries and leads, or start an action.
+  - **Theme:** light and dark, with a switch in the top bar.
 
-Changes persist in browser `localStorage`; attached demo documents use browser IndexedDB. The Director's reset control restores the sample data and clears those attachments. This is a single-browser preview; records do not synchronize across staff or devices. Use **fictional data only**. Real patient use requires a secure backend, authentication, enforced authorization, audit trails, encryption, backups, data governance, and deployment review.
+### Cedar Assist (preview)
 
-## Finding and reviewing records
+Both features run in the browser. Nothing is sent to an AI provider. They show what the AI version will do.
 
-Every main register has keyword search, relevant facets, sort order, matching counts, removable filter chips, and a reset action. Date ranges are inclusive. Filters are scoped to the current page, staff workspace or patient, and do not change source records. Expand **Filters** to refine a list; the controls start collapsed so the records appear sooner. Wide tables support horizontal scrolling by touch or keyboard.
+- **Dictate a session note.** In a new Individual Session Note, speak (Chrome or Edge; English, Arabic or French) or type what happened, then choose "Draft the note". Cedar fills in attendance, themes, risk flags, escalation (Ahmed always, and Fadia if anything medical comes up) and the plan for next session. Each filled field is marked "Drafted, please check" until someone edits it. Negated mentions such as "denies self-harm" or "no cravings" never raise a flag. The clinician still signs.
+- **Prepare the weekly case review.** "Prepare" reads the last 7 days of filed records and raises the case review's standing flags:
+  - incident
+  - relapse
+  - refusal pattern
+  - medication change
+  - approaching discharge
 
-- **Operations:** filter inquiries by stage, program, coordinator, referral source and document readiness; patients by program, status and care team; rooms by wing, readiness, occupancy, type, access and ready-bed availability; appointments by staff and recording state; follow-ups by status, owner, contact method and due dates.
-- **Clinical work:** filter care goals, clinical reports, handoffs, planned arrivals, notes, comments, attendance, documents, permissions and timeline events. The timeline includes all recorded history and links back to sources. Open patient, note and report selections remain visible while their directory is filtered.
-- **Accounting:** filter invoices, receipts, collections, supplier bills, journal entries, accounts, bank matches and payer balances. Journal account filters retain both sides of matching entries. Trial-balance footer totals refer to visible accounts; filtered account subsets need not balance. Overview cards remain all time unless a report explicitly describes a filtered cohort.
-- **Exports and longer lists:** CSV exports follow the matching set across all result pages. Larger registers have page controls and a page-size selector. Financial reporting distinguishes an invoice cohort's current balances from the separate all-time operating statement.
+  It also fills in the review table, with flagged patients first, and the high-risk list. Decisions stay with the team. Each patient's Clinical tab shows the same "This week" summary.
+
+The forms follow the owner's rules:
+- Medium or High risk notifies Ahmed and stays on the patient until it is reviewed.
+- The family session unlocks only after consent is given.
+- Fitness gate two stays locked until Fadia clears gate one.
+- BMI is calculated automatically.
+- Filing the discharge plan books Melyssa's calls at 1 week, 1 month and 3 months.
+- Injuries escalate to Fadia.
 
 ## Checks
 
 ```sh
-npm run test:analytics
-npm run test:roles
-npm run test:clinical
-npm run test:patient-ai
-npm run test:finance
-npm run test:workspace
-node scripts/test-wallet.mjs
-npm run test:filters
+npm test             # runs every scripts/test-*.mjs
 npm run build
+node scripts/walkthrough.mjs http://localhost:4173   # clicks through lead → admitted patient, notes, review, booking, purchase
+node scripts/screens.mjs http://localhost:4173 artifacts/screens "melyssa:pipeline,ahmed:dashboard:390"
 ```
 
-`src/registry.js` filter logic is covered by `test:filters`. `scripts/check-filter-browser.mjs` exports `checkFilterBrowser(page, baseUrl)` for a Playwright Page in a fresh browser context against the built local server. It checks combined filters, exact CSV contents, pagination, handoff ordering and phone controls. Review captures and results are in `artifacts/ui-review/`.
-
-`scripts/check-rsa-wallet-browser.mjs` exports `checkRsaWalletBrowser(page, baseUrl)` for a fresh Playwright Page against the running local server. It covers RSA assignment, finance top-up, offline purchase, resident web request, and a single wallet deduction on fulfillment.
+The walkthrough and screenshot scripts need Chrome or Edge, and the server running (`npm start`).
