@@ -156,8 +156,8 @@
 {/if}
 
 <style>
-  .buy { flex-basis: 100%; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 12px; margin-top: 6px; border-radius: var(--r-md); background: #fafbf9; border: 1px solid var(--line); }
+  .buy { flex-basis: 100%; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 10px; margin-top: 6px; border-radius: var(--r-md); background: #fafbf9; border: 1px solid var(--line); }
   .buy .field { width: 160px; }
-  .checkin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+  .checkin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 11px; align-items: start; }
   @media (max-width: 900px) { .checkin-grid { grid-template-columns: 1fr; } }
 </style>

@@ -176,16 +176,16 @@
 
 <style>
   /* Pulse: what needs a decision now (incidents to review) and who is out of the house */
-  .watchboard { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 14px; margin-bottom: 24px; }
-  .watch { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; padding: 24px 26px; border-radius: 30px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
+  .watchboard { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 10px; margin-bottom: 16px; }
+  .watch { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; padding: 17px 18px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .watch::after { content: ""; position: absolute; right: -70px; bottom: -70px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(255 110 90 / 0.28), transparent 70%); pointer-events: none; }
   .watch.calm::after { background: radial-gradient(circle, rgb(124 252 0 / 0.22), transparent 70%); }
   .eyebrow { font-size: 12.5px; font-weight: 750; color: var(--on-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
-  .big { font-size: 64px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: #ff8a7a; margin: 6px 0 4px; }
+  .big { font-size: 50px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: #ff8a7a; margin: 6px 0 4px; }
   .watch.calm .big { color: var(--lime); }
   .watch p { margin: 0; font-size: 13px; color: var(--on-ink-2); font-weight: 600; }
-  .out-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; align-content: start; }
-  .out-card { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: 26px; background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--info), var(--shadow-1); }
+  .out-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; align-content: start; }
+  .out-card { display: flex; flex-direction: column; gap: 4px; padding: 11px 13px; border-radius: 18px; background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--info), var(--shadow-1); }
   .out-card.late { background: color-mix(in srgb, var(--urgent-soft) 60%, var(--paper)); box-shadow: inset 0 0 0 2px var(--urgent), var(--shadow-1); }
   .out-top { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 750; color: var(--info); }
   .out-card.late .out-top { color: var(--urgent); }
@@ -195,19 +195,19 @@
   .out-card strong { font-size: 16px; font-weight: 800; margin-top: 4px; }
   .out-sub { font-size: 12.5px; color: var(--text-2); }
   .back { align-self: flex-start; margin-top: 8px; background: var(--strong); color: var(--on-strong); border-color: transparent; }
-  .all-in { display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-radius: 30px; background: var(--leaf); color: var(--moss); }
+  .all-in { display: flex; align-items: center; gap: 10px; padding: 15px 17px; border-radius: 20px; background: var(--leaf); color: var(--moss); }
   .all-in strong { display: block; font-size: 16px; color: var(--text); }
   .all-in span { font-size: 13px; }
 
   /* Incidents: a review lane and the reviewed record, each a severity-coded feed */
-  .lanes { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-  .lane { padding: 14px; border-radius: 30px; background: var(--subtle); box-shadow: inset 0 0 0 1px var(--line); }
+  .lanes { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 13px; align-items: start; }
+  .lane { padding: 10px; border-radius: 20px; background: var(--subtle); box-shadow: inset 0 0 0 1px var(--line); }
   .lane.review-lane { background: var(--paper); box-shadow: var(--shadow-1); }
-  .lane-head { display: flex; align-items: center; gap: 10px; padding: 6px 8px 12px; }
+  .lane-head { display: flex; align-items: center; gap: 10px; padding: 6px 8px 10px; }
   .lane-head h2 { font-size: 17px; font-weight: 800; }
   .count { min-width: 26px; height: 26px; padding: 0 8px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; background: var(--strong); color: var(--on-strong); font-size: 12.5px; font-weight: 800; }
   .feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  .incident { --sev: var(--ok); display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 20px; background: var(--paper); box-shadow: inset 4px 0 0 var(--sev), 0 0 0 1px var(--line); }
+  .incident { --sev: var(--ok); display: flex; align-items: flex-start; gap: 8px; padding: 10px 11px; border-radius: 14px; background: var(--paper); box-shadow: inset 4px 0 0 var(--sev), 0 0 0 1px var(--line); }
   .incident.sev-medium { --sev: var(--warn); }
   .incident.sev-high { --sev: var(--urgent); background: color-mix(in srgb, var(--urgent-soft) 40%, var(--paper)); }
   .sev-mark { width: 34px; height: 34px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--sev); background: color-mix(in srgb, var(--sev) 14%, transparent); }
@@ -217,18 +217,18 @@
   .meta { font-size: 12px; margin-top: 6px; }
 
   /* Visits as a dated timeline */
-  .visit-days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
-  .vday { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 16px; }
-  .vdate { display: flex; flex-direction: column; align-items: center; justify-content: center; align-self: start; width: 64px; height: 70px; border-radius: 20px; background: var(--strong); color: var(--on-strong); }
-  .vdate strong { font-size: 26px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+  .visit-days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .vday { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 11px; }
+  .vdate { display: flex; flex-direction: column; align-items: center; justify-content: center; align-self: start; width: 64px; height: 70px; border-radius: 14px; background: var(--strong); color: var(--on-strong); }
+  .vdate strong { font-size: 20px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
   .vdate span { font-size: 12px; font-weight: 700; opacity: 0.75; }
   .visits { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
-  .visit, .leave { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; background: var(--paper); box-shadow: var(--shadow-1); }
+  .visit, .leave { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 14px; background: var(--paper); box-shadow: var(--shadow-1); }
   .visit .title, .leave .title { font-weight: 800; font-size: 14px; }
   .visit .sub, .leave .sub { font-size: 12.5px; color: var(--text-2); }
   .leave-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .leave.s-overdue { box-shadow: inset 4px 0 0 var(--urgent), var(--shadow-1); }
   .leave.s-out { box-shadow: inset 4px 0 0 var(--info), var(--shadow-1); }
   @media (max-width: 1000px) { .watchboard, .lanes { grid-template-columns: 1fr; } }
-  @media (max-width: 600px) { .vday { grid-template-columns: 1fr; } .vdate { flex-direction: row; gap: 6px; width: auto; height: 36px; padding: 0 14px; justify-self: start; } .vdate strong { font-size: 18px; } .visits { grid-template-columns: 1fr; } .incident { flex-wrap: wrap; } }
+  @media (max-width: 600px) { .vday { grid-template-columns: 1fr; } .vdate { flex-direction: row; gap: 6px; width: auto; height: 36px; padding: 0 10px; justify-self: start; } .vdate strong { font-size: 18px; } .visits { grid-template-columns: 1fr; } .incident { flex-wrap: wrap; } }
 </style>

@@ -84,7 +84,7 @@
           {/if}
         </div>
         <div class="owed-ring">
-          <Ring value={billed ? Math.round((collected / billed) * 100) : null} size={150} stroke={13} label="Collected" />
+          <Ring value={billed ? Math.round((collected / billed) * 100) : null} size={113} stroke={13} label="Collected" />
           <span class="faint-ink">{usd(collected)} of {usd(billed)}</span>
         </div>
       </section>
@@ -265,34 +265,34 @@
 
 <style>
   /* Overview bento: what Cedar is owed leads, the other balances sit beside it */
-  .bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(132px, auto); gap: 14px; }
-  .owed { grid-column: span 2; grid-row: span 2; position: relative; overflow: hidden; display: flex; align-items: center; gap: 22px; padding: 28px 30px; border-radius: 32px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
+  .bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(132px, auto); gap: 10px; }
+  .owed { grid-column: span 2; grid-row: span 2; position: relative; overflow: hidden; display: flex; align-items: center; gap: 15px; padding: 20px 21px; border-radius: 22px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .owed::after { content: ""; position: absolute; right: -90px; top: -90px; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.22), transparent 70%); pointer-events: none; }
   .owed-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
   .eyebrow { font-size: 12.5px; font-weight: 750; color: var(--on-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
-  .big { font-size: clamp(38px, 4.4vw, 60px); font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: var(--lime); }
+  .big { font-size: clamp(30px, 4.4vw, 47px); font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: var(--lime); }
   .owed p { margin: 0; font-size: 13.5px; color: var(--on-ink-2); font-weight: 600; }
-  .aging { display: flex; gap: 3px; height: 12px; margin-top: 16px; border-radius: 6px; overflow: hidden; }
+  .aging { display: flex; gap: 3px; height: 12px; margin-top: 10px; border-radius: 6px; overflow: hidden; }
   .aging i, .aging-key i { display: block; flex-basis: 0; }
   .a-due { background: var(--lime); }
   .a-part-paid { background: #7cc4ff; }
   .a-overdue { background: #ff8a7a; }
-  .aging-key { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--on-ink-2); font-weight: 650; }
+  .aging-key { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 11px; font-size: 12px; color: var(--on-ink-2); font-weight: 650; }
   .aging-key li { display: inline-flex; align-items: center; gap: 6px; }
   .aging-key i { width: 10px; height: 10px; border-radius: 3px; }
   .aging-key strong { color: var(--on-ink); }
   .owed-ring { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1; }
   .owed-ring :global(figcaption) { color: var(--on-ink); }
   .faint-ink { font-size: 12px; color: var(--on-ink-2); font-weight: 650; }
-  .tile { display: flex; flex-direction: column; gap: 2px; padding: 20px 22px; border-radius: 26px; background: var(--paper); box-shadow: var(--shadow-1); }
+  .tile { display: flex; flex-direction: column; gap: 2px; padding: 14px 15px; border-radius: 18px; background: var(--paper); box-shadow: var(--shadow-1); }
   .tile .label { font-size: 13px; font-weight: 700; color: var(--text-2); margin-top: auto; }
-  .tile .value { font-size: 28px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; }
+  .tile .value { font-size: 22px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; }
   .tile .note { font-size: 12px; color: var(--text-3); }
   .tile.neg .value { color: var(--urgent); }
   .t-icon { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--leaf); color: var(--moss); margin-bottom: 12px; }
   .t-icon.warn { background: var(--warn-soft); color: var(--warn); }
 
-  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin-top: 12px; }
   .month-card.todo { box-shadow: inset 0 0 0 2px var(--lime), var(--shadow-1); }
   .month-card .muted { display: inline-flex; align-items: center; gap: 8px; }
   .overdue-list .owe { color: var(--urgent); }
@@ -300,5 +300,5 @@
   tr.first td { border-top: 1px solid var(--line-strong); }
   @media (max-width: 1200px) { .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } .owed { grid-row: auto; } }
   @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
-  @media (max-width: 600px) { .bento { grid-template-columns: 1fr 1fr; } .owed { flex-direction: column; align-items: stretch; padding: 22px; } .owed-ring { align-self: center; } .tile { padding: 16px; } .tile .value { font-size: 22px; } }
+  @media (max-width: 600px) { .bento { grid-template-columns: 1fr 1fr; } .owed { flex-direction: column; align-items: stretch; padding: 15px; } .owed-ring { align-self: center; } .tile { padding: 11px; } .tile .value { font-size: 17px; } }
 </style>

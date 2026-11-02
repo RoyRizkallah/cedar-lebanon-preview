@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createProgram, updateProgram, archiveProgram, assignProgram, endAssignment, programFor, programWeek, DAYS, SESSION_KINDS } from '../src/lib/programs.js';
+import { createProgram, updateProgram, archiveProgram, assignProgram, endAssignment, programFor, programWeek, programBookings, DAYS, SESSION_KINDS } from '../src/lib/programs.js';
 import { canDo, canSee } from '../src/lib/people.js';
 import { loadState } from '../src/lib/persist.js';
 import { seed } from '../src/lib/seed.js';
@@ -76,6 +76,69 @@ assert.ok(fresh.programAssignments.some(item => item.status === 'Active'));
 const old = { ...fresh }; delete old.programs;
 assert.ok(Array.isArray(loadState(JSON.stringify(old)).programs));
 
+// Assigning books the program onto the Schedule: shared sessions are one booking the patients join,
+// one-to-one sessions are booked per patient, moved later the same day if the leader is busy.
+{
+  const team = { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: 'alaa' };
+  const s = { programs: [], programAssignments: [], appointments: [], notifications: [], activity: [], tasks: [],
+    patients: ['P-1', 'P-2', 'P-3'].map(id => ({ id, clinicalName: id, fullName: id, status: 'Admitted', program: 'Inpatient', admittedAt: '2026-10-20', assigned: team })) };
+  const plan = createProgram(s, { name: 'Booking check', weeks: 2, sessions: [
+    { day: 'Mon', time: '10:00', minutes: 60, kind: 'Group', title: 'Process group', leader: 'clinical-director' },
+    { day: 'Wed', time: '15:00', minutes: 50, kind: 'Individual', title: 'Individual therapy', leader: 'nabila' }
+  ] }, 'nazha', now);
+  const a = assignProgram(s, plan.id, 'P-1', { start: '2026-11-03' }, 'nazha', now);
+  // Tue 3 Nov for 2 weeks: Mondays 9 and 16, Wednesdays 4 and 11.
+  assert.deepEqual(programBookings(s, a).map(item => `${item.date} ${item.start}`).sort(), ['2026-11-04 15:00', '2026-11-09 10:00', '2026-11-11 15:00', '2026-11-16 10:00']);
+  assert.deepEqual(a.conflicts, []);
+  const group = s.appointments.find(item => item.date === '2026-11-09' && item.start === '10:00');
+  assert.equal(group.service, 'Group');
+  assert.equal(group.provider, 'clinical-director');
+  assert.equal(group.title, 'Process group');
+  assert.deepEqual(group.patientIds, ['P-1']);
+
+  const b = assignProgram(s, plan.id, 'P-2', { start: '2026-11-03' }, 'nazha', now);
+  assert.deepEqual(group.patientIds, ['P-1', 'P-2'], 'the second patient joins the same group');
+  assert.equal(s.appointments.filter(item => item.date === '2026-11-09' && item.start === '10:00').length, 1);
+  const individual = programBookings(s, b).find(item => item.date === '2026-11-04');
+  assert.equal(individual.service, 'Psychologist session');
+  assert.equal(individual.patientId, 'P-2');
+  assert.equal(individual.start, '15:50', 'Nabila is busy at 15:00, so the next free time that day');
+
+  // A patient who is busy at a shared session is not double-booked: it is listed for the therapist.
+  s.appointments.push({ id: 'A-900', service: 'Nursing appointment', provider: 'fadia', patientId: 'P-3', date: '2026-11-09', start: '10:15', minutes: 30, status: 'Booked' });
+  const c = assignProgram(s, plan.id, 'P-3', { start: '2026-11-03' }, 'nazha', now);
+  assert.deepEqual(c.conflicts.map(item => `${item.date} ${item.time} ${item.title}`), ['2026-11-09 10:00 Process group']);
+  assert.ok(!group.patientIds.includes('P-3'));
+
+  // Editing the week rebooks what is still ahead.
+  updateProgram(s, plan.id, { sessions: plan.sessions.map(item => (item.kind === 'Group' ? { ...item, time: '11:00' } : item)) }, 'nazha', new Date('2026-11-10T08:00:00'));
+  assert.equal(group.status, 'Booked', 'past sessions stay as they were');
+  const moved = s.appointments.find(item => item.date === '2026-11-16' && item.title === 'Process group' && item.status === 'Booked');
+  assert.equal(moved.start, '11:00');
+  assert.ok(s.appointments.some(item => item.date === '2026-11-16' && item.start === '10:00' && item.status === 'Cancelled'));
+
+  // Ending or switching a program cancels its future sessions for that patient only.
+  endAssignment(s, b.id, 'nazha', new Date('2026-11-10T08:00:00'));
+  assert.ok(!moved.patientIds.includes('P-2'), 'P-2 leaves the future group');
+  assert.ok(moved.patientIds.includes('P-1'), 'P-1 stays in it');
+  assert.equal(s.appointments.find(item => item.patientId === 'P-2' && item.date === '2026-11-11').status, 'Cancelled');
+  assert.equal(s.appointments.find(item => item.patientId === 'P-2' && item.date === '2026-11-04').status, 'Booked', 'the past is kept');
+  const other = createProgram(s, { name: 'Other plan', weeks: 1, sessions: [] }, 'nazha', now);
+  assignProgram(s, other.id, 'P-1', { start: '2026-11-12' }, 'nazha', now);
+  assert.deepEqual(moved.patientIds, ['P-3'], 'switching programs takes P-1 out of the old one from the new start');
+  endAssignment(s, c.id, 'nazha', new Date('2026-11-10T08:00:00'));
+  assert.equal(moved.status, 'Cancelled', 'a group nobody is left in is cancelled');
+  // Fitness books the trainer's own kind of session, and a one-to-one never runs past 18:00.
+  const s2 = { programs: [], programAssignments: [], appointments: [], notifications: [], activity: [], tasks: [], patients: [{ id: 'P-9', clinicalName: 'P-9', status: 'Admitted', assigned: team }] };
+  const late = createProgram(s2, { name: 'Edges check', weeks: 1, sessions: [
+    { day: 'Thu', time: '09:00', minutes: 45, kind: 'Fitness', title: 'Walk', leader: 'john' },
+    { day: 'Thu', time: '17:30', minutes: 60, kind: 'Individual', title: 'Late talk', leader: 'clinical-director' }
+  ] }, 'nazha', now);
+  const edge = assignProgram(s2, late.id, 'P-9', { start: '2026-11-03' }, 'nazha', now);
+  assert.equal(s2.appointments.find(item => item.title === 'Walk').service, 'Fitness session');
+  assert.deepEqual(edge.conflicts.map(item => item.title), ['Late talk']);
+}
+
 await withSsr(async ({ load, html }) => {
   const { session } = await load('/src/lib/store.svelte.js');
   session.staffId = 'nazha';
@@ -84,6 +147,7 @@ await withSsr(async ({ load, html }) => {
   session.staffId = 'ahmed';
   const view = await html('/src/pages/Programs.svelte', { args: [] });
   assert.ok(view.includes('Programs') && !view.includes('New program'), 'Ahmed reads, does not build');
+  assert.ok(view.includes('Programs are built by Wael, Nabila and Nazha'), 'and is told who builds them');
 });
 
 console.log('Program checks passed.');

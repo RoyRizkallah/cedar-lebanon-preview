@@ -70,18 +70,18 @@
 {#if form}{#key form}<FormView {...form} onclose={() => { form = null; }} />{/key}{/if}
 
 <style>
-  .banner { position: relative; overflow: hidden; isolation: isolate; padding: 22px 30px 28px; margin-bottom: 18px; border-radius: 30px; background: linear-gradient(115deg, var(--paper) 0%, var(--paper) 45%, var(--leaf) 100%); box-shadow: var(--shadow-1); }
+  .banner { position: relative; overflow: hidden; isolation: isolate; padding: 15px 21px 20px; margin-bottom: 12px; border-radius: 20px; background: linear-gradient(115deg, var(--paper) 0%, var(--paper) 45%, var(--leaf) 100%); box-shadow: var(--shadow-1); }
   .banner::after { content: ""; position: absolute; z-index: -1; right: -100px; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.2), transparent 65%); }
   .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 650; color: var(--text-3); margin-bottom: 14px; }
-  .banner-main { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-  .portrait { width: 84px; height: 84px; font-size: 26px; box-shadow: 0 0 0 6px var(--paper), 0 12px 30px rgb(80 160 0 / 0.25); }
-  .banner h1 { font-size: 38px; font-weight: 800; letter-spacing: -0.04em; }
+  .banner-main { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+  .portrait { width: 84px; height: 84px; font-size: 20px; box-shadow: 0 0 0 6px var(--paper), 0 12px 30px rgb(80 160 0 / 0.25); }
+  .banner h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .chip { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow-1); font-size: 12.5px; font-weight: 700; color: var(--text-2); }
+  .chip { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow-1); font-size: 12.5px; font-weight: 700; color: var(--text-2); }
   .chip.risk-High { background: var(--urgent-soft); color: var(--urgent); box-shadow: none; }
   .chip.risk-Medium, .chip.warn { background: var(--warn-soft); color: var(--warn); box-shadow: none; }
   .chip.risk-Low { background: var(--ok-soft); color: var(--ok); box-shadow: none; }
-  .journey-box { width: min(420px, 100%); padding: 16px 18px; border-radius: 22px; background: var(--paper); box-shadow: var(--shadow-1); }
-  .patient-tabs { margin-bottom: 22px; padding: 6px; border-radius: 24px; background: var(--sunk); width: max-content; max-width: 100%; }
-  @media (max-width: 700px) { .banner { padding: 18px 18px 22px; } .banner h1 { font-size: 28px; } .portrait { width: 60px; height: 60px; font-size: 19px; } }
+  .journey-box { width: min(420px, 100%); padding: 11px 13px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow-1); }
+  .patient-tabs { margin-bottom: 14px; padding: 6px; border-radius: 16px; background: var(--sunk); width: max-content; max-width: 100%; }
+  @media (max-width: 700px) { .banner { padding: 13px 13px 15px; } .banner h1 { font-size: 22px; } .portrait { width: 60px; height: 60px; font-size: 19px; } }
 </style>

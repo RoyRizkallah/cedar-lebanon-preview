@@ -1,7 +1,7 @@
 <script>
   import Icon from '../components/Icon.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { DAYS, DAY_NAMES, SESSION_KINDS, createProgram, updateProgram, archiveProgram, restoreProgram, assignProgram, endAssignment, programWeek, patientsOn, activeAssignment } from '../lib/programs.js';
+  import { DAYS, DAY_NAMES, SESSION_KINDS, createProgram, updateProgram, archiveProgram, restoreProgram, assignProgram, endAssignment, programWeek, patientsOn, activeAssignment, programBookings } from '../lib/programs.js';
   import { STAFF, canDo, hasRole, staffName } from '../lib/people.js';
   import { fmtDay, todayISO, addDays, daysBetween } from '../lib/dates.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -73,15 +73,22 @@
     const patient = patientOf(assign.patientId);
     const moving = patient && activeAssignment(db, patient.id);
     if (moving && !confirm(`${patient.clinicalName} is on another program. Starting this one ends it the day before. Continue?`)) return;
-    if (run(state => assignProgram(state, program.id, assign.patientId, { start: assign.start }, me, session.now), `${patient?.clinicalName || 'Patient'} starts ${fmtDay(assign.start)}`)) assign.patientId = '';
+    error = '';
+    try {
+      let made;
+      commit(state => { made = assignProgram(state, program.id, assign.patientId, { start: assign.start }, me, session.now); });
+      say(`${patient.clinicalName} starts ${fmtDay(assign.start)}: ${programBookings(db, made).length} sessions booked${made.conflicts.length ? `, ${made.conflicts.length} need a time` : ''}`);
+      assign.patientId = '';
+    } catch (e) { error = e.message; }
   }
 </script>
 
 <main class="content">
   <div class="page-head">
-    <div><h1>Programs</h1><p>Weekly plans the therapists build, then give to patients. The care team sees each patient's program on their file.</p></div>
+    <div><h1>Programs</h1><p>Weekly plans the therapists build and give to patients. Giving a program books its sessions on the Schedule, and the care team sees it on each patient's file.</p></div>
     {#if manage}<div class="actions"><button class="btn primary" onclick={() => openProgram(null)}><Icon name="plus" size={16} />New program</button></div>{/if}
   </div>
+  {#if !manage}<p class="notice" style="margin-bottom: 18px"><Icon name="lock" size={16} />Programs are built by Wael, Nabila and Nazha, who give them to patients. You can read them here. In this preview, switch to one of them from the profile menu to build one.</p>{/if}
 
   {#if !program}
     <section class="panel empty-state"><p>No programs yet.{manage ? ' Start one with "New program".' : ' The therapists will add them here.'}</p></section>
@@ -159,9 +166,14 @@
               {@const patient = patientOf(item.patientId)}
               {@const p = progress(item)}
               <li>
-                <a class="who" href={`#/patients/${item.patientId}`}><span class="avatar sm">{patient?.clinicalName?.slice(0, 2)}</span><span><strong>{patient?.clinicalName}</strong><span class="faint">{p.upcoming ? `Starts ${fmtDay(item.start)}` : `Week ${p.week} of ${program.weeks}, ends ${fmtDay(item.end)}`}</span></span></a>
+                <a class="who" href={`#/patients/${item.patientId}`}><span class="avatar sm">{patient?.clinicalName?.slice(0, 2)}</span><span><strong>{patient?.clinicalName}</strong><span class="faint">{p.upcoming ? `Starts ${fmtDay(item.start)}` : `Week ${p.week} of ${program.weeks}, ends ${fmtDay(item.end)}`}. {programBookings(db, item).filter(entry => entry.date >= today).length} sessions booked ahead.</span></span></a>
                 <span class="meter" aria-label={`${p.pct}% through`}><i style={`width: ${p.pct}%`}></i></span>
-                {#if manage}<button class="btn sm ghost" onclick={() => { if (confirm(`End ${patient?.clinicalName}'s program today?`)) run(state => endAssignment(state, item.id, me, session.now), 'Program ended'); }}>End</button>{/if}
+                {#if item.conflicts?.some(entry => entry.date >= today)}
+                  <details class="misses"><summary class="pill warn">{item.conflicts.filter(entry => entry.date >= today).length} need a time</summary>
+                    <ul>{#each item.conflicts.filter(entry => entry.date >= today) as miss (`${miss.date}${miss.time}${miss.title}`)}<li>{fmtDay(miss.date)} {miss.time}, {miss.title}: {miss.reason}. <a href="#/schedule">Book by hand</a></li>{/each}</ul>
+                  </details>
+                {/if}
+                {#if manage}<button class="btn sm ghost" onclick={() => { if (confirm(`End ${patient?.clinicalName}'s program today? Their sessions from tomorrow come off the Schedule.`)) run(state => endAssignment(state, item.id, me, session.now), 'Program ended'); }}>End</button>{/if}
               </li>
             {:else}<li class="faint">Nobody is on this program yet.</li>{/each}
           </ul>
@@ -226,9 +238,9 @@
 
 <style>
   /* A shelf of programs on the left; the chosen one opens as a hero, its goals, its week, and its people */
-  .prog-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .prog-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 14px; align-items: start; }
   .prog-list { position: sticky; top: calc(var(--topbar) + 8px); display: flex; flex-direction: column; gap: 10px; }
-  .prog-card { display: flex; flex-direction: column; gap: 3px; padding: 16px 18px; border-radius: 22px; background: var(--paper); box-shadow: var(--shadow-1); color: var(--text); text-decoration: none; }
+  .prog-card { display: flex; flex-direction: column; gap: 3px; padding: 11px 13px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow-1); color: var(--text); text-decoration: none; }
   .prog-card:hover { text-decoration: none; box-shadow: var(--shadow-2); }
   .prog-card strong { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
   .prog-card .meta { font-size: 12.5px; color: var(--text-3); font-weight: 600; }
@@ -238,31 +250,31 @@
   .archived summary { cursor: pointer; padding: 6px 4px; font-size: 13px; font-weight: 700; color: var(--text-3); }
   .archived { display: flex; flex-direction: column; gap: 8px; }
 
-  .prog-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-  .prog-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; padding: 26px 28px; border-radius: 30px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
+  .prog-main { display: flex; flex-direction: column; gap: 11px; min-width: 0; }
+  .prog-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; padding: 18px 20px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .prog-hero::before { content: ""; position: absolute; right: -60px; top: -120px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.18), transparent 65%); pointer-events: none; }
   .hero-text { position: relative; display: flex; flex-direction: column; gap: 6px; }
   .eyebrow { font-size: 12.5px; font-weight: 700; color: var(--lime); }
-  .prog-hero h2 { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--on-ink); }
+  .prog-hero h2 { font-size: 23px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--on-ink); }
   .prog-hero p { margin: 0; color: var(--on-ink-2); font-size: 14.5px; max-width: 52ch; }
   .hero-facts { position: relative; display: grid; gap: 8px; margin: 0; }
-  .hero-facts div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 16px; background: rgb(255 255 255 / 0.07); }
+  .hero-facts div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 16px; background: rgb(255 255 255 / 0.07); }
   .hero-facts dt { font-size: 13px; color: var(--on-ink-2); font-weight: 650; }
   .hero-facts dd { margin: 0; font-size: 20px; font-weight: 800; }
   .hero-facts small { font-size: 12px; font-weight: 600; color: var(--on-ink-2); }
   .hero-actions { position: relative; grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
   .ghost-ink { background: rgb(255 255 255 / 0.08); color: var(--on-ink); }
 
-  .goal-list { list-style: none; margin: 0; padding: 0 18px 8px; display: flex; flex-direction: column; gap: 4px; }
+  .goal-list { list-style: none; margin: 0; padding: 0 13px 8px; display: flex; flex-direction: column; gap: 4px; }
   .goal-list li { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-weight: 600; color: var(--text); }
   .goal-list li :global(svg) { color: var(--moss); flex: none; }
-  .goal-add { display: flex; gap: 8px; padding: 0 18px 18px; }
+  .goal-add { display: flex; gap: 8px; padding: 0 13px 13px; }
   .goal-add .input { flex: 1; min-width: 0; }
 
-  .week { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 10px; padding: 0 14px 16px; overflow-x: auto; }
-  .day { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 20px; background: var(--sunk); min-height: 180px; }
+  .week { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 10px; padding: 0 10px 11px; overflow-x: auto; }
+  .day { display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 14px; background: var(--sunk); min-height: 144px; }
   .day h4 { font-size: 13px; font-weight: 800; padding: 2px 4px; }
-  .slot { display: flex; flex-direction: column; gap: 2px; padding: 10px 11px; border: 0; border-radius: 14px; background: var(--paper); color: var(--text); text-align: left; font: inherit; cursor: pointer; box-shadow: var(--shadow-1); }
+  .slot { display: flex; flex-direction: column; gap: 2px; padding: 8px 9px; border: 0; border-radius: 14px; background: var(--paper); color: var(--text); text-align: left; font: inherit; cursor: pointer; box-shadow: var(--shadow-1); }
   .slot:disabled { cursor: default; }
   .slot:not(:disabled):hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
   .slot strong { font-size: 13.5px; font-weight: 750; line-height: 1.25; }
@@ -279,13 +291,16 @@
   .add-slot { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 8px; border: 1.5px dashed var(--line-strong); border-radius: 14px; background: none; color: var(--text-2); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .add-slot:hover { border-color: var(--moss); color: var(--moss); }
 
-  .people { list-style: none; margin: 0; padding: 0 18px 8px; display: flex; flex-direction: column; }
-  .people li { display: grid; grid-template-columns: minmax(0, 1fr) 160px auto; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .people { list-style: none; margin: 0; padding: 0 13px 8px; display: flex; flex-direction: column; }
+  .people li { display: grid; grid-template-columns: minmax(0, 1fr) 160px auto auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .misses summary { cursor: pointer; list-style: none; }
+  .misses ul { margin: 8px 0 0; padding-left: 13px; font-size: 12.5px; color: var(--text-2); }
+  .misses[open] { grid-column: 1 / -1; }
   .people li:last-child { border-bottom: 0; }
   .people .who { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; min-width: 0; }
   .people .who strong { display: block; font-size: 14px; }
   .people .who .faint { font-size: 12.5px; }
-  .assign { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 12px 18px 18px; border-top: 1px solid var(--line); }
+  .assign { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 10px 13px 13px; border-top: 1px solid var(--line); }
   .assign .grow { flex: 1 1 220px; }
 
   /* Below very wide screens the shelf sits above, so the whole week fits across */
@@ -296,13 +311,13 @@
     .archived { flex: 0 0 auto; }
   }
   @media (max-width: 1000px) {
-    .prog-hero { grid-template-columns: 1fr; padding: 22px; }
+    .prog-hero { grid-template-columns: 1fr; padding: 15px; }
   }
   @media (max-width: 720px) {
     .week { grid-template-columns: repeat(6, 78vw); scroll-snap-type: x mandatory; margin: 0; }
     .day { scroll-snap-align: start; }
     .people li { grid-template-columns: minmax(0, 1fr) auto; }
     .people .meter { grid-column: 1 / -1; grid-row: 2; }
-    .prog-hero h2 { font-size: 24px; }
+    .prog-hero h2 { font-size: 19px; }
   }
 </style>

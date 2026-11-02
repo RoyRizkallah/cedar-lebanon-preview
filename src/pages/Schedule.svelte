@@ -247,12 +247,12 @@
 
 <style>
   /* Week calendar: an hour axis on the left, a column per day, bookings placed by time and length */
-  .cal { background: var(--paper); border-radius: 30px; box-shadow: var(--shadow-1); padding: 10px 14px 18px; overflow-x: auto; }
+  .cal { background: var(--paper); border-radius: 20px; box-shadow: var(--shadow-1); padding: 8px 10px 13px; overflow-x: auto; }
   .cal-head, .cal-body { display: grid; grid-template-columns: 58px repeat(6, minmax(150px, 1fr)); min-width: 960px; }
-  .cal-head { position: sticky; top: 0; z-index: 4; background: var(--paper); padding: 6px 0 12px; }
-  .dayhead { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 10px 14px; margin: 0 4px; border-radius: 20px; }
+  .cal-head { position: sticky; top: 0; z-index: 4; background: var(--paper); padding: 6px 0 10px; }
+  .dayhead { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 8px 10px; margin: 0 4px; border-radius: 14px; }
   .dayhead .dname { font-size: 12.5px; font-weight: 750; color: var(--text-3); }
-  .dayhead .dnum { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; }
+  .dayhead .dnum { font-size: 23px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; }
   .dayhead .dcount { font-size: 12px; font-weight: 650; color: var(--text-2); }
   .dayhead.today { background: var(--hero); color: #fff; box-shadow: var(--shadow-2); }
   .dayhead.today .dname, .dayhead.today .dcount { color: var(--on-ink-2); }

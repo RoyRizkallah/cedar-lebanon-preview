@@ -63,6 +63,7 @@ try {
 
   console.log('Lead to inquiry (Melyssa)');
   await open('leads/L-0004', 'melyssa');
+  check(await run(`const box = document.querySelector('.messenger').getBoundingClientRect(); return innerHeight - box.bottom <= 24;`), 'the inbox reaches the bottom of the window');
   check(await bodyHas('Nour Zein'), 'WhatsApp lead is open');
   await click('Create inquiry');
   await click('Create inquiry', `document.querySelector('.drawer')`);

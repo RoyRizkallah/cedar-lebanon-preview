@@ -5,7 +5,8 @@ import { nextRsa } from './people.js';
 import { seedCare } from './seedCare.js';
 import { seedPrograms } from './seedPrograms.js';
 
-export const SEED_VERSION = 2;
+// Raised whenever the sample data changes shape, so saved previews reload fresh.
+export const SEED_VERSION = 3;
 
 const ROOMS = ['101', '102', '103', '104', '105', '106'].map(id => ({ id, name: `Room ${id}`, beds: 2 }));
 

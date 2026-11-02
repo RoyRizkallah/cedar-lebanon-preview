@@ -31,7 +31,7 @@ const live = item => item.status !== 'Cancelled';
 const overlaps = (a, b) => minutesOf(a.start) < minutesOf(b.start) + b.minutes && minutesOf(b.start) < minutesOf(a.start) + a.minutes;
 const involves = (item, patientId) => !!patientId && (item.patientId === patientId || !!item.patientIds?.includes(patientId));
 
-function clash(state, { provider, patientId, date, start, minutes, ignoreId }) {
+export function clash(state, { provider, patientId, date, start, minutes, ignoreId }) {
   return state.appointments.find(item => live(item) && item.id !== ignoreId && item.date === date && item.provider !== 'external' &&
     (item.provider === provider || involves(item, patientId)) && overlaps(item, { start, minutes }));
 }

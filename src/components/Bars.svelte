@@ -10,7 +10,7 @@
     <li title={`${row.label}: ${row.value}${unit}`}>
       <span class="label">{#if channels}<ChannelBadge channel={row.label} small />{/if}{row.label}</span>
       <span class="track"><i style:width={`${(row.value / max) * 100}%`} style:background={row.color || 'var(--ink)'}></i></span>
-      <span class="value num">{row.value}{unit}</span>
+      <span class="value num">{row.display ?? `${row.value}${unit}`}</span>
     </li>
   {/each}
 </ul>

@@ -98,7 +98,7 @@
 {/if}
 
 <style>
-  .fu-stats { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+  .fu-stats { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .name { font-weight: 800; color: var(--text); font-size: 15px; }
   .note-cell { max-width: 280px; color: var(--text-2); }
   tr.highlight td { background: var(--leaf); }

@@ -107,11 +107,11 @@
 {#if review}<FormView {...review} onclose={() => { review = null; }} />{/if}
 
 <style>
-  .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
-  .person { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 26px; background: var(--paper); box-shadow: var(--shadow-1); color: inherit; text-decoration: none; transition: box-shadow 0.15s, transform 0.15s; }
+  .people { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 11px; }
+  .person { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; background: var(--paper); box-shadow: var(--shadow-1); color: inherit; text-decoration: none; transition: box-shadow 0.15s, transform 0.15s; }
   .person:hover { box-shadow: var(--shadow-2); transform: translateY(-2px); text-decoration: none; }
   .person.risky { box-shadow: inset 0 0 0 2px var(--urgent-soft), var(--shadow-1); }
-  .person header { display: flex; align-items: center; gap: 12px; }
+  .person header { display: flex; align-items: center; gap: 8px; }
   .person header strong { display: block; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
   .person header span:not(.pill):not(.avatar) { font-size: 13px; color: var(--text-2); }
   .avatar.big { width: 48px; height: 48px; font-size: 15px; }
@@ -120,9 +120,9 @@
   .phases i.done { background: var(--strong); }
   .phases i.now { background: var(--lime); box-shadow: 0 0 8px rgb(124 252 0 / 0.5); }
   .phase-name { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-top: -6px; }
-  .person footer { display: grid; grid-template-columns: auto 1fr; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .person footer { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
   .person footer strong { display: block; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
   .person footer .next strong { font-size: 13.5px; }
   .person footer span { font-size: 12px; color: var(--text-3); font-weight: 600; }
-  .person footer .next { border-left: 1px solid var(--line); padding-left: 14px; min-width: 0; }
+  .person footer .next { border-left: 1px solid var(--line); padding-left: 10px; min-width: 0; }
 </style>

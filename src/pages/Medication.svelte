@@ -64,7 +64,7 @@
         </div>
         <strong class="day-name">{fmtDay(date)}</strong>
         <div class="round-ring">
-          <Ring value={round.length ? Math.round((done / round.length) * 100) : null} size={150} stroke={13} label="Recorded" />
+          <Ring value={round.length ? Math.round((done / round.length) * 100) : null} size={113} stroke={13} label="Recorded" />
         </div>
         <p class="round-progress"><strong class="num">{done} of {round.length}</strong> recorded</p>
         <dl class="tally">
@@ -186,8 +186,8 @@
 
 <style>
   /* Round: the day's progress on a dark card, the rounds as a timeline beside it */
-  .round-layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 22px; align-items: start; }
-  .round-card { position: sticky; top: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px; border-radius: 30px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); overflow: hidden; }
+  .round-layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 15px; align-items: start; }
+  .round-card { position: sticky; top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 15px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); overflow: hidden; }
   .round-card::before { content: ""; position: absolute; inset: auto -80px -80px auto; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.2), transparent 70%); pointer-events: none; }
   .day-nav { display: flex; gap: 6px; width: 100%; }
   .day-nav .btn { background: rgb(255 255 255 / 0.08); color: var(--on-ink); box-shadow: none; border-color: transparent; }
@@ -199,25 +199,25 @@
   .round-progress { margin: 0; font-size: 13.5px; color: var(--on-ink-2); font-weight: 600; }
   .round-progress strong { color: var(--lime); font-size: 15px; }
   .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; margin: 6px 0 0; }
-  .tally div { padding: 10px 8px; border-radius: 16px; background: rgb(255 255 255 / 0.07); text-align: center; }
+  .tally div { padding: 8px 8px; border-radius: 16px; background: rgb(255 255 255 / 0.07); text-align: center; }
   .tally dt { font-size: 11.5px; color: var(--on-ink-2); font-weight: 650; }
-  .tally dd { margin: 2px 0 0; font-size: 22px; font-weight: 800; }
+  .tally dd { margin: 2px 0 0; font-size: 17px; font-weight: 800; }
   .tally .bad dd { color: #ff8a7a; }
   .next { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 13px; color: var(--on-ink-2); }
   .next strong { color: var(--on-ink); }
 
   .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; position: relative; }
-  .slot { position: relative; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding-bottom: 18px; }
+  .slot { position: relative; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 11px; padding-bottom: 13px; }
   .slot:not(:last-child)::before { content: ""; position: absolute; left: 13px; top: 34px; bottom: -6px; width: 3px; border-radius: 3px; background: var(--line); }
   .slot.complete:not(:last-child)::before { background: linear-gradient(var(--lime), #c5f59a); }
-  .slot-time { display: flex; align-items: center; gap: 10px; align-self: start; padding-top: 10px; position: sticky; top: 16px; flex-wrap: wrap; }
-  .slot-time h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
-  .slot-time .faint { font-size: 12px; font-weight: 700; flex-basis: 100%; padding-left: 40px; margin-top: -6px; }
+  .slot-time { display: flex; align-items: center; gap: 10px; align-self: start; padding-top: 8px; position: sticky; top: 16px; flex-wrap: wrap; }
+  .slot-time h2 { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; }
+  .slot-time .faint { font-size: 12px; font-weight: 700; flex-basis: 100%; padding-left: 28px; margin-top: -6px; }
   .node { width: 29px; height: 29px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--paper); box-shadow: inset 0 0 0 3px var(--line-strong); flex: none; z-index: 1; }
   .slot.complete .node { background: var(--lime); color: var(--on-lime); box-shadow: 0 0 0 4px var(--leaf); }
   .slot.next .node { background: var(--paper); box-shadow: inset 0 0 0 3px var(--strong), 0 0 0 5px rgb(124 252 0 / 0.35); }
   .doses { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
-  .dose { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 22px; background: var(--paper); box-shadow: var(--shadow-1); min-width: 0; }
+  .dose { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow-1); min-width: 0; }
   .dose.due { box-shadow: inset 0 0 0 1.5px var(--line-strong), var(--shadow-1); }
   .slot.next .dose.due { box-shadow: inset 0 0 0 2px var(--lime), var(--shadow-2); }
   .dose.given { opacity: 0.72; }
@@ -232,8 +232,8 @@
   .give:hover { background: var(--lime-press); }
 
   /* Drug screens as cards, positives stand out */
-  .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-  .screen { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; border-radius: 24px; background: var(--paper); box-shadow: var(--shadow-1); border-left: 5px solid var(--ok); }
+  .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .screen { display: flex; flex-direction: column; gap: 6px; padding: 13px 14px; border-radius: 16px; background: var(--paper); box-shadow: var(--shadow-1); border-left: 5px solid var(--ok); }
   .screen.positive { border-left-color: var(--urgent); background: color-mix(in srgb, var(--urgent-soft) 45%, var(--paper)); }
   .screen header { display: flex; justify-content: space-between; align-items: center; }
   .screen h3 { font-size: 16px; font-weight: 800; }

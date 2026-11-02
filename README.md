@@ -79,6 +79,11 @@ Clinical forms are never shown to Melyssa, Finance, Operations or the RSA team, 
   - **Bills:** supplier bills are approved by Amer or Rabih, then paid.
   - **Books:** a balanced journal with manual entries, a trial balance, bank reconciliation and payer balances.
   - **Export:** CSV on every list.
+- **Programs (Wael, Nabila, Nazha):**
+  - A therapist builds a program: a name, a focus, its length in weeks, goals, and a Monday-to-Saturday week of sessions, each with a kind, time and leader. A new program can start as a copy of another.
+  - Giving a program to a patient books its sessions on the Schedule for the whole length. Group-type sessions are one booking that each patient joins. Individual and family sessions are booked per patient, moving to the leader's next free time that day.
+  - Anything that can't be booked is listed under the patient as "need a time". Editing the week rebooks what is still ahead, and ending a program takes the patient out of its future sessions.
+  - Everyone else on the care team can read programs, and each patient's file shows their program and today's sessions.
 - **Sessions:** the week's individual sessions, groups and fitness sessions, with attendance and whether each note is filed, due or overdue. Note content stays in the patient file.
 - **Medication (Fadia, and Imad under her supervision):**
   - Daily rounds from active medications: given, refused, missed or held. A refused or missed dose alerts Wael.

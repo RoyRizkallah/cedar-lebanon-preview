@@ -177,32 +177,32 @@
 {/if}
 
 <style>
-  .money { display: grid; grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 26px; }
-  .split { display: flex; height: 8px; border-radius: 8px; overflow: hidden; margin-top: 16px; background: #2c3b29; }
+  .money { display: grid; grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .split { display: flex; height: 6px; border-radius: 6px; overflow: hidden; margin-top: 10px; background: #2c3b29; }
   .split i:first-child { background: var(--lime); }
   .split i:last-child { flex: 1; background: #c5f59a; }
-  .board { display: grid; grid-template-columns: repeat(3, minmax(290px, 1fr)); gap: 18px; align-items: start; overflow-x: auto; padding-bottom: 8px; }
-  .column { background: var(--sunk); border-radius: 28px; padding: 10px; min-height: 360px; transition: box-shadow 0.15s, background 0.15s; }
+  .board { display: grid; grid-template-columns: repeat(3, minmax(270px, 1fr)); gap: 12px; align-items: start; overflow-x: auto; padding-bottom: 8px; }
+  .column { background: var(--sunk); border-radius: 18px; padding: 8px; min-height: 300px; transition: box-shadow 0.15s, background 0.15s; }
   .column.over { background: var(--leaf); box-shadow: inset 0 0 0 2px #8fd14f; }
-  .column-head { padding: 12px 12px 14px; }
-  .column-head h2 { font-size: 17px; font-weight: 800; }
+  .column-head { padding: 6px 8px 9px; }
+  .column-head h2 { font-size: 15px; font-weight: 800; }
   .column-head .count { min-width: 26px; padding: 0 9px; border-radius: 12px; background: var(--paper); font-size: 12px; font-weight: 800; text-align: center; line-height: 24px; }
-  .cards { display: flex; flex-direction: column; gap: 10px; }
-  .card { background: var(--paper); border-radius: 20px; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; cursor: grab; box-shadow: var(--shadow-1); transition: box-shadow 0.15s, transform 0.15s; }
+  .cards { display: flex; flex-direction: column; gap: 7px; }
+  .card { background: var(--paper); border-radius: 13px; padding: 10px 12px 9px; display: flex; flex-direction: column; gap: 6px; cursor: grab; box-shadow: var(--shadow-1); transition: box-shadow 0.15s, transform 0.15s; }
   .card:hover { box-shadow: var(--shadow-2); transform: translateY(-1px); }
   .card.urgent { box-shadow: inset 4px 0 0 #ef5a24, var(--shadow-1); }
   .card.dragging { opacity: 0.45; }
   .card-link { display: flex; flex-direction: column; gap: 3px; color: inherit; text-decoration: none; }
   .card-link:hover { text-decoration: none; }
-  .card-link strong { font-size: 15.5px; font-weight: 800; }
-  .card-link .faint { font-size: 13px; color: var(--text-2); }
+  .card-link strong { font-size: 14px; font-weight: 800; }
+  .card-link .faint { font-size: 12.5px; color: var(--text-2); }
   .via { font-size: 12px; font-weight: 700; color: var(--moss); }
   .clock { height: 5px; border-radius: 5px; background: var(--sunk); overflow: hidden; }
   .clock i { display: block; height: 100%; background: var(--lime); border-radius: inherit; }
   .clock i.soon { background: #f2a33a; }
   .clock i.late { background: #ef5a24; }
   .move select { height: 30px; border: 0; border-radius: 15px; background: var(--sunk); font: 650 12px var(--font); color: var(--text-2); padding: 0 10px; max-width: 98px; }
-  .drop-hint { text-align: center; padding: 28px 8px; font-size: 13px; border: 2px dashed var(--line-strong); border-radius: 20px; }
+  .drop-hint { text-align: center; padding: 18px 8px; font-size: 13px; border: 2px dashed var(--line-strong); border-radius: 20px; }
   @media (max-width: 1200px) { .money { grid-template-columns: repeat(3, minmax(0, 1fr)); } .money .hero { grid-column: span 3; } }
   @media (max-width: 900px) {
     .money { grid-template-columns: repeat(2, minmax(0, 1fr)); } .money .hero { grid-column: span 2; }

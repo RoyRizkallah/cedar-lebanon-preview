@@ -30,7 +30,7 @@
           <h1>Dashboard</h1>
           <p class="hero-line">Last 30 days unless a figure says otherwise.</p>
         </div>
-        <Ring value={k.census.occupancyPct} size={132} label="Occupancy" />
+        <Ring value={k.census.occupancyPct} size={96} label="Occupancy" />
       </div>
       <div class="hero-figure">
         <span>Potential revenue in play</span>
@@ -58,7 +58,7 @@
         <a href={books}><span>Owed to Cedar</span><strong class="num">{money(k.money.owed)}</strong></a>
         <a href={books} class:alert={k.money.overdue > 0}><span>Overdue, {k.money.overdueCount} invoices</span><strong class="num">{money(k.money.overdue)}</strong></a>
       </div>
-      <div class="collect"><Ring value={k.money.collectionPct} size={92} stroke={10} tone="ink" label="Collected" /><p>Of everything billed so far, {show(k.money.collectionPct, '%')} has been collected.</p></div>
+      <div class="collect"><Ring value={k.money.collectionPct} size={76} stroke={9} tone="ink" label="Collected" /><p>Of everything billed so far, {show(k.money.collectionPct, '%')} has been collected.</p></div>
     </article>
 
     <article class="tile safety-tile">
@@ -86,9 +86,9 @@
     <article class="tile care-tile">
       <header><h2>Care quality</h2></header>
       <div class="rings">
-        <div><Ring value={k.clinical.notesOnTimePct} size={104} stroke={11} /><p><strong>Session notes on time</strong><span>Within 24 hours, {k.clinical.sessions} sessions</span></p></div>
-        <div><Ring value={k.clinical.intakeOnTimePct} size={104} stroke={11} /><p><strong>Intake within 72 hours</strong><span>Admissions in the last 90 days</span></p></div>
-        <div><Ring value={k.fitness.attendancePct} size={104} stroke={11} tone="ink" /><p><strong>Fitness attendance</strong><span>{k.fitness.injuriesThisMonth} injuries this month</span></p></div>
+        <div><Ring value={k.clinical.notesOnTimePct} size={78} stroke={9} /><p><strong>Session notes on time</strong><span>Within 24 hours, {k.clinical.sessions} sessions</span></p></div>
+        <div><Ring value={k.clinical.intakeOnTimePct} size={78} stroke={9} /><p><strong>Intake within 72 hours</strong><span>Admissions in the last 90 days</span></p></div>
+        <div><Ring value={k.fitness.attendancePct} size={78} stroke={9} tone="ink" /><p><strong>Fitness attendance</strong><span>{k.fitness.injuriesThisMonth} injuries this month</span></p></div>
       </div>
       <dl class="mini-dl"><div><dt>Treatment plans overdue</dt><dd class:alert={k.clinical.plansOverdue > 0}>{k.clinical.plansOverdue}</dd></div><div><dt>Medium or high risk</dt><dd>{k.clinical.elevatedRisk}</dd></div><div><dt>Aftercare calls on time</dt><dd>{show(k.aftercare.onTimePct, '%')}</dd></div></dl>
     </article>
@@ -101,52 +101,52 @@
 </main>
 
 <style>
-  .bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
-  .tile { background: var(--paper); border-radius: 26px; padding: 22px 24px; box-shadow: var(--shadow-1); color: inherit; text-decoration: none; min-width: 0; }
+  .bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+  .tile { background: var(--paper); border-radius: 18px; padding: 14px 18px; box-shadow: var(--shadow-1); color: inherit; text-decoration: none; min-width: 0; }
   a.tile:hover { box-shadow: var(--shadow-2); text-decoration: none; }
-  .tile header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-  .tile header h2 { font-size: 18px; }
+  .tile header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .tile header h2 { font-size: 15px; }
   .tile header a, .tile header .faint { font-size: 13px; }
 
-  .hero-tile { grid-column: span 8; grid-row: span 2; position: relative; overflow: hidden; background: var(--hero); color: var(--on-ink); display: flex; flex-direction: column; gap: 22px; padding: 30px 32px; }
+  .hero-tile { grid-column: span 8; grid-row: span 2; position: relative; overflow: hidden; background: var(--hero); color: var(--on-ink); display: flex; flex-direction: column; gap: 12px; padding: 18px 22px; }
   .hero-tile::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.25), transparent 65%); pointer-events: none; }
   .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; position: relative; z-index: 1; }
   .hero-top :global(.ring) { color: #fff; }
-  .eyebrow-date { color: var(--lime); font-weight: 750; font-size: 14px; }
-  .hero-tile h1 { color: #fff; font-size: 40px; letter-spacing: -0.04em; }
-  .hero-line { color: var(--on-ink-2); margin-top: 4px; }
+  .eyebrow-date { color: var(--lime); font-weight: 750; font-size: 12.5px; }
+  .hero-tile h1 { color: #fff; font-size: 26px; letter-spacing: -0.03em; }
+  .hero-line { color: var(--on-ink-2); margin-top: 2px; font-size: 13px; }
   .hero-figure { position: relative; z-index: 1; }
-  .hero-figure span { color: var(--on-ink-2); font-weight: 650; }
-  .hero-figure strong { display: block; font-size: 64px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: var(--lime); margin: 6px 0; text-shadow: 0 0 30px rgb(124 252 0 / 0.25); }
-  .hero-figure em { font-style: normal; color: var(--on-ink-2); font-size: 13.5px; }
+  .hero-figure span { color: var(--on-ink-2); font-weight: 650; font-size: 13px; }
+  .hero-figure strong { display: block; font-size: 42px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; color: var(--lime); margin: 4px 0; text-shadow: 0 0 30px rgb(124 252 0 / 0.25); }
+  .hero-figure em { font-style: normal; color: var(--on-ink-2); font-size: 12.5px; }
   .hero-row { position: relative; z-index: 1; margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .hero-row div { padding: 14px 16px; border-radius: 18px; background: rgb(255 255 255 / 0.07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
-  .hero-row strong { display: block; color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
+  .hero-row div { padding: 9px 12px; border-radius: 13px; background: rgb(255 255 255 / 0.07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
+  .hero-row strong { display: block; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -0.03em; }
   .hero-row small { font-size: 13px; opacity: 0.7; }
-  .hero-row span { color: var(--on-ink-2); font-size: 12.5px; font-weight: 650; }
+  .hero-row span { color: var(--on-ink-2); font-size: 12px; font-weight: 650; }
 
-  .mini { grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
-  .mini .label { color: var(--text-2); font-weight: 650; font-size: 13px; }
-  .mini strong { font-size: 28px; font-weight: 800; letter-spacing: -0.035em; }
+  .mini { grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; }
+  .mini .label { color: var(--text-2); font-weight: 650; font-size: 12.5px; }
+  .mini strong { font-size: 22px; font-weight: 800; letter-spacing: -0.035em; }
   .mini .note { color: var(--text-3); font-size: 12px; }
   .mini.leafy { background: var(--leaf); }
   .mini.leafy .label { color: var(--moss); }
 
   .money-tile { grid-column: span 7; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; column-gap: 20px; }
   .money-tile header { grid-column: 1 / -1; }
-  .money-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .money-grid a { padding: 14px 16px; border-radius: 18px; background: var(--subtle); color: inherit; text-decoration: none; box-shadow: inset 0 0 0 1px var(--line); }
+  .money-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .money-grid a { padding: 9px 12px; border-radius: 13px; background: var(--subtle); color: inherit; text-decoration: none; box-shadow: inset 0 0 0 1px var(--line); }
   .money-grid a:hover { background: var(--paper); box-shadow: var(--shadow-1); text-decoration: none; }
   .money-grid span { display: block; color: var(--text-2); font-size: 12.5px; font-weight: 650; }
-  .money-grid strong { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; }
+  .money-grid strong { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; }
   .money-grid a.alert strong { color: var(--urgent); }
-  .collect { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 170px; text-align: center; }
-  .collect p { font-size: 12.5px; color: var(--text-2); }
+  .collect { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 150px; text-align: center; }
+  .collect p { font-size: 12px; color: var(--text-2); }
 
   .safety-tile { grid-column: span 5; }
-  .signals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .signals li { padding: 14px 16px; border-radius: 18px; background: var(--subtle); box-shadow: inset 0 0 0 1px var(--line); }
-  .signals strong { display: block; font-size: 28px; font-weight: 800; letter-spacing: -0.03em; }
+  .signals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .signals li { padding: 9px 12px; border-radius: 13px; background: var(--subtle); box-shadow: inset 0 0 0 1px var(--line); }
+  .signals strong { display: block; font-size: 21px; font-weight: 800; letter-spacing: -0.03em; }
   .signals span { font-size: 12.5px; color: var(--text-2); font-weight: 650; }
   .signals li.alert { background: var(--urgent-soft); box-shadow: none; }
   .signals li.alert strong { color: var(--urgent); }
@@ -155,12 +155,12 @@
   .care-tile { grid-column: span 8; }
   .after-tile { grid-column: span 4; }
   .rings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  .rings > div { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .rings > div { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
   .rings p strong { display: block; font-size: 13.5px; font-weight: 800; }
   .rings p span { font-size: 12px; color: var(--text-3); }
-  .mini-dl { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+  .mini-dl { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--line); }
   .mini-dl dt { color: var(--text-2); font-size: 12.5px; font-weight: 600; }
-  .mini-dl dd { margin: 2px 0 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+  .mini-dl dd { margin: 1px 0 0; font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
   .alert { color: var(--urgent); }
 
   @media (max-width: 1200px) {

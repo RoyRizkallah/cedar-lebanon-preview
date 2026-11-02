@@ -6,6 +6,8 @@ import { riskLevel } from './forms/engine.js';
 import { buildJournal, trialBalance, payerBalances, openBalance, invoiceStatus } from './finance.js';
 import { INCIDENT_TYPES } from './safety.js';
 import { staffName } from './people.js';
+import { dashboard } from './kpis.js';
+import { patientsOn, programBookings } from './programs.js';
 
 const pct = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '—');
 const money = value => Math.round(value);
@@ -66,6 +68,11 @@ export function buildReports(state, group, now = new Date()) {
       rows: INCIDENT_TYPES.map(type => ({ type, count: state.incidents.filter(i => i.type === type).length, open: state.incidents.filter(i => i.type === type && i.status === 'Open').length })).filter(row => row.count) });
     tables.push({ id: 'screens', title: 'Drug screens', columns: [{ label: 'Result', value: 'result' }, { label: 'Screens', value: 'count' }],
       rows: ['Negative', 'Positive'].map(result => ({ result, count: (state.medication?.tests || []).filter(t => t.result === result).length })) });
+    tables.push({ id: 'care-programs', title: 'Treatment programs', columns: [{ label: 'Program', value: 'program' }, { label: 'Built by', value: 'by' }, { label: 'Patients on it', value: 'patients' }, { label: 'Sessions booked ahead', value: 'booked' }, { label: 'Need a time', value: 'missing' }],
+      rows: state.programs.filter(item => item.status === 'Active').map(program => {
+        const on = patientsOn(state, program.id);
+        return { program: program.name, by: staffName(program.createdBy), patients: on.length, booked: on.reduce((sum, item) => sum + programBookings(state, item).filter(entry => entry.date >= today).length, 0), missing: on.reduce((sum, item) => sum + (item.conflicts || []).filter(entry => entry.date >= today).length, 0) };
+      }) });
     const doses = state.medication?.doses || [];
     tables.push({ id: 'doses', title: 'Medication rounds', columns: [{ label: 'Outcome', value: 'status' }, { label: 'Doses', value: 'count' }, { label: 'Share', value: 'share' }],
       rows: ['Given', 'Refused', 'Missed', 'Held'].map(status => ({ status, count: doses.filter(d => d.status === status).length, share: pct(doses.filter(d => d.status === status).length, doses.length) })) });
@@ -82,7 +89,44 @@ export function buildReports(state, group, now = new Date()) {
     tables.push({ id: 'pnl', title: 'Income and expenses (all time)', columns: [{ label: 'Account', value: 'name' }, { label: 'Type', value: 'type' }, { label: 'Amount (USD)', value: 'amount' }],
       rows: trialBalance(buildJournal(state)).filter(row => ['Revenue', 'Expense'].includes(row.type)).map(row => ({ name: row.name, type: row.type, amount: money(Math.abs(row.balance)) })) });
   }
-  return tables;
+  return tables.map(table => (CHARTS[table.id] ? { ...table, chart: CHARTS[table.id] } : table));
+}
+
+// The measure each report draws as bars beside its table.
+const CHARTS = { 'census-month': 'admitted', programs: 'count', 'care-programs': 'patients', rooms: 'occupied', channels: 'leads', funnel: 'count', sources: 'inquiries', notes: 'sessions', risk: 'count', incidents: 'count', screens: 'count', doses: 'count', billing: 'billed', aging: 'open', payers: 'open', pnl: 'amount' };
+
+// Four headline figures per group, from the same numbers as the dashboard.
+const usd = value => `$${Math.round(value).toLocaleString('en-US')}`;
+const percent = value => (value === null || value === undefined ? '—' : `${value}%`);
+export function reportHeadlines(state, group, now = new Date()) {
+  const k = dashboard(state, now);
+  const heads = {
+    operations: [
+      { label: 'In care', value: String(k.census.admitted), note: `${k.census.occupied} of ${k.census.beds} beds in use` },
+      { label: 'Occupancy', value: percent(k.census.occupancyPct), note: 'Beds in use now' },
+      { label: 'Admitted this month', value: String(k.census.admissionsThisMonth), note: `${k.census.dischargesThisMonth} discharged` },
+      { label: 'Average stay', value: k.census.averageStayDays === null ? '—' : `${k.census.averageStayDays} days`, note: 'Of patients in care' }
+    ],
+    admissions: [
+      { label: 'Leads, 30 days', value: String(k.leads.last30), note: `${k.leads.unanswered} still unanswered`, tone: k.leads.unanswered ? 'warn' : undefined },
+      { label: 'Lead to inquiry', value: percent(k.leads.conversionPct), note: `Median first reply ${k.leads.medianFirstResponseMins ?? '—'} min` },
+      { label: 'Inquiry to admission', value: percent(k.pipeline.admittedPct), note: 'Last 90 days' },
+      { label: 'Potential in play', value: usd(k.pipeline.potential.combined), note: 'Per month, inquiry and assessment' }
+    ],
+    care: [
+      { label: 'Notes within 24 h', value: percent(k.clinical.notesOnTimePct), note: `Of ${k.clinical.sessions} sessions` },
+      { label: 'Elevated risk', value: String(k.clinical.elevatedRisk), note: 'Medium or high, in care', tone: k.clinical.elevatedRisk ? 'warn' : undefined },
+      { label: 'Open incidents', value: String(k.safety.openIncidents), note: `${k.safety.incidents30} in 30 days`, tone: k.safety.openIncidents ? 'urgent' : undefined },
+      { label: 'Positive screens', value: String(k.safety.positiveScreens30), note: 'Last 30 days', tone: k.safety.positiveScreens30 ? 'urgent' : undefined }
+    ],
+    finance: [
+      { label: 'Invoiced this month', value: usd(k.money.invoicedThisMonth), note: 'Net of voids' },
+      { label: 'Collected this month', value: usd(k.money.collectedThisMonth), note: `${percent(k.money.collectionPct)} of all billing collected` },
+      { label: 'Owed to Cedar', value: usd(k.money.owed), note: 'Open balance on invoices' },
+      { label: 'Overdue', value: usd(k.money.overdue), note: `${k.money.overdueCount} invoices past due`, tone: k.money.overdue > 0 ? 'urgent' : undefined }
+    ]
+  };
+  return heads[group] || [];
 }
 
 // Overdue invoice count for the reports header.

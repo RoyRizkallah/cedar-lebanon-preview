@@ -168,26 +168,26 @@
 {/if}
 
 <style>
-  .admission { padding: 8px; border-radius: 30px; }
-  .admission-head { display: flex; align-items: center; gap: 18px; padding: 20px 22px 8px; flex-wrap: wrap; }
-  .admission-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .admission { padding: 8px; border-radius: 20px; }
+  .admission-head { display: flex; align-items: center; gap: 13px; padding: 14px 15px 8px; flex-wrap: wrap; }
+  .admission-head h2 { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
   .person-avatar { width: 54px; height: 54px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; background: linear-gradient(135deg, #b6f56b, #7cfc00); color: var(--on-lime); font-weight: 800; font-size: 17px; box-shadow: 0 8px 20px rgb(80 160 0 / 0.25); }
-  .progress { display: flex; align-items: center; gap: 12px; }
+  .progress { display: flex; align-items: center; gap: 8px; }
   .progress :global(.ring strong) { font-size: 14px; }
   .progress :global(.ring small) { display: none; }
   .progress > span { display: flex; flex-direction: column; font-size: 12.5px; color: var(--text-2); font-weight: 600; line-height: 1.25; }
   .progress > span strong { font-size: 15px; color: var(--text); font-weight: 800; }
-  .admit { height: 50px; padding: 0 24px; border-radius: 25px; font-size: 15px; background: var(--sunk); color: var(--text-3); box-shadow: none; }
+  .admit { height: 50px; padding: 0 17px; border-radius: 17px; font-size: 15px; background: var(--sunk); color: var(--text-3); box-shadow: none; }
   .admit.ready { background: var(--lime); color: var(--on-lime); box-shadow: 0 0 0 6px rgb(124 252 0 / 0.18), 0 14px 30px rgb(80 160 0 / 0.35); animation: breathe 2.4s ease-in-out infinite; }
   .admit.ready:hover { background: var(--lime-press); }
   @keyframes breathe { 50% { box-shadow: 0 0 0 10px rgb(124 252 0 / 0.08), 0 14px 30px rgb(80 160 0 / 0.35); } }
 
   /* The five steps as one connected journey */
-  .steps { list-style: none; margin: 0; padding: 18px 12px 16px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
+  .steps { list-style: none; margin: 0; padding: 13px 10px 11px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
   .steps li { position: relative; }
   .steps li:not(:last-child)::after { content: ""; position: absolute; z-index: 0; top: 36px; left: calc(50% + 26px); right: calc(-50% + 26px); height: 4px; border-radius: 4px; background: var(--line); }
   .steps li.done:not(:last-child)::after { background: linear-gradient(90deg, var(--lime), #c5f59a); }
-  .step { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px 14px; border: 0; border-radius: 22px; background: transparent; text-align: center; color: inherit; transition: background 0.15s; }
+  .step { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 8px 10px; border: 0; border-radius: 15px; background: transparent; text-align: center; color: inherit; transition: background 0.15s; }
   .step:hover { background: var(--subtle); }
   .step strong { display: block; font-size: 13.5px; font-weight: 800; line-height: 1.3; }
   .step .grow { display: flex; flex-direction: column; gap: 2px; }
@@ -199,7 +199,7 @@
   li.open .step { background: var(--sunk); }
   li.open .mark { box-shadow: 0 0 0 5px var(--paper), 0 0 0 7px var(--strong); }
 
-  .step-panel { margin: 0 12px 12px; padding: 22px; border-radius: 22px; background: var(--subtle); display: flex; flex-direction: column; gap: 14px; align-items: flex-start; box-shadow: inset 0 0 0 1px var(--line); }
+  .step-panel { margin: 0 12px 12px; padding: 15px; border-radius: 15px; background: var(--subtle); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; box-shadow: inset 0 0 0 1px var(--line); }
   .step-panel .field, .step-panel .grid-2 { width: 100%; max-width: 560px; }
   @media (max-width: 1000px) {
     .steps { grid-template-columns: 1fr; gap: 6px; }
