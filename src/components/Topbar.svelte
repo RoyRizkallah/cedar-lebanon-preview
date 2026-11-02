@@ -3,7 +3,7 @@
   import CommandPalette from './CommandPalette.svelte';
   import { STAFF, RESIDENTS, staffById, canDo } from '../lib/people.js';
   import { session, switchStaff, resetData } from '../lib/store.svelte.js';
-  import { say, theme, setTheme } from '../lib/ui.svelte.js';
+  import { say } from '../lib/ui.svelte.js';
 
   let { onmenu, unread = 0, onbell, title = '' } = $props();
 
@@ -38,9 +38,6 @@
 
   <span class="spacer"></span>
 
-  <button class="btn icon icon-btn" aria-label={`Switch to ${theme.mode === 'dark' ? 'light' : 'dark'} theme`} title="Light or dark" onclick={() => setTheme(theme.mode === 'dark' ? 'light' : 'dark')}>
-    <Icon name={theme.mode === 'dark' ? 'sun' : 'moon'} />
-  </button>
   <button class="btn icon icon-btn bell" aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`} onclick={onbell}>
     <Icon name="bell" />
     {#if unread}<span class="badge">{unread}</span>{/if}

@@ -3,7 +3,7 @@
   import ChannelBadge from './ChannelBadge.svelte';
   import { db, session } from '../lib/store.svelte.js';
   import { pagesFor, canSee, canDo, visiblePatients } from '../lib/people.js';
-  import { go, act, theme, setTheme } from '../lib/ui.svelte.js';
+  import { go, act } from '../lib/ui.svelte.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
 
   let { onclose } = $props();
@@ -19,8 +19,7 @@
     { label: 'Log a family visit', icon: 'users', page: 'safety', when: () => canDo(me, 'logVisit'), run: () => act('visit', 'safety/visits') },
     { label: 'New resident request', icon: 'bag', page: 'requests', run: () => act('new-request', 'requests') },
     { label: 'Record a payment', icon: 'wallet', page: 'finance', run: () => go('finance/invoices') },
-    { label: 'Medication round', icon: 'pill', page: 'medication', run: () => go('medication') },
-    { label: `Switch to ${theme.mode === 'dark' ? 'light' : 'dark'} theme`, icon: theme.mode === 'dark' ? 'sun' : 'moon', page: null, run: () => setTheme(theme.mode === 'dark' ? 'light' : 'dark') }
+    { label: 'Medication round', icon: 'pill', page: 'medication', run: () => go('medication') }
   ].filter(item => (!item.page || canSee(me, item.page)) && (!item.when || item.when()));
 
   const results = $derived.by(() => {

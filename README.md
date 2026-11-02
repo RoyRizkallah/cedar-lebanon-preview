@@ -104,7 +104,7 @@ Clinical forms are never shown to Melyssa, Finance, Operations or the RSA team, 
   - A printable case report that names the source of every line.
 - **Everywhere:**
   - **Ctrl K:** search patients, inquiries and leads, or start an action.
-  - **Theme:** light and dark, with a switch in the top bar.
+  - **Theme:** light only.
 
 ### Cedar Assist (preview)
 

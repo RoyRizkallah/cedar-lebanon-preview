@@ -23,11 +23,3 @@ export function say(text) {
 export const intent = $state({ action: '' });
 export function act(action, path) { intent.action = action; go(path); }
 export const takeIntent = action => { if (intent.action !== action) return false; intent.action = ''; return true; };
-
-// Light or dark, saved per browser; the first visit follows the device setting.
-export const theme = $state({ mode: typeof document === 'undefined' ? 'light' : document.documentElement.dataset.theme || 'light' });
-export function setTheme(mode) {
-  theme.mode = mode;
-  document.documentElement.dataset.theme = mode;
-  try { localStorage.setItem('cedar-theme', mode); } catch { /* private mode */ }
-}

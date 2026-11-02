@@ -8,8 +8,9 @@
     <meta name="description" content="Cedar Rehab — staff workspace for leads, admissions, clinical and fitness records." />
     <title>Cedar Rehab</title>
     <script>
-      // Apply the saved or system theme before the first paint, so there is no flash.
-      try { const t = new URLSearchParams(location.search).get('theme') || localStorage.getItem('cedar-theme'); document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch { document.documentElement.dataset.theme = 'light'; }
+      // The workspace is light only; a dark choice saved by an earlier version is forgotten.
+      document.documentElement.dataset.theme = 'light';
+      try { localStorage.removeItem('cedar-theme'); } catch { /* private mode */ }
     </script>
   </head>
   <body>
