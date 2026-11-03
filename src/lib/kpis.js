@@ -1,6 +1,6 @@
 // Business figures for Ahmed. Percentages are whole numbers; null means there is nothing to measure yet.
 import { addDays, daysBetween, hoursBetween, todayISO } from './dates.js';
-import { CHANNELS } from './leads.js';
+import { CHANNELS, conversionRate } from './leads.js';
 import { STAGES, potentialTotals, reviewDue, isOpen } from './pipeline.js';
 import { riskLevel } from './forms/engine.js';
 import { invoiceStatus, openBalance, paidOf } from './finance.js';
@@ -30,7 +30,7 @@ export function dashboard(state, now = new Date()) {
     byChannel: Object.fromEntries(CHANNELS.map(channel => [channel, recentLeads.filter(lead => lead.channel === channel).length])),
     medianFirstResponseMins: median(firstReplies),
     unanswered: state.leads.filter(lead => lead.status === 'New').length,
-    conversionPct: pct(recentLeads.filter(lead => lead.status === 'Converted').length, recentLeads.filter(lead => lead.status !== 'Closed').length)
+    conversionPct: conversionRate(recentLeads).pct
   };
 
   const open = state.inquiries.filter(isOpen);

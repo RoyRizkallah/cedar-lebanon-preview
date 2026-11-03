@@ -1,7 +1,7 @@
 // Cedar Intelligence (preview): admissions observations calculated from the records. No model is used;
 // the live version would add an AI explanation on top of these same verified figures.
 import { hoursBetween } from './dates.js';
-import { CHANNELS } from './leads.js';
+import { CHANNELS, conversionRate } from './leads.js';
 import { STAGES, potentialTotals, isOpen } from './pipeline.js';
 
 const median = values => { if (!values.length) return null; const s = [...values].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -9,10 +9,10 @@ const days = hours => Math.round((hours / 24) * 10) / 10;
 
 export function admissionsInsights(state) {
   const channels = CHANNELS.map(channel => {
-    const leads = state.leads.filter(lead => lead.channel === channel && lead.status !== 'Closed');
-    const converted = leads.filter(lead => lead.status === 'Converted').length;
+    const leads = state.leads.filter(lead => lead.channel === channel);
+    const { converted, pct } = conversionRate(leads);
     const replies = leads.map(lead => { const reply = lead.messages.find(m => m.from === 'staff'); return reply ? (new Date(reply.at) - new Date(lead.receivedAt)) / 60000 : null; }).filter(v => v !== null);
-    return { channel, leads: leads.length, converted, rate: leads.length ? Math.round((converted / leads.length) * 100) : null, reply: median(replies) };
+    return { channel, leads: leads.length, converted, rate: pct, reply: median(replies) };
   });
   const stageTime = STAGES.slice(0, -1).map((stage, index) => {
     const spans = state.inquiries.map(inquiry => {

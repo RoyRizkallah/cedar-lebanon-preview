@@ -80,6 +80,7 @@
             <strong>{name(leave.patientId)}</strong>
             <span class="out-sub">{leave.state === 'Overdue' ? 'Overdue, was due' : 'Out, due back'} {fmtDateTime(leave.dueBack)}{leave.escort ? `. With ${leave.escort}` : ''}</span>
             {#if logsVisits}<button class="btn sm back" onclick={() => run(state => returnLeave(state, leave.id, me), `${name(leave.patientId)} is back`)}><Icon name="enter" size={14} />Back now</button>{/if}
+            {#if leave.state === 'Overdue'}<button class="btn sm ghost danger" onclick={() => { error = ''; dialog = { kind: 'incident', patientId: leave.patientId, type: 'Absconding', severity: 'High', description: `Did not return from leave; was due back ${fmtDateTime(leave.dueBack)}${leave.escort ? `, out with ${leave.escort}` : ''}.`, actionTaken: '', date: today }; }}><Icon name="alert" size={14} />Report absconding</button>{/if}
           </div>
         {/each}
       </div>

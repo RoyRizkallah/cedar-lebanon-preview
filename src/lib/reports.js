@@ -1,6 +1,6 @@
 // Every report is a plain table: title, columns, rows. The page renders it, prints it, and exports it as CSV.
 import { addDays, daysBetween, todayISO, localDay } from './dates.js';
-import { CHANNELS } from './leads.js';
+import { CHANNELS, conversionRate } from './leads.js';
 import { STAGES, PROGRAMS } from './pipeline.js';
 import { riskLevel } from './forms/engine.js';
 import { buildJournal, trialBalance, payerBalances, openBalance, invoiceStatus, paidOf } from './finance.js';
@@ -45,8 +45,8 @@ export function buildReports(state, group, now = new Date()) {
   }
 
   if (group === 'admissions') {
-    tables.push({ id: 'channels', title: 'Leads by channel', columns: [{ label: 'Channel', value: 'channel' }, { label: 'Leads', value: 'leads' }, { label: 'Became inquiries', value: 'converted' }, { label: 'Conversion', value: 'rate' }],
-      rows: CHANNELS.map(channel => { const list = state.leads.filter(l => l.channel === channel); const converted = list.filter(l => l.status === 'Converted').length; return { channel, leads: list.length, converted, rate: pct(converted, list.length) }; }) });
+    tables.push({ id: 'channels', title: 'Leads by channel, all time', columns: [{ label: 'Channel', value: 'channel' }, { label: 'Leads', value: 'leads' }, { label: 'Became inquiries', value: 'converted' }, { label: 'Conversion', value: 'rate' }],
+      rows: CHANNELS.map(channel => { const { leads, converted, pct: rate } = conversionRate(state.leads.filter(l => l.channel === channel)); return { channel, leads, converted, rate: rate === null ? '—' : `${rate}%` }; }) });
     tables.push({ id: 'funnel', title: 'Inquiries by furthest stage', columns: [{ label: 'Stage', value: 'stage' }, { label: 'Reached', value: 'count' }, { label: 'Of all inquiries', value: 'share' }],
       rows: [...STAGES, 'Admitted'].map(stage => { const count = state.inquiries.filter(i => stage === 'Admitted' ? i.outcome === 'Admitted' : i.stageHistory.some(step => step.stage === stage)).length; return { stage, count, share: pct(count, state.inquiries.length) }; }) });
     tables.push({ id: 'sources', title: 'Admissions by source', columns: [{ label: 'Source', value: 'source' }, { label: 'Inquiries', value: 'inquiries' }, { label: 'Admitted', value: 'admitted' }, { label: 'Declined', value: 'declined' }, { label: 'Admission rate', value: 'rate' }],
@@ -55,7 +55,7 @@ export function buildReports(state, group, now = new Date()) {
 
   if (group === 'care') {
     const sessions = state.appointments.filter(a => ['Psychologist session', 'Therapist session'].includes(a.service) && a.status === 'Completed');
-    tables.push({ id: 'notes', title: 'Session notes by clinician', columns: [{ label: 'Clinician', value: 'who' }, { label: 'Completed sessions', value: 'sessions' }, { label: 'Notes filed', value: 'filed' }, { label: 'Filed within 24 hours', value: 'onTime' }],
+    tables.push({ id: 'notes', title: 'Session notes by clinician, all time', columns: [{ label: 'Clinician', value: 'who' }, { label: 'Completed sessions', value: 'sessions' }, { label: 'Notes filed', value: 'filed' }, { label: 'Filed within 24 hours', value: 'onTime' }],
       rows: ['clinical-director', 'nabila'].map(id => {
         const list = sessions.filter(a => a.provider === id);
         const notes = list.map(a => state.forms.find(f => f.id === a.noteFormId)).filter(f => f?.status === 'Filed');
@@ -105,16 +105,16 @@ export function reportHeadlines(state, group, now = new Date()) {
       { label: 'In care', value: String(k.census.admitted), note: `${k.census.occupied} of ${k.census.beds} beds in use` },
       { label: 'Occupancy', value: percent(k.census.occupancyPct), note: 'Beds in use now' },
       { label: 'Admitted this month', value: String(k.census.admissionsThisMonth), note: `${k.census.dischargesThisMonth} discharged` },
-      { label: 'Average stay', value: k.census.averageStayDays === null ? '—' : `${k.census.averageStayDays} days`, note: 'Of patients in care' }
+      { label: 'Average stay', value: k.census.averageStayDays === null ? '—' : `${k.census.averageStayDays} days`, note: 'Of patients discharged' }
     ],
     admissions: [
       { label: 'Leads, 30 days', value: String(k.leads.last30), note: `${k.leads.unanswered} still unanswered`, tone: k.leads.unanswered ? 'warn' : undefined },
-      { label: 'Lead to inquiry', value: percent(k.leads.conversionPct), note: `Median first reply ${k.leads.medianFirstResponseMins ?? '—'} min` },
+      { label: 'Lead to inquiry', value: percent(k.leads.conversionPct), note: `Last 30 days; first reply ${k.leads.medianFirstResponseMins ?? '—'} min` },
       { label: 'Inquiry to admission', value: percent(k.pipeline.admittedPct), note: 'Last 90 days' },
       { label: 'Potential in play', value: usd(k.pipeline.potential.combined), note: 'Per month, inquiry and assessment' }
     ],
     care: [
-      { label: 'Notes within 24 h', value: percent(k.clinical.notesOnTimePct), note: `Of ${k.clinical.sessions} sessions` },
+      { label: 'Notes within 24 h', value: percent(k.clinical.notesOnTimePct), note: `Last 30 days, ${k.clinical.sessions} sessions` },
       { label: 'Elevated risk', value: String(k.clinical.elevatedRisk), note: 'Medium or high, in care', tone: k.clinical.elevatedRisk ? 'warn' : undefined },
       { label: 'Open incidents', value: String(k.safety.openIncidents), note: `${k.safety.incidents30} in 30 days`, tone: k.safety.openIncidents ? 'urgent' : undefined },
       { label: 'Positive screens', value: String(k.safety.positiveScreens30), note: 'Last 30 days', tone: k.safety.positiveScreens30 ? 'urgent' : undefined }

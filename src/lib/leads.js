@@ -5,6 +5,7 @@ import { todayISO } from './dates.js';
 
 export const CHANNELS = ['WhatsApp', 'Instagram', 'Facebook', 'Email', 'Website', 'Phone'];
 export const LEAD_STATUSES = ['New', 'Replied', 'Converted', 'Closed'];
+export const CLOSE_REASONS = ['Not relevant', 'Spam', 'Wrong number', 'Went elsewhere', 'Duplicate', 'Other'];
 
 const find = (state, id) => {
   const lead = state.leads.find(item => item.id === id);
@@ -38,9 +39,28 @@ export function convertLead(state, id, fields, staffId, now = new Date()) {
 
 export function closeLead(state, id, reason, staffId) {
   const lead = find(state, id);
-  Object.assign(lead, { status: 'Closed', closeReason: String(reason || 'Not relevant').trim() });
-  log(state, staffId, `Closed lead from ${lead.name}`, `#/leads/${id}`);
+  if (!CLOSE_REASONS.includes(reason)) throw new Error('Choose why this lead is closing.');
+  if (lead.status === 'Converted') throw new Error('This lead is already an inquiry.');
+  Object.assign(lead, { status: 'Closed', closeReason: reason, closedBy: staffId });
+  log(state, staffId, `Closed lead from ${lead.name}: ${reason.toLowerCase()}`, `#/leads/${id}`);
   return lead;
+}
+
+// A lead closed by mistake comes back as it was: unanswered, or answered.
+export function reopenLead(state, id, staffId) {
+  const lead = find(state, id);
+  if (lead.status !== 'Closed') throw new Error('This lead is not closed.');
+  lead.status = lead.messages.some(message => message.from === 'staff') ? 'Replied' : 'New';
+  delete lead.closeReason;
+  delete lead.closedBy;
+  log(state, staffId, `Reopened lead from ${lead.name}`, `#/leads/${id}`);
+  return lead;
+}
+
+// Lead to inquiry, everywhere: leads that became inquiries out of all leads received in the window.
+export function conversionRate(leads) {
+  const converted = leads.filter(lead => lead.status === 'Converted').length;
+  return { leads: leads.length, converted, pct: leads.length ? Math.round((converted / leads.length) * 100) : null };
 }
 
 const firstReplyMinutes = lead => {

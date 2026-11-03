@@ -4,6 +4,7 @@
   import TabBar from './components/TabBar.svelte';
   import { db, session, commit } from './lib/store.svelte.js';
   import { runFollowUpAlerts } from './lib/pipeline.js';
+  import { runLeaveAlerts, leaveAlertsDue } from './lib/safety.js';
   import { canSee, homePage, PAGES } from './lib/people.js';
   import { route, toast, readHash } from './lib/ui.svelte.js';
   import { navCounts } from './lib/counts.js';
@@ -38,6 +39,8 @@
     session.now = new Date();
     // Follow-ups that came due since the last look notify their contact person once.
     if (typeof window !== 'undefined' && db.inquiries.some(item => item.stage === 'Follow-up' && !item.followUp?.notified)) commit(state => runFollowUpAlerts(state, session.now));
+    // Residents late back from leave raise an urgent alert once.
+    if (typeof window !== 'undefined' && leaveAlertsDue(db, session.now)) commit(state => runLeaveAlerts(state, session.now));
     menuOpen = false;
   }
   sync();

@@ -76,3 +76,13 @@ export function incidentsFor(state, staffId) {
   return state.incidents.filter(item => !item.patientId || mine.has(item.patientId)).map(item =>
     details || item.reportedBy === staffId ? item : { ...item, redacted: true, description: 'Details are with the care team.', actionTaken: '', outcome: item.outcome ? 'Reviewed.' : '' });
 }
+
+// When a resident isn't back by the agreed time, Ahmed, Omar and their RSA are alerted once, urgently.
+export function runLeaveAlerts(state, now = new Date()) {
+  for (const leave of state.leaves.filter(item => !item.returnedAt && !item.lateAlerted && leaveStatus(item, now) === 'Overdue')) {
+    const patient = state.patients.find(item => item.id === leave.patientId);
+    leave.lateAlerted = true;
+    notify(state, { to: ['ahmed', 'omar', patient?.assigned?.rsa], title: `Not back from leave: ${patient?.fullName}`, body: `Due back ${fmtDateTime(leave.dueBack)}${leave.escort ? `, with ${leave.escort}` : ''}. Call them, then report absconding if needed.`, link: '#/safety/leave', urgent: true });
+  }
+}
+export const leaveAlertsDue = (state, now = new Date()) => state.leaves.some(item => !item.returnedAt && !item.lateAlerted && leaveStatus(item, now) === 'Overdue');

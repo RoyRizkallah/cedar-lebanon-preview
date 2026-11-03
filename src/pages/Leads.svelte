@@ -3,7 +3,7 @@
   import ChannelBadge from '../components/ChannelBadge.svelte';
   import InquiryFields from '../components/InquiryFields.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { CHANNELS, leadStats, replyToLead, convertLead, closeLead, lastMessage } from '../lib/leads.js';
+  import { CHANNELS, CLOSE_REASONS, leadStats, replyToLead, convertLead, closeLead, reopenLead, lastMessage } from '../lib/leads.js';
   import { CLARIFICATION_REPLY } from '../lib/pipeline.js';
   import { staffName } from '../lib/people.js';
   import { fmtAgo, fmtDateTime } from '../lib/dates.js';
@@ -16,6 +16,7 @@
   let status = $state('Open');
   let query = $state('');
   let reply = $state('');
+  let closing = $state('');
   let error = $state('');
   let converting = $state(null);
 
@@ -104,8 +105,17 @@
           {#if lead.inquiryId}
             <a class="btn" href={`#/pipeline/${lead.inquiryId}`}>Open inquiry</a>
           {:else if lead.status !== 'Closed'}
-            <button class="btn ghost" onclick={() => { commit(state => closeLead(state, lead.id, 'Not relevant', session.staffId)); say('Lead closed'); }}>Close</button>
+            {#if closing !== lead.id}<button class="btn ghost" onclick={() => { closing = lead.id; }}>Close</button>
+            {:else}
+              <span class="close-as" role="group" aria-label="Why is this lead closing?">
+                {#each CLOSE_REASONS as why}<button class="btn sm ghost" onclick={() => { commit(state => closeLead(state, lead.id, why, session.staffId)); closing = ''; say(`Lead closed: ${why.toLowerCase()}`); }}>{why}</button>{/each}
+                <button class="btn sm ghost icon" aria-label="Keep it open" onclick={() => { closing = ''; }}><Icon name="close" size={14} /></button>
+              </span>
+            {/if}
             <button class="btn primary" onclick={startConvert}><Icon name="plus" size={16} />Create inquiry</button>
+          {:else}
+            <span class="pill">Closed: {lead.closeReason || 'Not relevant'}</span>
+            <button class="btn" onclick={() => { commit(state => reopenLead(state, lead.id, session.staffId)); say('Lead reopened'); }}>Reopen</button>
           {/if}
           </div>
         </header>
@@ -164,6 +174,7 @@
 {/if}
 
 <style>
+  .close-as { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 3px; border-radius: 14px; background: var(--sunk); }
   .leads-top { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(200px, 1fr) repeat(3, minmax(130px, 0.7fr)); gap: 10px; margin-bottom: 10px; align-items: stretch; }
   .lt-title { padding: 17px 20px; border-radius: 19px; background: linear-gradient(112deg, var(--paper) 0%, var(--paper) 55%, var(--leaf) 100%); box-shadow: var(--shadow-1); }
   .lt-title h1 { font-size: 30px; letter-spacing: -0.04em; }
