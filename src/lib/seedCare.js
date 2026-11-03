@@ -93,5 +93,5 @@ export function seedCare(state, today) {
   );
 
   // Rooms: wing, access and readiness.
-  state.rooms.forEach((room, index) => Object.assign(room, { wing: index < 3 ? 'Ground' : 'Upper', access: index === 0 ? 'Step-free' : 'Standard', status: index === 5 ? 'Cleaning' : 'Ready', notes: index === 5 ? 'Deep clean after discharge.' : '' }));
+  state.rooms.forEach((room, index) => Object.assign(room, { wing: index < 3 ? 'Ground' : 'Upper', access: index === 0 ? 'Step-free' : 'Standard', status: index === 5 ? 'Cleaning' : 'Ready', notes: index === 5 ? 'Bed 2: deep clean after a discharge, ready tomorrow.' : '' }));
 }

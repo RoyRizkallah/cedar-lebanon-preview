@@ -3,7 +3,7 @@
   import Ring from '../components/Ring.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
   import { canDo } from '../lib/people.js';
-  import { ACCOUNTS, EXPENSE_CATEGORIES, PAYMENT_METHODS, PAYERS, usd, accountName, paidOf, openBalance, invoiceStatus, createInvoice, invoiceMonth, recordPayment, voidInvoice, createExpense, approveExpense, payExpense, addManualEntry, buildJournal, trialBalance, totals, bankJournalLines, matchBank, payerBalances } from '../lib/finance.js';
+  import { ACCOUNTS, EXPENSE_CATEGORIES, PAYMENT_METHODS, PAYERS, usd, accountName, paidOf, openBalance, invoiceStatus, createInvoice, invoiceMonth, recordPayment, reversePayment, voidInvoice, createExpense, approveExpense, rejectExpense, payExpense, addManualEntry, buildJournal, trialBalance, totals, bankJournalLines, matchBank, payerBalances } from '../lib/finance.js';
   import { fmtDate, todayISO } from '../lib/dates.js';
   import { downloadCsv } from '../lib/csv.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -125,6 +125,7 @@
               <td data-label="Status"><span class="pill {tone(item.state)}">{item.state}</span></td>
               <td><div class="row" style="justify-content: flex-end; gap: 6px">
                 {#if item.open > 0}<button class="btn sm dark" onclick={() => { dialog = { kind: 'payment', id: item.id, amount: item.open, method: 'Bank transfer', date: today, reference: '' }; }}>Record payment</button>{/if}
+                {#if item.paid > 0}<button class="btn sm ghost" onclick={() => { dialog = { kind: 'reverse', id: item.id, paymentId: (item.payments || []).filter(payment => !payment.reversed).at(-1)?.id, reason: '' }; }}>Reverse payment</button>{/if}
                 {#if item.state !== 'Void' && !item.paid}<button class="btn sm ghost danger" onclick={() => { dialog = { kind: 'void', id: item.id, reason: '' }; }}>Void</button>{/if}
               </div></td>
             </tr>
@@ -142,9 +143,9 @@
             <tr>
               <td class="lead-cell"><strong>{item.supplier}</strong><div class="faint" style="font-size: 12px">{item.description}</div></td>
               <td data-label="Category">{accountName(item.category)}</td><td data-label="Due">{fmtDate(item.due)}</td><td data-label="Amount" class="num">{usd(item.amount)}</td>
-              <td data-label="Status"><span class="pill {item.status === 'Paid' ? 'ok' : item.status === 'Approved' ? 'info' : 'warn'}">{item.status}</span></td>
+              <td data-label="Status"><span class="pill {item.status === 'Paid' ? 'ok' : item.status === 'Approved' ? 'info' : item.status === 'Rejected' ? '' : 'warn'}" title={item.rejectReason || ''}>{item.status}</span></td>
               <td><div class="row" style="justify-content: flex-end">
-                {#if item.status === 'Pending approval' && canDo(me, 'approveExpense')}<button class="btn sm dark" onclick={() => run(state => approveExpense(state, item.id, me), 'Bill approved')}>Approve</button>{/if}
+                {#if item.status === 'Pending approval' && canDo(me, 'approveExpense')}<button class="btn sm ghost danger" onclick={() => { dialog = { kind: 'reject', id: item.id, reason: '' }; }}>Reject</button><button class="btn sm dark" onclick={() => run(state => approveExpense(state, item.id, me), 'Bill approved')}>Approve</button>{/if}
                 {#if item.status === 'Approved'}<button class="btn sm dark" onclick={() => { dialog = { kind: 'bill-payment', id: item.id, amount: item.amount - item.payments.reduce((s, p) => s + p.amount, 0), method: 'Bank transfer', date: today, reference: '' }; }}>Pay</button>{/if}
               </div></td>
             </tr>
@@ -230,13 +231,15 @@
       invoice: () => run(state => createInvoice(state, d, me), 'Invoice issued'),
       payment: () => run(state => recordPayment(state, d.id, d, me), 'Payment recorded'),
       void: () => run(state => voidInvoice(state, d.id, d.reason, me), 'Invoice voided'),
-      expense: () => run(state => createExpense(state, d, me), 'Bill recorded and sent to Ahmed for approval'),
+      reverse: () => run(state => reversePayment(state, d.id, d.paymentId, d.reason, me), 'Payment reversed'),
+      reject: () => run(state => rejectExpense(state, d.id, d.reason, me), 'Bill rejected'),
+      expense: () => run(state => createExpense(state, d, me), 'Bill recorded and sent to Amer and Rabih for approval'),
       'bill-payment': () => run(state => payExpense(state, d.id, d, me), 'Bill paid'),
       manual: () => run(state => addManualEntry(state, d, me), 'Journal entry posted')
     }[d.kind]();
     if (done) close();
   }}>
-    <header class="drawer-head"><div class="grow"><h2>{({ invoice: 'New invoice', payment: 'Record payment', void: 'Void invoice', expense: 'Record bill', 'bill-payment': 'Pay bill', manual: 'Journal entry' })[dialog.kind]}</h2></div></header>
+    <header class="drawer-head"><div class="grow"><h2>{({ invoice: 'New invoice', payment: 'Record payment', void: 'Void invoice', reverse: 'Reverse a payment', reject: 'Reject bill', expense: 'Record bill', 'bill-payment': 'Pay bill', manual: 'Journal entry' })[dialog.kind]}</h2></div></header>
     <div class="drawer-body stack">
       {#if dialog.kind === 'invoice'}
         <label class="field"><span>Patient</span><select class="select" bind:value={dialog.patientId}>{#each db.patients as p}<option value={p.id}>{p.fullName}</option>{/each}</select></label>
@@ -245,6 +248,14 @@
       {:else if dialog.kind === 'payment' || dialog.kind === 'bill-payment'}
         <div class="grid-2"><label class="field"><span>Amount</span><input class="input" inputmode="decimal" bind:value={dialog.amount} /></label><label class="field"><span>Date</span><input class="input" type="date" bind:value={dialog.date} /></label></div>
         <div class="grid-2"><label class="field"><span>Method</span><select class="select" bind:value={dialog.method}>{#each PAYMENT_METHODS as method}<option>{method}</option>{/each}</select></label><label class="field"><span>Reference</span><input class="input" bind:value={dialog.reference} /></label></div>
+      {:else if dialog.kind === 'reverse'}
+        {@const live = (db.finance.invoices.find(item => item.id === dialog.id)?.payments || []).filter(payment => !payment.reversed)}
+        <label class="field"><span>Payment</span><select class="select" bind:value={dialog.paymentId}>{#each live as payment (payment.id)}<option value={payment.id}>{usd(payment.amount)}, {payment.method}, {fmtDate(payment.date)}{payment.reference ? `, ${payment.reference}` : ''}</option>{/each}</select></label>
+        <label class="field"><span>Reason</span><input class="input" bind:value={dialog.reason} placeholder="For example: typed 600 instead of 60" /></label>
+        <p class="faint">The receipt stays on record; a reversing entry is posted and the balance reopens.</p>
+      {:else if dialog.kind === 'reject'}
+        <label class="field"><span>Reason</span><input class="input" bind:value={dialog.reason} placeholder="For example: duplicate of an earlier bill" /></label>
+        <p class="faint">The bill stays on record as rejected and never reaches the books.</p>
       {:else if dialog.kind === 'void'}
         <label class="field"><span>Reason</span><input class="input" bind:value={dialog.reason} placeholder="For example: billed in error" /></label>
         <p class="faint">A reversing entry is posted; the invoice stays on record.</p>

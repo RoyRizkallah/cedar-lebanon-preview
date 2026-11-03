@@ -7,7 +7,7 @@ import { seedPrograms } from './seedPrograms.js';
 import { book, earliestSlot } from './scheduling.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 
 const ROOMS = ['101', '102', '103', '104', '105', '106'].map(id => ({ id, name: `Room ${id}`, beds: 2 }));
 
@@ -92,7 +92,7 @@ export function seed(now = new Date()) {
     const patient = {
       id: patientId, inquiryId, fullName: person.name, clinicalName: clinicalNameOf(person.name), age: person.age, program: person.program,
       roomId: person.room || '', bed: person.bed || null, admittedAt, phase: person.phase || '4 Discharge prep',
-      assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: nextRsa(state) },
+      assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: person.program === 'Outpatient' ? '' : nextRsa(state) },
       commPreference, phone: phoneFor(index), status: person.discharged ? 'Discharged' : 'Admitted', monthlyAmount: person.monthly,
       contacts: familyFor(person.name, index)
     };

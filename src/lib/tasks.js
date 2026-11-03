@@ -91,6 +91,14 @@ export function tasksFor(state, staffId, now = new Date()) {
     }
   }
 
+  // The nurse clears every new resident for activity (fitness Form 1, gate one) before they train.
+  if (hasRole(staffId, 'nurse')) {
+    for (const patient of state.patients.filter(item => item.status === 'Admitted')) {
+      const cleared = state.forms.some(entry => entry.formId === 'clearance' && entry.patientId === patient.id && entry.values?.medicallyCleared);
+      if (!cleared) push({ id: `clearance-${patient.id}`, kind: 'clearance', patientId: patient.id, title: `Medical clearance for activity: ${patient.fullName}`, sub: 'Gate one of the physical assessment', due: addDays(patient.admittedAt, 1), link: `#/patients/${patient.id}/medical` });
+    }
+  }
+
   // Once a discharge plan is filed, the coordinator discharges the patient on the day, from their file.
   if (hasRole(staffId, 'admin')) {
     for (const patient of state.patients.filter(item => item.status === 'Admitted')) {

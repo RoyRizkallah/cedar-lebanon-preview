@@ -34,7 +34,8 @@
       <dt>Contact preference</dt><dd>{patient.commPreference}</dd>
       {#if hasRole(me, 'admin', 'gm', 'director')}
         <dt>Phone</dt><dd>{patient.phone || '—'}</dd>
-        <dt>Agreed amount</dt><dd>${Number(patient.monthlyAmount || 0).toLocaleString('en-US')} a month</dd>
+        <dt>Agreed amount</dt><dd>${Number(patient.monthlyAmount || 0).toLocaleString('en-US')} a month{patient.paymentTerms ? `, ${patient.paymentTerms.toLowerCase()}` : ''}</dd>
+        {#if patient.payer}<dt>Paid by</dt><dd>{patient.payer}</dd>{/if}
       {/if}
       {#if canSeeTab(me, 'wallet')}<dt>Wallet</dt><dd>{formatCents(walletBalanceCents(db, patient.id))}</dd>{/if}
     </dl>

@@ -46,8 +46,9 @@ export function roundFor(state, date) {
   })).sort((a, b) => a.time.localeCompare(b.time) || a.patientId.localeCompare(b.patientId));
 }
 
-export function recordDose(state, { orderId, date, time, status, note = '' }, staffId) {
+export function recordDose(state, { orderId, date, time, status, note = '' }, staffId, now = new Date()) {
   allowed(staffId);
+  if (date > todayISO(now)) throw new Error('Doses are recorded when they happen, not ahead of time.');
   const order = med(state).orders.find(item => item.id === orderId);
   if (!order) throw new Error('This medication was not found.');
   if (!DOSE_STATUSES.includes(status)) throw new Error('Choose Given, Refused, Missed or Held.');
@@ -55,10 +56,29 @@ export function recordDose(state, { orderId, date, time, status, note = '' }, st
   if (status !== 'Given' && !String(note).trim()) throw new Error('Add a note for a dose that was not given.');
   const dose = { id: nextId('DOSE', med(state).doses), orderId, patientId: order.patientId, date, time, status, note: String(note).trim(), by: staffId, at: new Date().toISOString() };
   med(state).doses.push(dose);
-  if (status === 'Refused' || status === 'Missed') {
-    const patient = state.patients.find(item => item.id === order.patientId);
-    notify(state, { to: 'clinical-director', title: `Dose ${status.toLowerCase()}: ${patient.clinicalName}`, body: `${order.drug} ${order.dose} at ${time}. ${dose.note}`, link: '#/medication' });
-  }
+  alertIfNotGiven(state, order, dose);
+  return dose;
+}
+
+function alertIfNotGiven(state, order, dose) {
+  if (dose.status !== 'Refused' && dose.status !== 'Missed') return;
+  const patient = state.patients.find(item => item.id === order.patientId);
+  notify(state, { to: 'clinical-director', title: `Dose ${dose.status.toLowerCase()}: ${patient.clinicalName}`, body: `${order.drug} ${order.dose} at ${dose.time}. ${dose.note}`, link: '#/medication' });
+}
+
+// A dose recorded wrongly is corrected, never overwritten: the history stays on the record.
+export function correctDose(state, doseId, { status, note = '', reason }, staffId) {
+  allowed(staffId);
+  const dose = med(state).doses.find(item => item.id === doseId);
+  if (!dose) throw new Error('This dose was not found.');
+  if (!DOSE_STATUSES.includes(status)) throw new Error('Choose Given, Refused, Missed or Held.');
+  if (!String(reason || '').trim()) throw new Error('Give a reason for the correction.');
+  if (status !== 'Given' && !String(note).trim()) throw new Error('Add a note for a dose that was not given.');
+  (dose.corrections ||= []).push({ from: dose.status, to: status, reason: String(reason).trim(), by: staffId, at: new Date().toISOString() });
+  Object.assign(dose, { status, note: String(note).trim() });
+  const order = med(state).orders.find(item => item.id === dose.orderId);
+  alertIfNotGiven(state, order, dose);
+  log(state, staffId, `Corrected a ${order.drug} dose to ${status.toLowerCase()}`, '#/medication');
   return dose;
 }
 

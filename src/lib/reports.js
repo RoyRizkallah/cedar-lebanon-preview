@@ -3,7 +3,7 @@ import { addDays, daysBetween, todayISO, localDay } from './dates.js';
 import { CHANNELS } from './leads.js';
 import { STAGES, PROGRAMS } from './pipeline.js';
 import { riskLevel } from './forms/engine.js';
-import { buildJournal, trialBalance, payerBalances, openBalance, invoiceStatus } from './finance.js';
+import { buildJournal, trialBalance, payerBalances, openBalance, invoiceStatus, paidOf } from './finance.js';
 import { INCIDENT_TYPES } from './safety.js';
 import { staffName } from './people.js';
 import { dashboard } from './kpis.js';
@@ -81,7 +81,7 @@ export function buildReports(state, group, now = new Date()) {
   if (group === 'finance') {
     const invoices = state.finance.invoices.filter(i => i.status !== 'Void');
     tables.push({ id: 'billing', title: 'Billing by month', columns: [{ label: 'Month', value: 'month' }, { label: 'Invoiced (USD)', value: 'billed' }, { label: 'Collected (USD)', value: 'collected' }, { label: 'Still open (USD)', value: 'open' }],
-      rows: recent.map(month => { const list = invoices.filter(i => i.issued.startsWith(month)); return { month: monthName(month), billed: money(list.reduce((s, i) => s + i.amount, 0)), collected: money(list.reduce((s, i) => s + i.payments.reduce((t, p) => t + p.amount, 0), 0)), open: money(list.reduce((s, i) => s + openBalance(i), 0)) }; }) });
+      rows: recent.map(month => { const list = invoices.filter(i => i.issued.startsWith(month)); return { month: monthName(month), billed: money(list.reduce((s, i) => s + i.amount, 0)), collected: money(list.reduce((s, i) => s + paidOf(i), 0)), open: money(list.reduce((s, i) => s + openBalance(i), 0)) }; }) });
     const buckets = [['Not yet due', -Infinity, 0], ['1–30 days late', 1, 30], ['31–60 days late', 31, 60], ['Over 60 days late', 61, Infinity]];
     tables.push({ id: 'aging', title: 'What is owed, by age', columns: [{ label: 'Age', value: 'label' }, { label: 'Invoices', value: 'count' }, { label: 'Open (USD)', value: 'open' }],
       rows: buckets.map(([label, from, to]) => { const list = invoices.filter(i => openBalance(i) > 0 && daysBetween(i.due, today) >= from && daysBetween(i.due, today) <= to); return { label, count: list.length, open: money(list.reduce((s, i) => s + openBalance(i), 0)) }; }) });

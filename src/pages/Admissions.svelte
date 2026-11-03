@@ -3,6 +3,7 @@
   import Ring from '../components/Ring.svelte';
   import SignaturePad from '../components/SignaturePad.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
+  import { PAYERS } from '../lib/finance.js';
   import { STEPS, STEP_LABELS, STEP_OWNERS, PAYMENT_TERMS, completeStep, undoStep, canAdmit, admit, freeBeds, inquiryOf, isOutpatient, isActive, linkedPsychologist, rebookPsychologist } from '../lib/admission.js';
   import { money } from '../lib/pipeline.js';
   import { staffName, canDo, hasRole } from '../lib/people.js';
@@ -33,7 +34,7 @@
     const key = `${onboarding.id}:${step}`;
     openStep = openStep === key ? null : key;
     const inquiry = inquiryOf(db, onboarding);
-    inputs = { note: '', monthlyAmount: inquiry?.potentialRevenue || '', terms: PAYMENT_TERMS[0], arrivalDate: '', bed: freeBeds(db, onboarding.id)[0]?.join('/') || '' };
+    inputs = { note: '', monthlyAmount: inquiry?.potentialRevenue || '', terms: PAYMENT_TERMS[0], payer: PAYERS[0], arrivalDate: '', bed: freeBeds(db, onboarding.id)[0]?.join('/') || '' };
   }
   function done(onboarding, step, payload) {
     if (run(state => completeStep(state, onboarding.id, step, payload, me), `${STEP_LABELS[step]} done`)) openStep = null;
@@ -90,7 +91,7 @@
             <div class="step-panel">
               {#if state.done}
                 <p><strong>{STEP_LABELS[step]}</strong> done by {staffName(state.by)}, {fmtDateTime(state.at)}.
-                  {#if state.monthlyAmount} {money(state.monthlyAmount)} a month, {state.terms.toLowerCase()}.{/if}
+                  {#if state.monthlyAmount} {money(state.monthlyAmount)} a month, {state.terms.toLowerCase()}{state.payer ? `, paid by ${state.payer.toLowerCase()}` : ''}.{/if}
                   {#if state.roomId} Room {state.roomId}, bed {state.bed}.{/if}
                   {#if state.arrivalDate} Arriving {fmtDay(state.arrivalDate)}.{/if}
                   {#if step === 'room' && !state.roomId} Outpatient, no room needed.{/if}
@@ -119,6 +120,7 @@
                 <div class="grid-2">
                   <label class="field"><span>Agreed monthly amount <span class="hint">USD</span></span><input class="input" type="number" min="0" step="100" bind:value={inputs.monthlyAmount} /></label>
                   <label class="field"><span>Payment terms</span><select class="select" bind:value={inputs.terms}>{#each PAYMENT_TERMS as term}<option>{term}</option>{/each}</select></label>
+                  <label class="field"><span>Who pays</span><select class="select" bind:value={inputs.payer}>{#each PAYERS as payer}<option>{payer}</option>{/each}</select></label>
                 </div>
                 <button class="btn dark" onclick={() => done(onboarding, 'financial', $state.snapshot(inputs))}>Save financial arrangement</button>
               {:else if step === 'agreement'}

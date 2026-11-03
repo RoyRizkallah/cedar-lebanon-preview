@@ -15,6 +15,7 @@
 </script>
 
 <div class="stack" style="gap: 20px">
+  {#if patient.nursingNote}<p class="notice"><Icon name="stethoscope" size={15} />At admission, nursing noted: {patient.nursingNote}</p>{/if}
   <section class="panel">
     <div class="panel-head"><h3>Medical clearance for activity</h3>{#if clearance || hasRole(me, 'nurse', 'pt')}<button class="btn sm" onclick={() => onform('clearance', clearance?.id || null)}>{clearance ? 'Open' : 'Start'}</button>{/if}</div>
     <div class="panel-body">

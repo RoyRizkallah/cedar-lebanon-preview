@@ -1,7 +1,9 @@
 // Admission is separate from the pipeline: five steps, then the patient and their wallet exist.
 import { nextId } from './ids.js';
 import { todayISO } from './dates.js';
-import { staffName, canDo, nextRsa } from './people.js';
+import { STAFF, staffName, canDo, hasRole, nextRsa } from './people.js';
+import { notify } from './notifications.js';
+import { PAYERS } from './finance.js';
 import { log } from './activity.js';
 import { autoBookPsychologist } from './scheduling.js';
 import { openWallet } from './wallet.js';
@@ -71,13 +73,13 @@ export function rebookPsychologist(state, onboardingId, staffId, now = new Date(
   return appointment;
 }
 
-// Beds free now, excluding beds already held by another admission in progress.
+// Beds free now in rooms that are ready, excluding beds already held by another admission in progress.
 export function freeBeds(state, exceptOnboardingId) {
   const taken = new Set([
     ...state.patients.filter(patient => patient.status === 'Admitted' && patient.roomId).map(patient => `${patient.roomId}/${patient.bed}`),
     ...state.onboardings.filter(item => !item.admittedPatientId && item.id !== exceptOnboardingId && item.steps.room.done && item.steps.room.roomId && isActive(state, item)).map(item => `${item.steps.room.roomId}/${item.steps.room.bed}`)
   ]);
-  return state.rooms.flatMap(room => Array.from({ length: room.beds }, (_, index) => [room.id, index + 1])).filter(([room, bed]) => !taken.has(`${room}/${bed}`));
+  return state.rooms.filter(room => (room.status || 'Ready') === 'Ready').flatMap(room => Array.from({ length: room.beds }, (_, index) => [room.id, index + 1])).filter(([room, bed]) => !taken.has(`${room}/${bed}`));
 }
 
 export function completeStep(state, onboardingId, step, payload = {}, staffId, now = new Date()) {
@@ -96,6 +98,8 @@ export function completeStep(state, onboardingId, step, payload = {}, staffId, n
     if (!(amount > 0)) throw new Error('Add the agreed monthly amount.');
     done.monthlyAmount = amount;
     done.terms = PAYMENT_TERMS.includes(payload.terms) ? payload.terms : PAYMENT_TERMS[0];
+    if (payload.payer !== undefined && !PAYERS.includes(payload.payer)) throw new Error('Choose who pays.');
+    done.payer = payload.payer || PAYERS[0];
   }
   if (step === 'agreement') {
     if (!payload.signature?.at && !payload.fileId) throw new Error('Capture the signed agreement or upload the signed scan.');
@@ -142,8 +146,10 @@ export function admit(state, onboardingId, staffId, now = new Date()) {
   const patient = {
     id: nextId('P', state.patients), inquiryId: inquiry.id, fullName: inquiry.name, clinicalName: clinicalNameOf(inquiry.name), age: '', program: inquiry.program,
     roomId: onboarding.steps.room.roomId || '', bed: onboarding.steps.room.bed || null, admittedAt: today, phase: '1 Stabilization',
-    assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: nextRsa(state) },
+    assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: isOutpatient(inquiry) ? '' : nextRsa(state) },
     commPreference: inquiry.commPreference, phone: inquiry.phone, status: 'Admitted', monthlyAmount: onboarding.steps.financial.monthlyAmount,
+    // What was agreed and observed during the admission steps travels with the patient.
+    payer: onboarding.steps.financial.payer || PAYERS[0], paymentTerms: onboarding.steps.financial.terms, nursingNote: onboarding.steps.nursing.note || '',
     // The family member who made the inquiry becomes the first contact.
     contacts: inquiry.relationship && inquiry.relationship !== 'Self' && inquiry.callerName
       ? [{ id: `CT-${inquiry.id}`, name: inquiry.callerName, relation: inquiry.relationship, phone: inquiry.phone || '', emergency: true, canDiscuss: true, canVisit: true }]
@@ -158,6 +164,9 @@ export function admit(state, onboardingId, staffId, now = new Date()) {
   state.forms.push({ id: nextId('F', state.forms), formId: 'discharge', patientId: patient.id, status: 'Draft', createdBy: staffId, createdAt: now.toISOString(), updatedAt: now.toISOString(), updatedBy: staffId, values: { patient: patient.clinicalName, admissionDate: today } });
   onboarding.admittedPatientId = patient.id;
   onboarding.admittedAt = now.toISOString();
+  // The care team meets a new resident; Operations has a bed taken; Finance has a new monthly amount.
+  const team = [...Object.values(patient.assigned), ...STAFF.filter(person => hasRole(person.id, 'ops', 'finance-head')).map(person => person.id)].filter(id => id && id !== staffId);
+  notify(state, { to: team, title: `New admission: ${patient.clinicalName}`, body: `${patient.program}${patient.roomId ? `, room ${patient.roomId} bed ${patient.bed}` : ''}. $${patient.monthlyAmount.toLocaleString('en-US')} a month, ${patient.payer.toLowerCase()}.`, link: `#/patients/${patient.id}` });
   log(state, staffId, `Admitted ${patient.fullName}. Wallet created.`, `#/patients/${patient.id}`);
   return patient;
 }

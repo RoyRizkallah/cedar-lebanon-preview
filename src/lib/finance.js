@@ -31,7 +31,7 @@ const books = state => (state.finance ||= { invoices: [], expenses: [], manualEn
 const positive = value => { const amount = dollars(value); if (!(amount > 0)) throw new Error('Enter an amount greater than 0.'); return amount; };
 const monthLabel = month => new Date(`${month}-01T12:00:00`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
-export const paidOf = invoice => (invoice.payments || []).reduce((sum, payment) => sum + cents(payment.amount), 0) / 100;
+export const paidOf = invoice => (invoice.payments || []).filter(payment => !payment.reversed).reduce((sum, payment) => sum + cents(payment.amount), 0) / 100;
 export const openBalance = invoice => invoice.status === 'Void' ? 0 : Math.max(0, cents(invoice.amount) - cents(paidOf(invoice))) / 100;
 
 export function invoiceStatus(invoice, today = todayISO()) {
@@ -76,11 +76,24 @@ export function voidInvoice(state, invoiceId, reason, staffId) {
   allowed(staffId);
   const invoice = books(state).invoices.find(item => item.id === invoiceId);
   if (!invoice) throw new Error('This invoice was not found.');
-  if ((invoice.payments || []).length) throw new Error('This invoice has payments; it cannot be voided.');
+  if ((invoice.payments || []).some(payment => !payment.reversed)) throw new Error('This invoice has payments; it cannot be voided. Reverse them first.');
   if (!String(reason || '').trim()) throw new Error('Give a reason for voiding.');
   Object.assign(invoice, { status: 'Void', voidedAt: todayISO(), voidReason: reason.trim(), voidedBy: staffId });
   log(state, staffId, `Voided ${invoice.id}`, '#/finance/invoices');
   return invoice;
+}
+
+// A mistyped or misplaced receipt is reversed, not deleted: it stays on record and the books get a reversing entry.
+export function reversePayment(state, invoiceId, paymentId, reason, staffId, now = new Date()) {
+  allowed(staffId);
+  const invoice = books(state).invoices.find(item => item.id === invoiceId);
+  const payment = invoice?.payments?.find(item => item.id === paymentId);
+  if (!payment) throw new Error('This payment was not found.');
+  if (payment.reversed) throw new Error('This payment is already reversed.');
+  if (!String(reason || '').trim()) throw new Error('Give a reason for reversing the payment.');
+  payment.reversed = { reason: String(reason).trim(), by: staffId, date: todayISO(now), at: now.toISOString() };
+  log(state, staffId, `Reversed ${usd(payment.amount)} on ${invoice.id}`, '#/finance/invoices');
+  return payment;
 }
 
 export function createExpense(state, { supplier, description, category, amount, date, due, reference = '' }, staffId) {
@@ -100,6 +113,16 @@ export function approveExpense(state, expenseId, staffId) {
   if (expense?.status !== 'Pending approval') throw new Error('This bill is not waiting for approval.');
   Object.assign(expense, { status: 'Approved', approvedBy: staffId, approvedAt: new Date().toISOString() });
   log(state, staffId, `Approved bill ${expense.id}`, '#/finance/expenses');
+  return expense;
+}
+
+export function rejectExpense(state, expenseId, reason, staffId) {
+  if (!canDo(staffId, 'approveExpense')) throw new Error('Bills are approved or rejected by Amer or Rabih.');
+  const expense = books(state).expenses.find(item => item.id === expenseId);
+  if (expense?.status !== 'Pending approval') throw new Error('This bill is not waiting for approval.');
+  if (!String(reason || '').trim()) throw new Error('Give a reason for rejecting the bill.');
+  Object.assign(expense, { status: 'Rejected', rejectReason: String(reason).trim(), rejectedBy: staffId, rejectedAt: new Date().toISOString() });
+  log(state, staffId, `Rejected bill ${expense.id}`, '#/finance/expenses');
   return expense;
 }
 
@@ -140,11 +163,13 @@ export function buildJournal(state) {
     for (const payment of invoice.payments || []) {
       const paid = dollars(payment.amount);
       out.push(entry(`J-${payment.id}`, payment.date, `Receipt for ${invoice.id}, ${payment.method}`, payment.reference || payment.id, [{ account: payment.method === 'Cash' ? '1020' : '1010', debit: paid, credit: 0 }, { account: '1100', debit: 0, credit: paid }], 'Receipt'));
+      // A reversed receipt stays in the books, undone by its mirror image on the day it was reversed.
+      if (payment.reversed) out.push(entry(`J-REV-${payment.id}`, payment.reversed.date, `Reversed receipt for ${invoice.id}: ${payment.reversed.reason}`, payment.reference || payment.id, [{ account: '1100', debit: paid, credit: 0 }, { account: payment.method === 'Cash' ? '1020' : '1010', debit: 0, credit: paid }], 'Reversal'));
     }
   }
   for (const expense of expenses) {
     const amount = dollars(expense.amount);
-    if (expense.status !== 'Pending approval') out.push(entry(`J-EXP-${expense.id}`, expense.date, `${expense.supplier}, ${expense.description}`, expense.reference || expense.id, [{ account: expense.category, debit: amount, credit: 0 }, { account: '2100', debit: 0, credit: amount }], 'Bill'));
+    if (!['Pending approval', 'Rejected'].includes(expense.status)) out.push(entry(`J-EXP-${expense.id}`, expense.date, `${expense.supplier}, ${expense.description}`, expense.reference || expense.id, [{ account: expense.category, debit: amount, credit: 0 }, { account: '2100', debit: 0, credit: amount }], 'Bill'));
     for (const payment of expense.payments || []) {
       const paid = dollars(payment.amount);
       out.push(entry(`J-${payment.id}`, payment.date, `Payment to ${expense.supplier}`, payment.reference || payment.id, [{ account: '2100', debit: paid, credit: 0 }, { account: payment.method === 'Cash' ? '1020' : '1010', debit: 0, credit: paid }], 'Bill payment'));

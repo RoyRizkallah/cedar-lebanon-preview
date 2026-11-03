@@ -93,7 +93,7 @@ export function dashboard(state, now = new Date()) {
   const overdueList = invoices.filter(item => invoiceStatus(item, today) === 'Overdue');
   const money = {
     invoicedThisMonth: invoices.filter(item => item.issued >= monthStart).reduce((sum, item) => sum + item.amount, 0),
-    collectedThisMonth: invoices.flatMap(item => item.payments || []).filter(payment => payment.date >= monthStart).reduce((sum, payment) => sum + payment.amount, 0),
+    collectedThisMonth: invoices.flatMap(item => item.payments || []).filter(payment => !payment.reversed && payment.date >= monthStart).reduce((sum, payment) => sum + payment.amount, 0),
     owed: invoices.reduce((sum, item) => sum + openBalance(item), 0),
     overdue: overdueList.reduce((sum, item) => sum + openBalance(item), 0),
     overdueCount: overdueList.length,

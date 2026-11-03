@@ -2,7 +2,7 @@
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { ROUTES, SUBSTANCES, roundFor, recordDose, addOrder, stopOrder, recordTest } from '../lib/medication.js';
+  import { ROUTES, SUBSTANCES, roundFor, recordDose, correctDose, addOrder, stopOrder, recordTest } from '../lib/medication.js';
   import { staffName, canDo } from '../lib/people.js';
   import { addDays, todayISO, fmtDate, fmtDay } from '../lib/dates.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -91,7 +91,7 @@
                     {#if item.record}<div class="sub">{item.status} by {staffName(item.record.by)}{item.record.note ? `: ${item.record.note}` : ''}</div>{/if}
                   </div>
                   {#if item.status === 'Due'}
-                    {#if records}
+                    {#if records && date <= todayISO(session.now)}
                       <div class="dose-actions">
                         <button class="btn sm give" onclick={() => mark(item, 'Given')}><Icon name="check" size={14} stroke={2.4} />Given</button>
                         <button class="btn sm" onclick={() => { noting = { item, status: 'Refused', note: '' }; }}>Not given</button>
@@ -99,6 +99,7 @@
                     {:else}<span class="pill warn">Due</span>{/if}
                   {:else}
                     <span class="pill {item.status === 'Given' ? 'ok' : item.status === 'Held' ? '' : 'urgent'}">{item.status}</span>
+                    {#if records}<button class="btn sm ghost" title="Correct a dose recorded wrongly" onclick={() => { error = ''; noting = { item, status: item.status, note: item.record?.note || '', correcting: true, reason: '' }; }}>Correct</button>{/if}
                   {/if}
                 </li>
               {/each}
@@ -145,11 +146,12 @@
 
 {#if noting}
   <div class="scrim" onclick={() => { noting = null; }} aria-hidden="true"></div>
-  <form class="dialog" use:dialogFocus={{ onClose: () => { noting = null; } }} onsubmit={event => { event.preventDefault(); if (mark(noting.item, noting.status, noting.note)) noting = null; }}>
-    <header class="drawer-head"><div class="grow"><h2>Dose not given</h2><p class="muted" style="margin-top: 4px">{patient(noting.item.patientId).clinicalName}, {noting.item.drug} {noting.item.dose} at {noting.item.time}. The Clinical Director is told about refused and missed doses.</p></div></header>
+  <form class="dialog" use:dialogFocus={{ onClose: () => { noting = null; } }} onsubmit={event => { event.preventDefault(); const ok = noting.correcting ? run(state => correctDose(state, noting.item.record.id, { status: noting.status, note: noting.note, reason: noting.reason }, me), 'Dose corrected') : mark(noting.item, noting.status, noting.note); if (ok) noting = null; }}>
+    <header class="drawer-head"><div class="grow"><h2>{noting.correcting ? 'Correct the dose record' : 'Dose not given'}</h2><p class="muted" style="margin-top: 4px">{patient(noting.item.patientId).clinicalName}, {noting.item.drug} {noting.item.dose} at {noting.item.time}. The Clinical Director is told about refused and missed doses.</p></div></header>
     <div class="drawer-body stack">
-      <div class="choices">{#each ['Refused', 'Missed', 'Held'] as option}<label class="choice"><input type="radio" name="dose" value={option} bind:group={noting.status} /><span>{option}</span></label>{/each}</div>
-      <label class="field"><span>Why</span><input class="input" bind:value={noting.note} data-autofocus /></label>
+      <div class="choices">{#each noting.correcting ? ['Given', 'Refused', 'Missed', 'Held'] : ['Refused', 'Missed', 'Held'] as option}<label class="choice"><input type="radio" name="dose" value={option} bind:group={noting.status} /><span>{option}</span></label>{/each}</div>
+      {#if noting.status !== 'Given'}<label class="field"><span>Why it was not given</span><input class="input" bind:value={noting.note} data-autofocus /></label>{/if}
+      {#if noting.correcting}<label class="field"><span>Reason for the correction <span class="hint">kept on the record</span></span><input class="input" bind:value={noting.reason} placeholder="For example: tapped Given by mistake" /></label>{/if}
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>
     <footer class="drawer-foot"><button class="btn" type="button" onclick={() => { noting = null; }}>Cancel</button><button class="btn primary" type="submit">Save</button></footer>
