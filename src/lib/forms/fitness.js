@@ -99,7 +99,7 @@ export const FITNESS_FORMS = [
     ]
   },
   {
-    id: 'wellbeing', family: 'fitness', number: 4, title: 'Weekly Wellbeing Check-in', owners: ['john'],
+    id: 'wellbeing', family: 'fitness', number: 4, title: 'Weekly Wellbeing Check-in', owners: ['john', 'resident'],
     purpose: 'A short self-rating the patient completes each week — the subjective side of physical progress. Quick to tap through on a tablet.',
     rule: "Averages feed into the patient's Progress Record automatically.",
     header: [patient, f('weekEnding', 'Week ending', 'date', { prefill: 'today' })],

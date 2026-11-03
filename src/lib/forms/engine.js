@@ -3,7 +3,7 @@ import { CLINICAL_FORMS } from './clinical.js';
 import { FITNESS_FORMS } from './fitness.js';
 import { addDays, fmtDate, todayISO } from '../dates.js';
 import { nextId } from '../ids.js';
-import { staffName } from '../people.js';
+import { staffName, isResident, RESIDENTS } from '../people.js';
 import { notify } from '../notifications.js';
 import { log } from '../activity.js';
 
@@ -138,11 +138,22 @@ const EFFECTS = {
     notify(state, { to: 'melyssa', title: `Discharge planned: ${patient.clinicalName}`, body: `${entry.values.dischargeType || 'Planned'}, ${fmtDate(entry.values.dischargeDate, { day: 'numeric', month: 'short' })}`, link: `#/patients/${patient.id}` });
   },
   aftercare(state, entry, staffId, previous) {
+    // A call logged as made (reached or not) closes that call's task, so the log and the to-do list agree.
+    for (const row of entry.values.contacts || []) {
+      if (!row.reached || (previous?.contacts || []).some(old => old.contact === row.contact && old.reached)) continue;
+      const task = state.tasks.find(item => item.patientId === entry.patientId && item.kind === 'followup-call' && item.status === 'open' && item.title.startsWith(`${row.contact} `));
+      if (task) Object.assign(task, { status: 'done', doneBy: staffId, doneAt: new Date().toISOString(), note: [row.reached, row.status].filter(Boolean).join(', ') });
+    }
     const added = (entry.values.routed || []).filter(item => item !== 'Not needed' && !(previous?.routed || []).includes(item));
     if (added.length) {
       const patient = patientOf(state, entry.patientId);
       notify(state, { to: 'clinical-director', title: `Follow-up concern routed: ${patient.clinicalName}`, body: `${added.join(', ')} call`, link: `#/patients/${patient.id}/followup` });
     }
+  },
+  wellbeing(state, entry, staffId) {
+    if (!isResident(staffId)) return;
+    const patient = patientOf(state, entry.patientId);
+    notify(state, { to: patient.assigned?.fitness || 'john', title: `Wellbeing check-in from ${patient.fullName}`, body: entry.values.teamNote || 'Filled in by the resident.', link: `#/patients/${patient.id}/fitness` });
   },
   clearance(state, entry, staffId, previous) {
     if (entry.values.sentToAdmin === 'Yes' && previous?.sentToAdmin !== 'Yes') {
@@ -174,10 +185,13 @@ function unnotedSession(state, patientId, date, staffId) {
   return candidates.find(item => item.provider === staffId) || candidates[0] || null;
 }
 
+// Staff named on the form complete it; a form open to residents is completed by the resident it is about.
+const completes = (form, staffId, patientId) => form.owners.includes(staffId) || (form.owners.includes('resident') && isResident(staffId) && RESIDENTS.find(person => person.id === staffId)?.patientId === patientId);
+
 export function fileForm(state, { entryId, formId, patientId = null, patientIds, appointmentId, values, staffId, final = false }) {
   const form = formById(formId);
   if (!form) throw new Error('Unknown form.');
-  if (!form.owners.includes(staffId)) throw new Error(`${form.title} is completed by ${nameList(form.owners)}.`);
+  if (!completes(form, staffId, patientId)) throw new Error(`${form.title} is completed by ${nameList(form.owners)}.`);
   let entry = entryId ? state.forms.find(item => item.id === entryId) : null;
   if (entry?.status === 'Filed' && !form.living) throw new Error('This form is already filed.');
   const computed = computeAuto(form, values);

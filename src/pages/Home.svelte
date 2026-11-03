@@ -7,6 +7,8 @@
   import { upcomingFor } from '../lib/scheduling.js';
   import { fmtDate, fmtDay, todayISO } from '../lib/dates.js';
   import { say } from '../lib/ui.svelte.js';
+  import { fileForm } from '../lib/forms/engine.js';
+  import { addDays, weekday } from '../lib/dates.js';
 
   let { args = [] } = $props();
   const me = session.staffId;
@@ -25,12 +27,37 @@
     error = '';
     try { commit(state => createRequest(state, { patientId, item, quantity, note }, me)); item = ''; quantity = 1; note = ''; say('Request sent to the support team'); } catch (e) { error = e.message; }
   }
+  // Once each calendar week (from Monday) the resident rates their week; John sees it with their fitness progress.
+  const SCALES = [['energy', 'Energy'], ['sleep', 'Sleep'], ['mood', 'Mood'], ['activityFeel', 'Activity']];
+  const checkedIn = $derived(db.forms.some(entry => entry.formId === 'wellbeing' && entry.patientId === patientId && entry.status === 'Filed' && entry.values.weekEnding >= addDays(todayISO(session.now), -((weekday(todayISO(session.now)) + 6) % 7))));
+  let week = $state({ energy: 0, sleep: 0, mood: 0, activityFeel: 0, teamNote: '' });
+  function checkIn() {
+    error = '';
+    if (SCALES.some(([id]) => !week[id])) { error = 'Rate each of the four, from 1 to 5.'; return; }
+    try {
+      commit(state => fileForm(state, { formId: 'wellbeing', patientId, values: { weekEnding: todayISO(session.now), ...$state.snapshot(week), completedBy: { name: patient.fullName, by: me, at: new Date().toISOString() } }, staffId: me, final: true }));
+      say('Thank you. John will see your check-in.');
+    } catch (e) { error = e.message; }
+  }
   const STATUS = { 'Awaiting approval': ['', 'Being checked'], Open: ['warn', 'Waiting'], Done: ['ok', 'Bought'], Cancelled: ['', 'Cancelled'], Declined: ['', 'Not approved'] };
 </script>
 
 <main class="content">
   {#if patient}
     <div class="page-head"><div><h1>Hello, {patient.fullName.split(' ')[0]}</h1><p>Your wallet, your requests and what is coming up. Nothing here is shared with other residents.</p></div></div>
+
+    {#if !checkedIn}
+      <section class="panel checkin">
+        <div class="panel-head"><h3>How was your week?</h3><span class="faint" style="font-size: 12.5px">1 is low, 5 is great</span></div>
+        <div class="panel-body stack">
+          {#each SCALES as [id, label] (id)}
+            <div class="scale-row"><span>{label}</span><div class="seg" role="group" aria-label={label}>{#each [1, 2, 3, 4, 5] as n}<button aria-pressed={week[id] === n} onclick={() => { week[id] = n; }}>{n}</button>{/each}</div></div>
+          {/each}
+          <label class="field"><span>Anything you want the team to know <span class="hint">optional</span></span><input class="input" bind:value={week.teamNote} /></label>
+          <button class="btn primary" onclick={checkIn}>Send my check-in</button>
+        </div>
+      </section>
+    {/if}
 
     <div class="home-grid">
       <section class="wallet-card">
@@ -86,6 +113,9 @@
 </main>
 
 <style>
+  .checkin { margin-bottom: 14px; }
+  .scale-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .scale-row > span { font-weight: 700; font-size: 14px; }
   .home-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 11px; }
   .wallet-card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: var(--r-lg); background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .wallet-card::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.33), transparent 70%); }

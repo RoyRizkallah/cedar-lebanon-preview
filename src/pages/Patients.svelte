@@ -19,7 +19,7 @@
   let query = $state('');
   let program = $state('');
   let risk = $state('');
-  let review = $state(null);
+  let review = $state(args[0] === 'review' && args[1] ? { formId: 'review', entryId: args[1] } : null);
   let layout = $state('cards');
   // Clinical staff start the weekly review; Ahmed opens the latest one to read and sign.
   const writesReview = formById('review').owners.includes(me);
@@ -34,7 +34,7 @@
     .sort((a, b) => (a.patient.roomId || 'zz').localeCompare(b.patient.roomId || 'zz', undefined, { numeric: true }) || a.patient.fullName.localeCompare(b.patient.fullName)));
 </script>
 
-{#if args[0]}
+{#if args[0] && args[0] !== 'review'}
   {#key args.join('/')}<PatientProfile id={args[0]} tab={args[1] || 'overview'} entry={args[2] || ''} />{/key}
 {:else}
   <main class="content">

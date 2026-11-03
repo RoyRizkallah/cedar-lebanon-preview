@@ -195,6 +195,9 @@ export function logCall(state, id, { outcome, notes = '' }, staffId, now = new D
   if (!CALL_OUTCOMES.includes(outcome)) throw new Error('Choose how the call went.');
   const call = { id: `C-${id}-${inquiry.calls.length + 1}`, at: now.toISOString(), by: staffId, outcome, notes: String(notes).trim() };
   inquiry.calls.push(call);
+  // The earliest follow-up call that was due is now made.
+  const due = state.tasks.filter(task => task.inquiryId === id && task.kind === 'inquiry-followup' && task.status === 'open' && task.due <= todayISO(now)).sort((a, b) => a.due.localeCompare(b.due))[0];
+  if (due) Object.assign(due, { status: 'done', doneBy: staffId, doneAt: now.toISOString(), note: `${outcome}${call.notes ? `: ${call.notes}` : ''}` });
   log(state, staffId, `Call with ${inquiry.name}: ${outcome}`, `#/pipeline/${id}`);
   return call;
 }

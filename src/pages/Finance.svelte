@@ -3,7 +3,7 @@
   import Ring from '../components/Ring.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
   import { canDo } from '../lib/people.js';
-  import { ACCOUNTS, EXPENSE_CATEGORIES, PAYMENT_METHODS, PAYERS, usd, accountName, paidOf, openBalance, invoiceStatus, createInvoice, invoiceMonth, recordPayment, reversePayment, voidInvoice, createExpense, approveExpense, rejectExpense, payExpense, addManualEntry, buildJournal, trialBalance, totals, bankJournalLines, matchBank, payerBalances } from '../lib/finance.js';
+  import { ACCOUNTS, EXPENSE_CATEGORIES, PAYMENT_METHODS, PAYERS, usd, accountName, paidOf, openBalance, invoiceStatus, createInvoice, invoiceMonth, recordPayment, reversePayment, addBankLine, voidInvoice, createExpense, approveExpense, rejectExpense, payExpense, addManualEntry, buildJournal, trialBalance, totals, bankJournalLines, matchBank, payerBalances } from '../lib/finance.js';
   import { fmtDate, todayISO } from '../lib/dates.js';
   import { downloadCsv } from '../lib/csv.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -189,7 +189,7 @@
     </div>
 
   {:else if tab === 'bank'}
-    <p class="muted" style="margin-bottom: 14px">Match each statement line to the journal entry it belongs to.</p>
+    <div class="row between wrap" style="margin-bottom: 14px; gap: 10px"><p class="muted" style="margin: 0">Match each statement line to the journal entry it belongs to.</p>{#if canDo(me, 'recordFinance')}<button class="btn" onclick={() => { dialog = { kind: 'bank', date: today, description: '', amount: '', reference: '' }; }}><Icon name="plus" size={15} />Add statement line</button>{/if}</div>
     <div class="panel table-wrap">
       <table class="table cards">
         <thead><tr><th>Statement line</th><th>Date</th><th class="num">Amount</th><th>Matched to</th></tr></thead>
@@ -233,13 +233,14 @@
       void: () => run(state => voidInvoice(state, d.id, d.reason, me), 'Invoice voided'),
       reverse: () => run(state => reversePayment(state, d.id, d.paymentId, d.reason, me), 'Payment reversed'),
       reject: () => run(state => rejectExpense(state, d.id, d.reason, me), 'Bill rejected'),
+      bank: () => run(state => addBankLine(state, d, me), 'Statement line added'),
       expense: () => run(state => createExpense(state, d, me), 'Bill recorded and sent to Amer and Rabih for approval'),
       'bill-payment': () => run(state => payExpense(state, d.id, d, me), 'Bill paid'),
       manual: () => run(state => addManualEntry(state, d, me), 'Journal entry posted')
     }[d.kind]();
     if (done) close();
   }}>
-    <header class="drawer-head"><div class="grow"><h2>{({ invoice: 'New invoice', payment: 'Record payment', void: 'Void invoice', reverse: 'Reverse a payment', reject: 'Reject bill', expense: 'Record bill', 'bill-payment': 'Pay bill', manual: 'Journal entry' })[dialog.kind]}</h2></div></header>
+    <header class="drawer-head"><div class="grow"><h2>{({ invoice: 'New invoice', payment: 'Record payment', void: 'Void invoice', reverse: 'Reverse a payment', reject: 'Reject bill', bank: 'Add statement line', expense: 'Record bill', 'bill-payment': 'Pay bill', manual: 'Journal entry' })[dialog.kind]}</h2></div></header>
     <div class="drawer-body stack">
       {#if dialog.kind === 'invoice'}
         <label class="field"><span>Patient</span><select class="select" bind:value={dialog.patientId}>{#each db.patients as p}<option value={p.id}>{p.fullName}</option>{/each}</select></label>
@@ -253,6 +254,9 @@
         <label class="field"><span>Payment</span><select class="select" bind:value={dialog.paymentId}>{#each live as payment (payment.id)}<option value={payment.id}>{usd(payment.amount)}, {payment.method}, {fmtDate(payment.date)}{payment.reference ? `, ${payment.reference}` : ''}</option>{/each}</select></label>
         <label class="field"><span>Reason</span><input class="input" bind:value={dialog.reason} placeholder="For example: typed 600 instead of 60" /></label>
         <p class="faint">The receipt stays on record; a reversing entry is posted and the balance reopens.</p>
+      {:else if dialog.kind === 'bank'}
+        <div class="grid-2"><label class="field"><span>Date</span><input class="input" type="date" bind:value={dialog.date} /></label><label class="field"><span>Amount <span class="hint">negative for money out</span></span><input class="input" inputmode="decimal" bind:value={dialog.amount} /></label></div>
+        <div class="grid-2"><label class="field"><span>Description</span><input class="input" bind:value={dialog.description} placeholder="As on the statement" /></label><label class="field"><span>Reference</span><input class="input" bind:value={dialog.reference} /></label></div>
       {:else if dialog.kind === 'reject'}
         <label class="field"><span>Reason</span><input class="input" bind:value={dialog.reason} placeholder="For example: duplicate of an earlier bill" /></label>
         <p class="faint">The bill stays on record as rejected and never reaches the books.</p>

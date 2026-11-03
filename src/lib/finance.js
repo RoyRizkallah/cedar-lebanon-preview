@@ -11,6 +11,7 @@ export const ACCOUNTS = [
   { code: '1020', name: 'Cash on hand', type: 'Asset' },
   { code: '1100', name: 'Accounts receivable', type: 'Asset' },
   { code: '2100', name: 'Accounts payable', type: 'Liability' },
+  { code: '2200', name: 'Patient wallets (held for patients)', type: 'Liability' },
   { code: '4100', name: 'Program revenue', type: 'Revenue' },
   { code: '5100', name: 'Clinical & medical supplies', type: 'Expense' },
   { code: '5200', name: 'Facility & maintenance', type: 'Expense' },
@@ -57,7 +58,14 @@ export function createInvoice(state, { patientId, payer = 'Self-pay', amount, is
 export function invoiceMonth(state, patientId, month, staffId) {
   const patient = state.patients.find(item => item.id === patientId);
   if (books(state).invoices.some(item => item.patientId === patientId && item.status !== 'Void' && item.issued.startsWith(month) && /program fee/i.test(item.description))) throw new Error(`${patient?.fullName} is already invoiced for ${monthLabel(month)}.`);
-  return createInvoice(state, { patientId, payer: patient?.payer || 'Self-pay', amount: patient?.monthlyAmount, issued: `${month}-01`, due: addDays(`${month}-01`, 7), description: `${monthLabel(month)} program fee` }, staffId);
+  // Admitted during the month: billed from the first day in care, for the days left in the month.
+  const first = `${month}-01`;
+  const days = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
+  const from = patient?.admittedAt?.startsWith(month) && patient.admittedAt > first ? patient.admittedAt : first;
+  const share = (days - Number(from.slice(8, 10)) + 1) / days;
+  const amount = Math.round(Number(patient?.monthlyAmount || 0) * share);
+  const label = from === first ? `${monthLabel(month)} program fee` : `${monthLabel(month)} program fee, from ${new Date(`${from}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+  return createInvoice(state, { patientId, payer: patient?.payer || 'Self-pay', amount, issued: from, due: addDays(from, 7), description: label }, staffId);
 }
 
 export function recordPayment(state, invoiceId, { amount, method = 'Bank transfer', date, reference = '' }, staffId) {
@@ -139,6 +147,18 @@ export function payExpense(state, expenseId, { amount, method = 'Bank transfer',
   return expense;
 }
 
+// A line from the bank statement, typed in so it can be matched to the books. Money out is negative.
+export function addBankLine(state, { date, description, amount, reference = '' }, staffId) {
+  allowed(staffId);
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value === 0) throw new Error('Enter the amount: negative for money out.');
+  if (!String(description || '').trim()) throw new Error('Describe the statement line.');
+  const line = { id: nextId('BANK', books(state).bankEntries), date: date || todayISO(), description: String(description).trim(), amount: Math.round(value * 100) / 100, reference: String(reference).trim(), matchedJournalId: '' };
+  books(state).bankEntries.push(line);
+  log(state, staffId, `Bank statement line: ${line.description}`, '#/finance/bank');
+  return line;
+}
+
 export function addManualEntry(state, { date, description, reference = '', debitAccount, creditAccount, amount }, staffId) {
   allowed(staffId);
   if (debitAccount === creditAccount) throw new Error('A journal entry needs two different accounts.');
@@ -174,6 +194,14 @@ export function buildJournal(state) {
       const paid = dollars(payment.amount);
       out.push(entry(`J-${payment.id}`, payment.date, `Payment to ${expense.supplier}`, payment.reference || payment.id, [{ account: '2100', debit: paid, credit: 0 }, { account: payment.method === 'Cash' ? '1020' : '1010', debit: 0, credit: paid }], 'Bill payment'));
     }
+  }
+  // Wallet money is held for patients: a deposit raises what Cedar holds for them; a purchase or refund pays it out of petty cash.
+  const patientName = id => state.patients.find(patient => patient.id === id)?.fullName || id;
+  for (const item of state.wallet?.transactions || []) {
+    if (!['credit', 'purchase', 'refund'].includes(item.type) || !(item.amountCents > 0)) continue;
+    const amount = item.amountCents / 100;
+    const lines = item.type === 'credit' ? [{ account: '1020', debit: amount, credit: 0 }, { account: '2200', debit: 0, credit: amount }] : [{ account: '2200', debit: amount, credit: 0 }, { account: '1020', debit: 0, credit: amount }];
+    out.push(entry(`J-${item.id}`, item.date, `Wallet ${item.type === 'credit' ? 'deposit' : item.type}, ${patientName(item.patientId)}: ${item.description}`, item.id, lines, 'Wallet'));
   }
   for (const manual of manualEntries) out.push(entry(`J-${manual.id}`, manual.date, manual.description, manual.reference, [{ account: manual.debitAccount, debit: dollars(manual.amount), credit: 0 }, { account: manual.creditAccount, debit: 0, credit: dollars(manual.amount) }], 'Adjustment'));
   return out.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));

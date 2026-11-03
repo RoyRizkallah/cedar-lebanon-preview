@@ -1,11 +1,9 @@
 <script>
   import Icon from '../Icon.svelte';
   import FormList from '../FormList.svelte';
-  import { db, session, commit } from '../../lib/store.svelte.js';
-  import { completeTask } from '../../lib/tasks.js';
+  import { db, session } from '../../lib/store.svelte.js';
   import { staffName } from '../../lib/people.js';
   import { fmtDay, fmtDateTime, todayISO } from '../../lib/dates.js';
-  import { say } from '../../lib/ui.svelte.js';
 
   let { patient, onform } = $props();
   const me = session.staffId;
@@ -26,7 +24,7 @@
           <div class="grow"><div class="title">{task.title}</div><div class="sub">{task.status === 'done' ? `Made by ${staffName(task.doneBy)}, ${fmtDateTime(task.doneAt)}` : `Due ${fmtDay(task.due)}`}</div></div>
           {#if task.status === 'open'}
             {#if task.due < today}<span class="pill urgent">Overdue</span>{:else if task.due === today}<span class="pill warn">Today</span>{/if}
-            {#if me === 'melyssa'}<button class="btn sm" onclick={() => { commit(state => completeTask(state, task.id, me)); say('Call recorded. Log the outcome below.'); }}>Call made</button>{/if}
+            {#if me === 'melyssa'}<button class="btn sm" onclick={() => onform('aftercare', db.forms.find(entry => entry.formId === 'aftercare' && entry.patientId === patient.id)?.id || null)}>Log call</button>{/if}
           {/if}
         </li>
       {/each}

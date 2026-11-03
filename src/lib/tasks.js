@@ -7,6 +7,9 @@ import { notesOverdue } from './scheduling.js';
 import { STEPS, STEP_LABELS, STEP_OWNERS } from './admission.js';
 import { allFields, formById } from './forms/engine.js';
 import { dischargeDay } from './discharge.js';
+import { walletBalanceCents, formatCents } from './wallet.js';
+
+const LOW_WALLET_CENTS = 2000;
 
 export function completeTask(state, id, staffId, note = '') {
   const task = state.tasks.find(item => item.id === id);
@@ -123,13 +126,22 @@ export function tasksFor(state, staffId, now = new Date()) {
     const pending = allFields(form).filter(field => field.type === 'signature' && field.later && field.signer?.includes(staffId) && !entry.values[field.id]?.at);
     if (!pending.length) continue;
     const who = entry.patientId ? patientName(state, entry.patientId, form.family === 'clinical') : 'weekly review';
-    push({ id: `sign-${entry.id}`, kind: 'sign', title: `Sign ${form.title}: ${who}`, sub: pending.map(field => field.label).join(', '), due: entry.filedAt ? localDay(entry.filedAt) : today, link: entry.patientId ? `#/patients/${entry.patientId}/${form.family}/${entry.id}` : '#/patients' });
+    push({ id: `sign-${entry.id}`, kind: 'sign', title: `Sign ${form.title}: ${who}`, sub: pending.map(field => field.label).join(', '), due: entry.filedAt ? localDay(entry.filedAt) : today, link: entry.formId === 'review' ? `#/patients/review/${entry.id}` : entry.patientId ? `#/patients/${entry.patientId}/${form.family}/${entry.id}` : '#/patients' });
   }
 
   for (const request of (state.requests || []).filter(item => item.status === 'Awaiting approval')) {
     const patient = state.patients.find(item => item.id === request.patientId);
     const mine = request.restricted ? hasRole(staffId, 'nurse') : patient?.assigned?.rsa === staffId;
     if (mine) push({ id: `approve-${request.id}`, kind: 'request', title: `Approve: ${request.quantity} × ${request.item}`, sub: `For ${patientName(state, request.patientId)}${request.restricted ? ', restricted item' : ''}`, due: today, link: '#/requests' });
+  }
+
+  // Requests waiting on a wallet that can't cover them: Admin asks the family to top it up.
+  if (hasRole(staffId, 'admin')) {
+    for (const patient of state.patients.filter(item => item.status === 'Admitted')) {
+      const waiting = (state.requests || []).filter(item => item.patientId === patient.id && ['Open', 'Awaiting approval'].includes(item.status));
+      const balance = walletBalanceCents(state, patient.id);
+      if (waiting.length && balance < LOW_WALLET_CENTS) push({ id: `topup-${patient.id}`, kind: 'topup', patientId: patient.id, title: `Ask the family to top up: ${patient.fullName}`, sub: `Wallet ${formatCents(balance)}, ${waiting.length} request${waiting.length === 1 ? '' : 's'} waiting`, due: today, link: `#/patients/${patient.id}/wallet` });
+    }
   }
 
   // Purchases come out of petty cash, which Georgio holds.

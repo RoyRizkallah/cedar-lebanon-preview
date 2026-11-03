@@ -30,7 +30,9 @@
   const feed = $derived(teamFeed(db, me, session.now));
   const MILESTONE_ICONS = { stay: 'flag', program: 'heart', discharge: 'door', arrival: 'enter' };
   const when = date => { const d = daysAway(date, session.now); return d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : fmtDay(date); };
-  const ICONS = { todo: 'check-circle', meeting: 'users', discharge: 'door', 'final-bill': 'receipt', assessment: 'calendar', 'inquiry-followup': 'phone', 'followup-call': 'phone', review: 'clock', note: 'pen', admission: 'door', form: 'document', sign: 'pen', request: 'bag', prescription: 'pill' };
+  // A call is logged on its record (the inquiry, or the aftercare log), which closes the task.
+  const CALLS = ['inquiry-followup', 'followup-call'];
+  const ICONS = { topup: 'wallet', clearance: 'stethoscope', todo: 'check-circle', meeting: 'users', discharge: 'door', 'final-bill': 'receipt', assessment: 'calendar', 'inquiry-followup': 'phone', 'followup-call': 'phone', review: 'clock', note: 'pen', admission: 'door', form: 'document', sign: 'pen', request: 'bag', prescription: 'pill' };
   const columns = $derived([
     { key: 'overdue', title: 'Overdue', hint: 'Past their date', items: work.overdue },
     { key: 'today', title: 'Today', hint: 'Due before you leave', items: work.today },
@@ -46,11 +48,12 @@
   let note = $state(null);
   function act(item) {
     if (item.kind === 'note') { note = { formId: 'session', patientId: item.patientId, appointmentId: item.appointmentId }; return; }
+    if (CALLS.includes(item.kind)) { go(item.link); return; }
     if (item.taskId) { commit(state => completeTask(state, item.taskId, me)); say('Marked done'); return; }
     if (item.kind === 'prescription') { commit(state => reviewPrescription(state, item.docId, me)); say('Prescription reviewed'); return; }
     go(item.link);
   }
-  const actionLabel = item => item.taskId ? 'Mark done' : item.kind === 'prescription' ? 'Mark reviewed' : item.kind === 'note' ? 'Write note' : item.kind === 'sign' ? 'Sign' : 'Open';
+  const actionLabel = item => CALLS.includes(item.kind) ? 'Log call' : item.taskId ? 'Mark done' : item.kind === 'prescription' ? 'Mark reviewed' : item.kind === 'note' ? 'Write note' : item.kind === 'sign' ? 'Sign' : 'Open';
 </script>
 
 <main class="content">
