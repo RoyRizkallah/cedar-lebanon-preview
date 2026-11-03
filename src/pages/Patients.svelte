@@ -6,7 +6,7 @@
   import { canDo, visiblePatients, hasRole } from '../lib/people.js';
   const floor = hasRole(session.staffId, 'rsa');
   import { PROGRAMS } from '../lib/pipeline.js';
-  import { riskLevel, formById } from '../lib/forms/engine.js';
+  import { riskLevel, onWatch, formById } from '../lib/forms/engine.js';
   import { upcomingFor } from '../lib/scheduling.js';
   import { daysBetween, todayISO, fmtDay, fmtDate } from '../lib/dates.js';
   import { go } from '../lib/ui.svelte.js';
@@ -62,7 +62,8 @@
             <header>
               <span class="avatar lime big">{patient.fullName.split(' ').map(part => part[0]).slice(0, 2).join('')}</span>
               <div class="grow"><strong>{patient.fullName}</strong><span>{patient.program}{patient.roomId ? `, room ${patient.roomId}` : ''}</span></div>
-              {#if level}<span class="pill {level === 'High' ? 'urgent' : level === 'Medium' ? 'warn' : 'ok'}">{level}</span>{/if}
+              {#if level}<span class="pill {level === 'High' ? 'urgent' : level === 'Medium' ? 'warn' : 'ok'}">{level}</span>
+              {:else if !showRisk && onWatch(db, patient.id)}<span class="pill warn" title="Extra care: ask the clinical team before leave or changes">On watch</span>{/if}
             </header>
             {#if !floor && view === 'Admitted'}
               <div class="phases" aria-label={`Phase ${phase} of 4`}>{#each [1, 2, 3, 4] as n}<i class:done={n < phase} class:now={n === phase}></i>{/each}</div>

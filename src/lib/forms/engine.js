@@ -95,6 +95,9 @@ export function riskLevel(state, patientId) {
   return intake ? maxRisk(intake.values) : null;
 }
 
+// On watch: a resident rated Medium or High. The floor sees this flag; only the clinical team sees the rating.
+export const onWatch = (state, patientId) => ['Medium', 'High'].includes(riskLevel(state, patientId));
+
 export function reviewRisk(state, patientId, level, note, staffId) {
   if (!RISK_ORDER.includes(level)) throw new Error('Choose Low, Medium or High.');
   if (!String(note || '').trim()) throw new Error('Add the basis for this review.');

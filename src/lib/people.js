@@ -98,6 +98,7 @@ const ACTIONS = {
   viewIncidentDetail: ['gm', 'director', 'clinical-director', 'psychologist', 'drama', 'nurse', 'rsa-lead'],
   viewTherapyBookings: [...CLINICIANS, 'nurse', 'admin', 'gm', 'pt', 'trainer'],
   viewPrescriptions: ['director', 'clinical-director', 'nurse', 'nurse-aide'],
+  approveRestricted: ['director', 'clinical-director', 'nurse'],
   viewRisk: [...CLINICIANS, 'nurse'],
   resetData: MANAGEMENT
 };

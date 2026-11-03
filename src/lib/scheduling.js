@@ -1,7 +1,7 @@
 // Internal calendar: earliest free slot, no double booking, external psychiatrist recorded by Fadia.
 import { nextId } from './ids.js';
 import { addDays, weekday, minutesOf, hhmm, hoursBetween } from './dates.js';
-import { staffName, hasRole, canDo } from './people.js';
+import { STAFF, staffName, hasRole, canDo } from './people.js';
 import { notify } from './notifications.js';
 import { log } from './activity.js';
 
@@ -88,6 +88,8 @@ export function autoBookPsychologist(state, { inquiryId, patientId }, from, staf
 // Whose calendars a person sees: their own (Fadia also the external psychiatrist); the partners and Melyssa see everyone.
 export function scheduleScope(staffId) {
   if (canDo(staffId, 'seeAllBookings')) return 'all';
+  // The Clinical Director oversees the therapists' sessions and notes.
+  if (hasRole(staffId, 'clinical-director')) return STAFF.filter(person => hasRole(person.id, 'clinical-director', 'psychologist', 'drama')).map(person => person.id);
   return staffId === 'fadia' ? ['fadia', 'external'] : [staffId];
 }
 

@@ -3,7 +3,7 @@
   import Icon from '../components/Icon.svelte';
   import { MOODS, addCheckin } from '../lib/support.js';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { createRequest, completeRequest, cancelRequest, uploadInvoice } from '../lib/requests.js';
+  import { createRequest, completeRequest, cancelRequest, uploadInvoice, approveRequest, declineRequest } from '../lib/requests.js';
   import { walletBalanceCents, formatCents } from '../lib/wallet.js';
   import { visiblePatients, staffName, canDo } from '../lib/people.js';
   import { fmtAgo } from '../lib/dates.js';
@@ -31,10 +31,12 @@
   let creating = $state(args[0] === 'new' ? { patientId: startPatient || '', item: '', quantity: 1, note: '' } : null);
   let invoice = $state(null);
   let buying = $state(null);
+  let declining = $state(null);
   let error = $state('');
 
-  const rows = $derived(db.requests.filter(item => canDo(me, 'pettyCash') || patients.some(p => p.id === item.patientId) || item.status !== 'Open')
-    .filter(item => view === 'All' || item.status === view || (view === 'Done' && item.status === 'Cancelled'))
+  // Georgio buys for everyone; everyone else sees the residents they look after.
+  const rows = $derived(db.requests.filter(item => canDo(me, 'pettyCash') || patients.some(p => p.id === item.patientId))
+    .filter(item => view === 'All' || item.status === view || (view === 'Open' && item.status === 'Awaiting approval') || (view === 'Done' && ['Cancelled', 'Declined'].includes(item.status)))
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))));
   const patientName = id => db.patients.find(p => p.id === id)?.fullName || id;
 
@@ -99,14 +101,27 @@
           <div class="title">{request.item}</div>
           <div class="sub">For <a href={`#/patients/${request.patientId}/wallet`}>{patientName(request.patientId)}</a>{request.note ? `. ${request.note.replace(/\.$/, '')}` : ''}. {staffName(request.createdBy)}, {fmtAgo(request.createdAt, session.now)}.</div>
         </div>
-        {#if request.status === 'Open'}
+        {#if request.status === 'Awaiting approval'}
+          <span class="pill warn">{request.restricted ? 'Restricted: needs clinical OK' : 'Needs approval'}</span>
+          {#if request.restricted ? canDo(me, 'approveRestricted') : canDo(me, 'createRequest')}
+            <button class="btn sm ghost" onclick={() => { error = ''; declining = { id: request.id, reason: '' }; }}>Decline</button>
+            <button class="btn sm dark" onclick={() => run(state => approveRequest(state, request.id, me), 'Approved: Georgio will buy it')}>Approve</button>
+          {/if}
+        {:else if request.status === 'Open'}
           <span class="faint num" style="font-size: 12.5px">Wallet {formatCents(walletBalanceCents(db, request.patientId))}</span>
           <button class="btn sm ghost" onclick={() => run(state => cancelRequest(state, request.id, me), 'Request cancelled')}>Cancel</button>
           {#if canDo(me, 'pettyCash')}<button class="btn sm dark" onclick={() => { error = ''; buying = { id: request.id, amount: '', file: null }; }}>Bought</button>{/if}
         {:else}
           {#if request.amountCents}<strong class="num">{formatCents(request.amountCents)}</strong>{/if}
           {#if request.invoiceDocId}{@const doc = db.documents.find(d => d.id === request.invoiceDocId)}{#if doc?.fileId}<button class="btn sm" onclick={() => openFile(doc.fileId)}>Invoice</button>{/if}{/if}
-          <span class="pill {request.status === 'Done' ? 'ok' : ''}">{request.status}</span>
+          <span class="pill {request.status === 'Done' ? 'ok' : ''}" title={request.declineReason || ''}>{request.status}</span>
+        {/if}
+        {#if declining?.id === request.id}
+          <form class="buy" onsubmit={event => { event.preventDefault(); if (run(state => declineRequest(state, request.id, declining.reason, me), 'Request declined')) declining = null; }}>
+            <label class="field grow"><span>Why not <span class="hint">the resident sees this</span></span><input class="input" bind:value={declining.reason} placeholder="For example: alcohol-based; ask for an alcohol-free one" /></label>
+            <button class="btn primary" type="submit">Decline request</button>
+            <button class="btn ghost" type="button" onclick={() => { declining = null; }}>Keep it</button>
+          </form>
         {/if}
         {#if buying?.id === request.id}
           <form class="buy" onsubmit={event => { event.preventDefault(); buy(); }}>

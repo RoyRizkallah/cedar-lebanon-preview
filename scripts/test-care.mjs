@@ -40,7 +40,7 @@ assert.equal(count('ahmed'), ahmed + 1, 'negative tests alert nobody');
 assert.throws(() => logVisit(state, { patientId: patient.id, visitor: '' }, 'melyssa'), /Add the visitor/);
 const visit = logVisit(state, { patientId: patient.id, visitor: 'Mona H.', relation: 'Mother', date: '2026-11-02', start: '15:00', end: '16:00' }, 'rsa');
 assert.equal(visit.loggedBy, 'rsa');
-const leave = startLeave(state, { patientId: patient.id, out: '2026-11-02T10:00:00', dueBack: '2026-11-02T18:00:00', escort: 'Brother' }, 'melyssa');
+const leave = startLeave(state, { patientId: patient.id, out: '2026-11-02T10:00:00', dueBack: '2026-11-02T18:00:00', escort: 'Brother', clinicalOk: true }, 'melyssa');
 assert.throws(() => startLeave(state, { patientId: patient.id, out: '2026-11-02T11:00:00', dueBack: '2026-11-02T19:00:00' }, 'melyssa'), /already out/);
 assert.equal(leaveStatus(leave, new Date('2026-11-02T17:00:00')), 'Out');
 assert.equal(leaveStatus(leave, new Date('2026-11-02T18:30:00')), 'Overdue');
@@ -75,7 +75,8 @@ assert.throws(() => removeRoom(state, occupied.id, 'melyssa'), /has patients in 
 // ---- Sessions hub ----
 const week = sessionsWeek(state, 'clinical-director', '2026-10-26', now);
 assert.ok(week.items.length > 0);
-assert.ok(week.items.every(item => item.appointment.provider === 'clinical-director'), 'own sessions only');
+assert.ok(week.items.every(item => ['clinical-director', 'nabila', 'nazha'].includes(item.appointment.provider)), 'Wael sees his team, not fitness or nursing');
+assert.ok(sessionsWeek(state, 'nabila', '2026-10-26', now).items.every(item => item.appointment.provider === 'nabila'), 'Nabila sees her own');
 assert.ok(week.items.some(item => item.appointment.service === 'Group' && item.attendance));
 const nabila = sessionsWeek(state, 'nabila', '2026-10-26', now);
 assert.equal(nabila.summary.overdue, 1, 'the missing seeded note is overdue');

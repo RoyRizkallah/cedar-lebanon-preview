@@ -5,6 +5,7 @@
   import { INCIDENT_TYPES, SEVERITIES, logVisit, startLeave, returnLeave, leaveStatus, reportIncident, reviewIncident } from '../lib/safety.js';
   import { staffName, visiblePatients, canDo } from '../lib/people.js';
   import { incidentsFor } from '../lib/safety.js';
+  import { onWatch } from '../lib/forms/engine.js';
   import { fmtDate, fmtDateTime, todayISO } from '../lib/dates.js';
   import { downloadCsv } from '../lib/csv.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -167,6 +168,7 @@
         <label class="field"><span>Resident</span><select class="select" bind:value={dialog.patientId}>{#each inCare as p}<option value={p.id}>{p.fullName}</option>{/each}</select></label>
         <div class="grid-2"><label class="field"><span>Out</span><input class="input" type="datetime-local" bind:value={dialog.out} /></label><label class="field"><span>Due back</span><input class="input" type="datetime-local" bind:value={dialog.dueBack} /></label></div>
         <div class="grid-2"><label class="field"><span>With</span><input class="input" bind:value={dialog.escort} /></label><label class="field"><span>Reason</span><input class="input" bind:value={dialog.reason} /></label></div>
+        {#if onWatch(db, dialog.patientId)}<p class="notice warn"><Icon name="alert" size={15} />{name(dialog.patientId)} is on watch.</p><label class="check-line"><input type="checkbox" bind:checked={dialog.clinicalOk} />The clinical team agreed to this leave</label>{/if}
       {:else}
         <label class="field"><span>Outcome of the review</span><textarea class="textarea" rows="3" bind:value={dialog.outcome}></textarea></label>
       {/if}
@@ -177,6 +179,7 @@
 {/if}
 
 <style>
+  .check-line { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 650; }
   /* Pulse: what needs a decision now (incidents to review) and who is out of the house */
   .watchboard { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 10px; margin-bottom: 16px; }
   .watch { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; padding: 17px 18px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }

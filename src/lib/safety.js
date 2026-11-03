@@ -4,6 +4,7 @@ import { todayISO, fmtDateTime } from './dates.js';
 import { notify } from './notifications.js';
 import { log } from './activity.js';
 import { canDo, whoCan, visiblePatients } from './people.js';
+import { onWatch } from './forms/engine.js';
 
 export const INCIDENT_TYPES = ['Aggression', 'Self-harm', 'Absconding', 'Substance found', 'Rule breach', 'Medical', 'Property damage', 'Other'];
 export const SEVERITIES = ['Low', 'Medium', 'High'];
@@ -24,13 +25,14 @@ export function leaveStatus(leave, now = new Date()) {
   return now.toISOString() > new Date(leave.dueBack).toISOString() ? 'Overdue' : 'Out';
 }
 
-export function startLeave(state, { patientId, out, dueBack, escort = '', reason = '' }, staffId) {
+export function startLeave(state, { patientId, out, dueBack, escort = '', reason = '', clinicalOk = false }, staffId) {
   const patient = patientOf(state, patientId);
   if (state.leaves.some(item => item.patientId === patientId && !item.returnedAt)) throw new Error(`${patient.fullName} is already out on leave.`);
+  if (onWatch(state, patientId) && !clinicalOk) throw new Error(`${patient.fullName} is on watch: confirm the clinical team agreed to this leave.`);
   const leaving = new Date(out || Date.now()).toISOString();
   const back = new Date(dueBack).toISOString();
   if (!dueBack || back <= leaving) throw new Error('The return time must be after the time out.');
-  const leave = { id: nextId('LV', state.leaves), patientId, out: leaving, dueBack: back, escort: escort.trim(), reason: reason.trim(), by: staffId };
+  const leave = { id: nextId('LV', state.leaves), patientId, out: leaving, dueBack: back, escort: escort.trim(), reason: reason.trim(), by: staffId, ...(clinicalOk ? { clinicalOk: true } : {}) };
   state.leaves.push(leave);
   log(state, staffId, `${patient.fullName} out on leave until ${fmtDateTime(back)}`, '#/safety/leave');
   return leave;

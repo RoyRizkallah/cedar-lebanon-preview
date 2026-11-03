@@ -25,7 +25,7 @@
     error = '';
     try { commit(state => createRequest(state, { patientId, item, quantity, note }, me)); item = ''; quantity = 1; note = ''; say('Request sent to the support team'); } catch (e) { error = e.message; }
   }
-  const STATUS = { Open: ['warn', 'Waiting'], Done: ['ok', 'Bought'], Cancelled: ['', 'Cancelled'] };
+  const STATUS = { 'Awaiting approval': ['', 'Being checked'], Open: ['warn', 'Waiting'], Done: ['ok', 'Bought'], Cancelled: ['', 'Cancelled'], Declined: ['', 'Not approved'] };
 </script>
 
 <main class="content">
@@ -60,7 +60,8 @@
             <li>
               <div class="grow"><div class="title">{request.quantity} × {request.item}</div><div class="sub">Asked {fmtDate(request.createdAt)}{request.amountCents ? `, cost ${formatCents(request.amountCents)}` : ''}</div></div>
               <span class="pill {STATUS[request.status][0]}">{STATUS[request.status][1]}</span>
-              {#if request.status === 'Open'}<button class="btn sm ghost" onclick={() => { commit(state => cancelRequest(state, request.id, me)); say('Request cancelled'); }}>Cancel</button>{/if}
+              {#if request.declineReason}<span class="faint" style="font-size: 12px">{request.declineReason}</span>{/if}
+              {#if ['Open', 'Awaiting approval'].includes(request.status)}<button class="btn sm ghost" onclick={() => { commit(state => cancelRequest(state, request.id, me)); say('Request cancelled'); }}>Cancel</button>{/if}
             </li>
           {:else}<li class="faint">You have not asked for anything yet.</li>{/each}
         </ul>

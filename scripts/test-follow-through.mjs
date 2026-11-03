@@ -35,7 +35,7 @@ const now = new Date();
   const patient = state.patients.find(item => item.status === 'Admitted' && item.assigned?.rsa && !state.leaves.some(leave => leave.patientId === item.id && !leave.returnedAt));
   const out = new Date(now.getTime() - 5 * 3600000).toISOString();
   const dueBack = new Date(now.getTime() - 3600000).toISOString();
-  const leave = startLeave(state, { patientId: patient.id, out, dueBack, escort: 'Brother', reason: 'Family lunch' }, 'melyssa');
+  const leave = startLeave(state, { patientId: patient.id, out, dueBack, escort: 'Brother', reason: 'Family lunch', clinicalOk: true }, 'melyssa');
   const before = state.notifications.length;
   runLeaveAlerts(state, now);
   const alerts = state.notifications.slice(0, state.notifications.length - before).filter(item => item.title.includes(patient.fullName));

@@ -15,6 +15,10 @@ const patientOf = (state, id) => {
   return patient;
 };
 
+// Items a rehab can't hand over without a clinical yes: alcohol-based products, medicines, stimulants, sharps.
+const RESTRICTED = ['mouthwash', 'perfume', 'cologne', 'aftershave', 'sanitizer', 'sanitiser', 'cough syrup', 'syrup', 'painkiller', 'panadol', 'paracetamol', 'ibuprofen', 'pill', 'tablet', 'sleeping', 'energy drink', 'red bull', 'razor', 'blade', 'lighter', 'vape'];
+export const isRestricted = item => RESTRICTED.some(word => String(item).toLowerCase().includes(word));
+
 export function createRequest(state, { patientId, item, quantity, note = '' }, staffId) {
   const own = isResident(staffId) && RESIDENTS.find(person => person.id === staffId)?.patientId === patientId;
   if (!canDo(staffId, 'createRequest') && !own) throw new Error('You cannot create requests.');
@@ -24,7 +28,9 @@ export function createRequest(state, { patientId, item, quantity, note = '' }, s
   if (name.length < 2 || name.length > 100) throw new Error('Describe the item in 2 to 100 characters.');
   if (!Number.isInteger(count) || count < 1 || count > 20) throw new Error('Choose a quantity from 1 to 20.');
   if (String(note).length > 300) throw new Error('Keep the note within 300 characters.');
-  const request = { id: nextId('R', state.requests), patientId, item: name, quantity: count, note: String(note).trim(), status: 'Open', createdBy: staffId, createdAt: new Date().toISOString() };
+  // A resident's own request is checked by their RSA; a restricted item needs Fadia or the clinical team.
+  const restricted = isRestricted(name);
+  const request = { id: nextId('R', state.requests), patientId, item: name, quantity: count, note: String(note).trim(), status: own || restricted ? 'Awaiting approval' : 'Open', ...(restricted ? { restricted: true } : {}), createdBy: staffId, createdAt: new Date().toISOString() };
   state.requests.push(request);
   log(state, staffId, `Request for ${patient.fullName}: ${count} × ${name}`, '#/requests');
   return request;
@@ -37,8 +43,30 @@ function invoiceDocument(state, { patientId, fileId, fileName, note }, staffId) 
   return document;
 }
 
+const mayApprove = (request, staffId) => request.restricted ? canDo(staffId, 'approveRestricted') : canDo(staffId, 'createRequest');
+
+export function approveRequest(state, id, staffId) {
+  const request = find(state, id);
+  if (request.status !== 'Awaiting approval') throw new Error('This request is not waiting for approval.');
+  if (!mayApprove(request, staffId)) throw new Error(request.restricted ? 'Restricted items are approved by Fadia or the clinical team.' : 'Requests are approved by the RSA team or Admin.');
+  Object.assign(request, { status: 'Open', approvedBy: staffId, approvedAt: new Date().toISOString() });
+  log(state, staffId, `Approved request: ${request.item}`, '#/requests');
+  return request;
+}
+
+export function declineRequest(state, id, reason, staffId) {
+  const request = find(state, id);
+  if (request.status !== 'Awaiting approval') throw new Error('This request is not waiting for approval.');
+  if (!mayApprove(request, staffId)) throw new Error(request.restricted ? 'Restricted items are approved by Fadia or the clinical team.' : 'Requests are approved by the RSA team or Admin.');
+  if (!String(reason || '').trim()) throw new Error('Give a reason, so the resident knows why.');
+  Object.assign(request, { status: 'Declined', declineReason: String(reason).trim(), completedAt: new Date().toISOString(), completedBy: staffId });
+  log(state, staffId, `Declined request: ${request.item}`, '#/requests');
+  return request;
+}
+
 export function completeRequest(state, id, { amount, fileId, fileName }, staffId) {
   const request = find(state, id);
+  if (request.status === 'Awaiting approval') throw new Error('This request has not been approved yet.');
   if (request.status !== 'Open') throw new Error('This request is already closed.');
   if (!canDo(staffId, 'pettyCash')) throw new Error('Purchases are paid from petty cash, held by Georgio.');
   const cents = amountToCents(amount);
@@ -53,7 +81,7 @@ export function completeRequest(state, id, { amount, fileId, fileName }, staffId
 
 export function cancelRequest(state, id, staffId) {
   const request = find(state, id);
-  if (request.status !== 'Open') throw new Error('This request is already closed.');
+  if (!['Open', 'Awaiting approval'].includes(request.status)) throw new Error('This request is already closed.');
   if (isResident(staffId) && RESIDENTS.find(person => person.id === staffId)?.patientId !== request.patientId) throw new Error('You can only cancel your own requests.');
   Object.assign(request, { status: 'Cancelled', completedAt: new Date().toISOString(), completedBy: staffId });
   log(state, staffId, `Cancelled request: ${request.item}`, '#/requests');

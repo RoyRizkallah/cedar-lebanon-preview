@@ -12,7 +12,7 @@
   import DischargeDialog from '../components/DischargeDialog.svelte';
   import { db, session } from '../lib/store.svelte.js';
   import { tabsFor, canDo, canSeeTab, visiblePatients } from '../lib/people.js';
-  import { riskLevel, formById } from '../lib/forms/engine.js';
+  import { riskLevel, onWatch, formById } from '../lib/forms/engine.js';
   import { daysBetween, todayISO, fmtDate } from '../lib/dates.js';
   import { noPhone } from '../lib/pipeline.js';
   import { emergencyContact } from '../lib/contacts.js';
@@ -52,7 +52,8 @@
             {#if patient.roomId}<span class="chip">Room {patient.roomId}, bed {patient.bed}</span>{/if}
             <span class="chip">{patient.status === 'Discharged' ? `Discharged ${fmtDate(patient.dischargedAt)}` : `Day ${day} of stay`}</span>
             {#if patient.status === 'Discharged'}<span class="chip">{patient.dischargeType ? `${patient.dischargeType}, after` : 'After'} {day - 1} days</span>{/if}
-            {#if risk}<span class="chip risk-{risk}" title="Latest risk rating">{risk} risk</span>{/if}
+            {#if risk}<span class="chip risk-{risk}" title="Latest risk rating">{risk} risk</span>
+            {:else if patient.status === 'Admitted' && onWatch(db, patient.id)}<span class="chip warn" title="Extra care: ask the clinical team before leave or changes"><Icon name="alert" size={13} />On watch</span>{/if}
             {#if patient.status === 'Admitted' && !emergencyContact(patient)}<span class="chip warn"><Icon name="alert" size={13} />No emergency contact</span>{/if}
             {#if noPhone(patient)}<span class="chip warn"><Icon name="phone-off" size={13} />No phone calls</span>{/if}
           </div>

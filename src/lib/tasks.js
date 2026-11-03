@@ -126,6 +126,12 @@ export function tasksFor(state, staffId, now = new Date()) {
     push({ id: `sign-${entry.id}`, kind: 'sign', title: `Sign ${form.title}: ${who}`, sub: pending.map(field => field.label).join(', '), due: entry.filedAt ? localDay(entry.filedAt) : today, link: entry.patientId ? `#/patients/${entry.patientId}/${form.family}/${entry.id}` : '#/patients' });
   }
 
+  for (const request of (state.requests || []).filter(item => item.status === 'Awaiting approval')) {
+    const patient = state.patients.find(item => item.id === request.patientId);
+    const mine = request.restricted ? hasRole(staffId, 'nurse') : patient?.assigned?.rsa === staffId;
+    if (mine) push({ id: `approve-${request.id}`, kind: 'request', title: `Approve: ${request.quantity} × ${request.item}`, sub: `For ${patientName(state, request.patientId)}${request.restricted ? ', restricted item' : ''}`, due: today, link: '#/requests' });
+  }
+
   // Purchases come out of petty cash, which Georgio holds.
   if (hasRole(staffId, 'petty-cash')) {
     for (const request of state.requests.filter(item => item.status === 'Open')) {
