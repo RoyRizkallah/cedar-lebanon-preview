@@ -1,14 +1,12 @@
 // The week's therapy, group and fitness sessions with their attendance and note status. Shows status only, never note content.
 import { addDays, hoursBetween } from './dates.js';
-import { scheduleScope } from './scheduling.js';
-
-const KINDS = { 'Psychologist session': 'Individual', 'Therapist session': 'Individual', Group: 'Group', 'Fitness session': 'Fitness', Physiotherapy: 'Fitness' };
+import { scheduleScope, sessionKind } from './scheduling.js';
 
 export function sessionsWeek(state, staffId, weekStart, now = new Date()) {
   const end = addDays(weekStart, 6);
   const scope = scheduleScope(staffId);
   const items = state.appointments
-    .filter(item => KINDS[item.service] && item.status !== 'Cancelled' && item.date >= weekStart && item.date <= end && (scope === 'all' || scope.includes(item.provider)))
+    .filter(item => sessionKind(item.service) && item.status !== 'Cancelled' && item.date >= weekStart && item.date <= end && (scope === 'all' || scope.includes(item.provider)))
     .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start))
     .map(appointment => {
       const note = state.forms.find(entry => entry.id === appointment.noteFormId);
@@ -18,7 +16,7 @@ export function sessionsWeek(state, staffId, weekStart, now = new Date()) {
       const rows = [note?.values?.attendance, note?.values?.patients].find(Array.isArray);
       const single = typeof note?.values?.attendance === 'string' ? note.values.attendance : null;
       const attendance = rows ? { present: rows.filter(row => row.present === true || row.attended === 'Attended').length, total: rows.length } : single ? { present: single === 'Attended' ? 1 : 0, total: 1 } : null;
-      return { appointment, kind: KINDS[appointment.service], noteStatus, attendance };
+      return { appointment, kind: sessionKind(appointment.service), noteStatus, attendance };
     });
   const rows = items.filter(item => item.attendance);
   const present = rows.reduce((sum, item) => sum + item.attendance.present, 0);

@@ -1,8 +1,9 @@
 <script>
   import Icon from '../components/Icon.svelte';
   import InquiryDrawer from '../components/InquiryDrawer.svelte';
+  import AssessmentDialog from '../components/AssessmentDialog.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { FOLLOW_UP_DAYS, CALL_OUTCOMES, followUpAgain, moveInquiry, declineInquiry, money, followUpPotential, noPhone } from '../lib/pipeline.js';
+  import { FOLLOW_UP_DAYS, CALL_OUTCOMES, followUpAgain, declineInquiry, money, followUpPotential, noPhone } from '../lib/pipeline.js';
   import { staffName } from '../lib/people.js';
   import { fmtDay, todayISO, daysBetween } from '../lib/dates.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -12,6 +13,7 @@
   const me = session.staffId;
   const today = todayISO(session.now);
   let dialog = $state(null);
+  let assessing = $state('');
   let error = $state('');
 
   const rows = $derived(db.inquiries.filter(item => item.stage === 'Follow-up' && !item.outcome).sort((a, b) => a.followUp.due.localeCompare(b.followUp.due)));
@@ -64,7 +66,7 @@
             <td data-label="Potential" class="num">{money(item.potentialRevenue)}</td>
             <td>
               <div class="row" style="justify-content: flex-end; gap: 6px; flex-wrap: wrap">
-                <button class="btn sm dark" onclick={() => run(state => moveInquiry(state, item.id, 'Assessment', me), `${item.name} moved to Assessment`)}>Schedule assessment</button>
+                <button class="btn sm dark" onclick={() => { assessing = item.id; }}>Schedule assessment</button>
                 <button class="btn sm" onclick={() => { error = ''; dialog = { kind: 'again', id: item.id, name: item.name, days: FOLLOW_UP_DAYS, outcome: 'No answer', note: '' }; }}>Follow up again</button>
                 <button class="btn sm ghost danger" onclick={() => { error = ''; dialog = { kind: 'close', id: item.id, name: item.name, reason: '' }; }}>Close</button>
               </div>
@@ -79,6 +81,7 @@
 </main>
 
 {#if args[0] && args[1] === 'open'}<InquiryDrawer id={args[0]} onclose={() => go('followups')} />{/if}
+{#if assessing}<AssessmentDialog id={assessing} onclose={() => { assessing = ''; }} />{/if}
 
 {#if dialog}
   <div class="scrim" onclick={() => { dialog = null; }} aria-hidden="true"></div>

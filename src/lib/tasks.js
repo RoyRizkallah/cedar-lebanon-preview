@@ -2,10 +2,11 @@
 import { log } from './activity.js';
 import { staffName, hasRole } from './people.js';
 import { addDays, todayISO, daysBetween, fmtDay, localDay } from './dates.js';
-import { reviewDue, REVIEW_AFTER_HOURS } from './pipeline.js';
+import { reviewDue, REVIEW_AFTER_HOURS, assessmentFor } from './pipeline.js';
 import { notesOverdue } from './scheduling.js';
 import { STEPS, STEP_LABELS, STEP_OWNERS } from './admission.js';
 import { allFields, formById } from './forms/engine.js';
+import { dischargeDay } from './discharge.js';
 
 export function completeTask(state, id, staffId, note = '') {
   const task = state.tasks.find(item => item.id === id);
@@ -34,6 +35,13 @@ export function tasksFor(state, staffId, now = new Date()) {
   for (const inquiry of state.inquiries) {
     if (inquiry.contactPerson === staffId && reviewDue(inquiry, now)) {
       push({ id: `review-${inquiry.id}`, kind: 'review', title: `Review ${inquiry.name}`, sub: `More than ${REVIEW_AFTER_HOURS} hours in New Inquiry`, due: todayISO(new Date(new Date(inquiry.stageHistory.at(-1).at).getTime() + REVIEW_AFTER_HOURS * 3600000)), link: `#/pipeline/${inquiry.id}` });
+    }
+  }
+
+  // In Assessment with nothing booked: the contact person books it.
+  for (const inquiry of state.inquiries) {
+    if (inquiry.stage === 'Assessment' && !inquiry.outcome && inquiry.contactPerson === staffId && !assessmentFor(state, inquiry.id)) {
+      push({ id: `assessment-${inquiry.id}`, kind: 'assessment', title: `Book the assessment: ${inquiry.name}`, sub: 'In Assessment with nothing booked', due: today, link: `#/pipeline/${inquiry.id}` });
     }
   }
 
@@ -80,6 +88,14 @@ export function tasksFor(state, staffId, now = new Date()) {
       const last = [localDay(plan.filedAt), ...(plan.values.reviews || []).map(review => review.date).filter(Boolean)].sort().at(-1);
       const due = addDays(last, 30);
       if (daysBetween(today, due) <= UPCOMING_DAYS) push({ id: `review-plan-${plan.id}`, kind: 'form', title: `Monthly plan review: ${patient.clinicalName}`, sub: 'Add a dated review entry to the treatment plan', due, link: `#/patients/${patient.id}/clinical/${plan.id}` });
+    }
+  }
+
+  // Once a discharge plan is filed, the coordinator discharges the patient on the day, from their file.
+  if (hasRole(staffId, 'admin')) {
+    for (const patient of state.patients.filter(item => item.status === 'Admitted')) {
+      const day = dischargeDay(state, patient.id);
+      if (day && daysBetween(today, day) <= UPCOMING_DAYS) push({ id: `discharge-${patient.id}`, kind: 'discharge', patientId: patient.id, title: `Discharge ${patient.fullName}`, sub: 'Bed, program, wallet and final bill follow', due: day, link: `#/patients/${patient.id}` });
     }
   }
 

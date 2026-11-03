@@ -1,11 +1,13 @@
 // In-app notifications. Urgent ones also record the email and WhatsApp copies waiting to be sent.
+import { reachableLink } from './people.js';
 export const URGENT_CHANNELS = ['In-app', 'Email (queued)', 'WhatsApp (queued)'];
 
-export function notify(state, { to, title, body = '', link = '', urgent = false, channels }) {
+// Each person's link only goes where they can look; the body carries the facts either way.
+export function notify(state, { to, title, body = '', link = '', fallback = '', urgent = false, channels }) {
   const recipients = [...new Set([to].flat().filter(Boolean))];
   const at = new Date().toISOString();
   return recipients.map(recipient => {
-    const item = { id: `N-${Date.now().toString(36)}-${state.notifications.length + 1}`, to: recipient, title, body, link, urgent, channels: channels || (urgent ? URGENT_CHANNELS : ['In-app']), at, read: false };
+    const item = { id: `N-${Date.now().toString(36)}-${state.notifications.length + 1}`, to: recipient, title, body, link: reachableLink(recipient, link, fallback), urgent, channels: channels || (urgent ? URGENT_CHANNELS : ['In-app']), at, read: false };
     state.notifications.unshift(item);
     return item;
   });

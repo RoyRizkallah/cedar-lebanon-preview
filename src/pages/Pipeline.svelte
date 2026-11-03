@@ -3,10 +3,11 @@
   import InquiryDrawer from '../components/InquiryDrawer.svelte';
   import InquiryFields from '../components/InquiryFields.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { STAGES, PROGRAMS, createInquiry, moveInquiry, reviewDue, timeInStageHours, noPhone, money, isOpen, potentialTotals, startFollowUp, FOLLOW_UP_DAYS } from '../lib/pipeline.js';
+  import { STAGES, PROGRAMS, createInquiry, moveInquiry, reviewDue, timeInStageHours, noPhone, money, isOpen, potentialTotals, startFollowUp, FOLLOW_UP_DAYS, assessmentFor } from '../lib/pipeline.js';
+  import AssessmentDialog from '../components/AssessmentDialog.svelte';
   import { dashboard } from '../lib/kpis.js';
   import { staffName, staffById, canDo, hasRole } from '../lib/people.js';
-  import { fmtDuration, fmtDate } from '../lib/dates.js';
+  import { fmtDuration, fmtDate, fmtDay } from '../lib/dates.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
   import { onMount } from 'svelte';
   import { go, say, takeIntent } from '../lib/ui.svelte.js';
@@ -38,8 +39,11 @@
   const people = n => `${n} ${n === 1 ? 'person' : 'people'}`;
   const total = stage => column(stage).reduce((sum, item) => sum + Number(item.potentialRevenue || 0), 0);
 
+  let assessing = $state('');
   function move(id, stage) {
     error = '';
+    // Moving to Assessment means booking it.
+    if (stage === 'Assessment') { assessing = id; return; }
     try {
       if (stage === 'Follow-up') {
         commit(state => startFollowUp(state, id, {}, me));
@@ -120,6 +124,11 @@
                     <span class="row" style="gap: 6px; margin-top: 2px">{#if item.urgency === 'Urgent'}<span class="pill urgent">Urgent</span>{/if}{#if reviewDue(item, session.now)}<span class="pill warn">Review due</span>{/if}</span>
                   {/if}
                 </a>
+                {#if item.stage === 'Assessment'}
+                  {@const booked = assessmentFor(db, item.id)}
+                  {#if booked}<span class="booked"><Icon name="calendar" size={13} />{fmtDay(booked.date)}, {booked.start}, {staffName(booked.provider)}{booked.mode && booked.mode !== 'In person' ? ` (${booked.mode.toLowerCase()})` : ''}</span>
+                  {:else if editable}<button class="pill warn as-button" onclick={() => { assessing = item.id; }}>Not booked: book it</button>{:else}<span class="pill warn">Not booked</span>{/if}
+                {/if}
                 {#if item.stage === 'New Inquiry'}
                   {@const hours = timeInStageHours(item, session.now)}
                   <div class="clock" title={`${Math.floor(hours)} of 48 hours used before review`}><i style:width={`${Math.min(100, (hours / 48) * 100)}%`} class:late={hours >= 48} class:soon={hours >= 36 && hours < 48}></i></div>
@@ -176,6 +185,8 @@
   </section>
 {/if}
 
+{#if assessing}<AssessmentDialog id={assessing} onclose={() => { assessing = ''; }} />{/if}
+
 <style>
   .money { display: grid; grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
   .split { display: flex; height: 6px; border-radius: 6px; overflow: hidden; margin-top: 10px; background: #2c3b29; }
@@ -202,6 +213,8 @@
   .clock i.soon { background: #f2a33a; }
   .clock i.late { background: #ef5a24; }
   .move select { height: 30px; border: 0; border-radius: 15px; background: var(--sunk); font: 650 12px var(--font); color: var(--text-2); padding: 0 10px; max-width: 98px; }
+  .booked { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--moss); }
+  .as-button { border: 0; cursor: pointer; align-self: flex-start; font: inherit; font-size: var(--t-xs); font-weight: 750; }
   .drop-hint { text-align: center; padding: 18px 8px; font-size: 13px; border: 2px dashed var(--line-strong); border-radius: 20px; }
   @media (max-width: 1200px) { .money { grid-template-columns: repeat(3, minmax(0, 1fr)); } .money .hero { grid-column: span 3; } }
   @media (max-width: 900px) {

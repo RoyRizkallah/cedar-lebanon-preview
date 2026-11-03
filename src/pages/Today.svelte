@@ -30,7 +30,7 @@
   const feed = $derived(teamFeed(db, me, session.now));
   const MILESTONE_ICONS = { stay: 'flag', program: 'heart', discharge: 'door', arrival: 'enter' };
   const when = date => { const d = daysAway(date, session.now); return d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : fmtDay(date); };
-  const ICONS = { todo: 'check-circle', meeting: 'users', 'inquiry-followup': 'phone', 'followup-call': 'phone', review: 'clock', note: 'pen', admission: 'door', form: 'document', sign: 'pen', request: 'bag', prescription: 'pill' };
+  const ICONS = { todo: 'check-circle', meeting: 'users', discharge: 'door', 'final-bill': 'receipt', assessment: 'calendar', 'inquiry-followup': 'phone', 'followup-call': 'phone', review: 'clock', note: 'pen', admission: 'door', form: 'document', sign: 'pen', request: 'bag', prescription: 'pill' };
   const columns = $derived([
     { key: 'overdue', title: 'Overdue', hint: 'Past their date', items: work.overdue },
     { key: 'today', title: 'Today', hint: 'Due before you leave', items: work.today },

@@ -129,13 +129,10 @@ const EFFECTS = {
     const to = (entry.values.escalations || []).map(name => map[name]).filter(Boolean);
     if (to.length) notify(state, { to, title: `Group escalation: ${entry.values.group || 'group session'}`, body: entry.values.observations, link: '#/schedule' });
   },
-  discharge(state, entry, staffId) {
+  // The plan sets the day. The discharge itself happens on that day, from the patient file (discharge.js).
+  discharge(state, entry) {
     const patient = patientOf(state, entry.patientId);
-    const date = entry.values.dischargeDate;
-    Object.assign(patient, { status: 'Discharged', dischargedAt: date, roomId: '', bed: null });
-    for (const [contact, days] of FOLLOWUP_OFFSETS) {
-      state.tasks.push({ id: nextId('T', state.tasks), kind: 'followup-call', title: `${contact} follow-up call`, owner: 'melyssa', due: addDays(date, days), patientId: patient.id, link: `#/patients/${patient.id}/followup`, status: 'open', createdBy: staffId });
-    }
+    notify(state, { to: 'melyssa', title: `Discharge planned: ${patient.clinicalName}`, body: `${entry.values.dischargeType || 'Planned'}, ${fmtDate(entry.values.dischargeDate, { day: 'numeric', month: 'short' })}`, link: `#/patients/${patient.id}` });
   },
   aftercare(state, entry, staffId, previous) {
     const added = (entry.values.routed || []).filter(item => item !== 'Not needed' && !(previous?.routed || []).includes(item));

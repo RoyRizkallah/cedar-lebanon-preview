@@ -4,7 +4,7 @@ import { seed } from '../src/lib/seed.js';
 import { withSsr } from './lib/ssr.mjs';
 
 const empty = () => ({ appointments: [], patients: [{ id: 'P-1', clinicalName: 'Test P.', fullName: 'Test Person', status: 'Admitted' }], inquiries: [], documents: [], notifications: [], activity: [], tasks: [] });
-assert.deepEqual(SERVICES.map(service => service.name), ['Psychologist session', 'Therapist session', 'Nursing appointment', 'Blood test', 'Physiotherapy', 'Fitness session', 'Movement & yoga', 'Tennis', 'Personal training', 'Boxing / MMA', 'Drama therapy', 'Group', 'External psychiatrist']);
+assert.deepEqual(SERVICES.map(service => service.name), ['Psychologist session', 'Therapist session', 'Nursing appointment', 'Blood test', 'Physiotherapy', 'Fitness session', 'Movement & yoga', 'Tennis', 'Personal training', 'Boxing / MMA', 'Drama therapy', 'Group', 'Assessment', 'External psychiatrist']);
 
 // Next day first; Sunday is skipped.
 assert.deepEqual(earliestSlot(empty(), { provider: 'nabila', minutes: 50, from: '2026-11-06' }), { date: '2026-11-07', start: '09:00' });

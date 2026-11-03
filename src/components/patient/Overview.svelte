@@ -1,7 +1,8 @@
 <script>
   import { db, session, commit } from '../../lib/store.svelte.js';
   import { addComment } from '../../lib/support.js';
-  import { staffName, hasRole, canSeeTab, canSee } from '../../lib/people.js';
+  import Contacts from './Contacts.svelte';
+  import { staffName, hasRole, canSeeTab, canSee, canDo } from '../../lib/people.js';
   import { programFor, DAYS } from '../../lib/programs.js';
   import { upcomingFor } from '../../lib/scheduling.js';
   import { walletBalanceCents, formatCents } from '../../lib/wallet.js';
@@ -9,7 +10,8 @@
 
   let { patient } = $props();
   const me = session.staffId;
-  const upcoming = $derived(hasRole(me, 'rsa') ? [] : upcomingFor(db, patient.id, todayISO(session.now)).slice(0, 6));
+  const upcoming = $derived(canDo(me, 'viewTherapyBookings') ? upcomingFor(db, patient.id, todayISO(session.now)).slice(0, 6) : []);
+  const seesPhase = canDo(me, 'viewTherapyBookings');
   const comments = $derived(db.comments.filter(item => item.patientId === patient.id).sort((a, b) => String(b.at).localeCompare(String(a.at))));
   // The program this patient follows, and what it has for them today.
   const plan = $derived(programFor(db, patient.id, todayISO(session.now)));
@@ -28,7 +30,7 @@
       <dt>Program</dt><dd>{patient.program}</dd>
       <dt>Room</dt><dd>{patient.roomId ? `Room ${patient.roomId}, bed ${patient.bed}` : 'No room (outpatient)'}</dd>
       <dt>Admitted</dt><dd>{fmtDate(patient.admittedAt, { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
-      {#if !hasRole(me, 'rsa')}<dt>Phase</dt><dd>{patient.phase}</dd>{/if}
+      {#if seesPhase}<dt>Phase</dt><dd>{patient.phase}</dd>{/if}
       <dt>Contact preference</dt><dd>{patient.commPreference}</dd>
       {#if hasRole(me, 'admin', 'gm', 'director')}
         <dt>Phone</dt><dd>{patient.phone || '—'}</dd>
@@ -44,6 +46,8 @@
       {#each team as [label, key]}<dt>{label}</dt><dd>{staffName(patient.assigned?.[key])}</dd>{/each}
     </dl>
   </section>
+
+  <Contacts {patient} />
 
   <section class="panel">
     <div class="panel-head"><h3>Program</h3>{#if plan && canSee(me, 'programs')}<a class="faint" href={`#/programs/${plan.program.id}`}>Open</a>{/if}</div>

@@ -44,13 +44,12 @@ assert.throws(() => signLater(state, filed.id, 'countersigned', { name: 'Nabila'
 signLater(state, filed.id, 'countersigned', signature, 'clinical-director');
 assert.equal(filed.values.countersigned.by, 'clinical-director');
 
-// Filing the discharge plan books the three post-discharge calls for Melyssa.
+// Filing the discharge plan sets the day and tells Melyssa; the discharge itself (and the aftercare calls) come on that day.
 const discharge = fileForm(state, { formId: 'discharge', patientId: patient.id, values: { dischargeDate: '2026-11-10', dischargeType: 'Planned', patientCopy: { name: patient.fullName, by: 'clinical-director', at: new Date().toISOString() } }, staffId: 'clinical-director', final: true });
 assert.equal(discharge.status, 'Filed');
-const calls = state.tasks.filter(task => task.kind === 'followup-call' && task.patientId === patient.id);
-assert.deepEqual(calls.map(task => task.due), ['2026-11-17', '2026-12-10', '2027-02-08']);
-assert.ok(calls.every(task => task.owner === 'melyssa'));
-assert.equal(patient.status, 'Discharged');
+assert.equal(patient.status, 'Admitted');
+assert.ok(state.notifications.some(item => item.to === 'melyssa' && item.title.startsWith('Discharge planned')));
+assert.equal(state.tasks.filter(task => task.kind === 'followup-call' && task.patientId === patient.id).length, 0);
 
 // A note started from the patient's Clinical tab (no appointment passed) still clears that session's reminder.
 {

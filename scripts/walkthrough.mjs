@@ -71,9 +71,13 @@ try {
 
   console.log('Pipeline');
   await open('pipeline', 'melyssa');
-  for (const stage of ['Assessment', 'Agreement']) {
-    await run(`const card = ${article('Nour Zein')}; const select = card.querySelector('select'); select.value = '${stage}'; select.dispatchEvent(new Event('change', { bubbles: true })); await new Promise(r => setTimeout(r, 350)); return true;`);
-  }
+  const moveCard = (name, stage) => run(`const card = ${article(name)}; const select = card.querySelector('select'); select.value = '${stage}'; select.dispatchEvent(new Event('change', { bubbles: true })); await new Promise(r => setTimeout(r, 350)); return true;`);
+  // Moving to Assessment opens the booking; it is filled with the assessor's earliest free hour.
+  await moveCard('Nour Zein', 'Assessment');
+  check(await run(`return !!document.querySelector('.dialog') && document.querySelector('.dialog').innerText.includes('Book the assessment');`), 'moving to Assessment asks to book it');
+  await click('Book assessment', `document.querySelector('.dialog .drawer-foot')`);
+  check(await run(`const col = [...document.querySelectorAll('section.column')].find(c => c.getAttribute('aria-label') === 'Assessment'); return col.innerText.includes('Nour Zein') && !!col.querySelector('.booked');`), 'booked: the card shows date, time and assessor');
+  await moveCard('Nour Zein', 'Agreement');
   check(await run(`return [...document.querySelectorAll('section.column')].find(c => c.getAttribute('aria-label') === 'Agreement').innerText.includes('Nour Zein');`), 'card moved to Agreement');
 
   console.log('Admission steps');
@@ -171,6 +175,7 @@ try {
   await open('followups', 'melyssa');
   check(await bodyHas('Georges Abi Nader') && await bodyHas('In 2 days'), 'listed in Follow-ups, due in 2 days');
   await click('Schedule assessment', `[...document.querySelectorAll('tr')].find(row => row.innerText.includes('Georges Abi Nader'))`);
+  await click('Book assessment', `document.querySelector('.dialog .drawer-foot')`);
   await open('pipeline', 'melyssa');
   check(await run(`return [...document.querySelectorAll('section.column')].find(c => c.getAttribute('aria-label') === 'Assessment').innerText.includes('Georges Abi Nader');`), 'scheduled: back on the board in Assessment');
 

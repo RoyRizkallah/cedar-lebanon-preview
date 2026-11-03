@@ -11,7 +11,7 @@ export const walletTransactionsFor = (state, patientId) => list(state)
 export function walletBalanceCents(state, patientId) {
   return list(state).reduce((balance, item) => {
     if (item.patientId !== patientId || !Number.isSafeInteger(item.amountCents) || item.amountCents <= 0) return balance;
-    return item.type === 'credit' ? balance + item.amountCents : item.type === 'purchase' ? balance - item.amountCents : balance;
+    return item.type === 'credit' ? balance + item.amountCents : ['purchase', 'refund'].includes(item.type) ? balance - item.amountCents : balance;
   }, 0);
 }
 

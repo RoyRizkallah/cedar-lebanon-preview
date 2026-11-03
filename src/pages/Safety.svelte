@@ -4,6 +4,7 @@
   import { db, session, commit } from '../lib/store.svelte.js';
   import { INCIDENT_TYPES, SEVERITIES, logVisit, startLeave, returnLeave, leaveStatus, reportIncident, reviewIncident } from '../lib/safety.js';
   import { staffName, visiblePatients, canDo } from '../lib/people.js';
+  import { incidentsFor } from '../lib/safety.js';
   import { fmtDate, fmtDateTime, todayISO } from '../lib/dates.js';
   import { downloadCsv } from '../lib/csv.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -21,7 +22,7 @@
 
   const inCare = $derived(visiblePatients(db, me).length ? visiblePatients(db, me) : db.patients.filter(p => p.status === 'Admitted'));
   const name = id => db.patients.find(p => p.id === id)?.fullName || 'No patient involved';
-  const incidents = $derived(db.incidents.slice().sort((a, b) => (a.status === 'Open' ? 0 : 1) - (b.status === 'Open' ? 0 : 1) || b.date.localeCompare(a.date)));
+  const incidents = $derived(incidentsFor(db, me).sort((a, b) => (a.status === 'Open' ? 0 : 1) - (b.status === 'Open' ? 0 : 1) || b.date.localeCompare(a.date)));
   const leaves = $derived(db.leaves.map(leave => ({ ...leave, state: leaveStatus(leave, session.now) })).sort((a, b) => (a.returnedAt ? 1 : 0) - (b.returnedAt ? 1 : 0) || b.out.localeCompare(a.out)));
   const out = $derived(leaves.filter(leave => !leave.returnedAt));
   const openIncidents = $derived(incidents.filter(item => item.status === 'Open'));

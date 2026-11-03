@@ -4,9 +4,10 @@ import { seedForms } from './seedForms.js';
 import { nextRsa } from './people.js';
 import { seedCare } from './seedCare.js';
 import { seedPrograms } from './seedPrograms.js';
+import { book, earliestSlot } from './scheduling.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;
 
 const ROOMS = ['101', '102', '103', '104', '105', '106'].map(id => ({ id, name: `Room ${id}`, beds: 2 }));
 
@@ -38,6 +39,19 @@ export const clinicalNameOf = fullName => {
 };
 
 const phoneFor = index => `+961 ${[3, 70, 71, 76, 78, 81][index % 6]} ${String(100 + index * 37).slice(-3)} ${String(400 + index * 53).slice(-3)}`;
+
+// Two people around each sample patient: the emergency contact who may hear about treatment, and a visitor.
+const FIRST = ['Mona', 'Rima', 'Georges', 'Samir', 'Nadine', 'Hala', 'Tony', 'Maya', 'Joseph', 'Layla', 'Fadi', 'Carla'];
+const KIN = [['Parent', 'Sibling'], ['Spouse or partner', 'Parent'], ['Sibling', 'Parent'], ['Parent', 'Other family']];
+function familyFor(name, index) {
+  const surname = name.split(' ').slice(1).join(' ') || name;
+  const [first, second] = KIN[index % KIN.length];
+  const phone = n => `+961 3 ${String(210000 + index * 97 + n * 13).slice(0, 3)} ${String(400 + index * 7 + n).padStart(3, '0')}`;
+  return [
+    { id: `CT-${String(index * 2 + 1).padStart(4, '0')}`, name: `${FIRST[(index * 2) % FIRST.length]} ${surname}`, relation: first, phone: phone(1), emergency: true, canDiscuss: true, canVisit: true },
+    { id: `CT-${String(index * 2 + 2).padStart(4, '0')}`, name: `${FIRST[(index * 2 + 1) % FIRST.length]} ${surname}`, relation: second, phone: phone(2), emergency: false, canDiscuss: false, canVisit: true }
+  ];
+}
 
 export function seed(now = new Date()) {
   const today = todayISO(now);
@@ -79,7 +93,8 @@ export function seed(now = new Date()) {
       id: patientId, inquiryId, fullName: person.name, clinicalName: clinicalNameOf(person.name), age: person.age, program: person.program,
       roomId: person.room || '', bed: person.bed || null, admittedAt, phase: person.phase || '4 Discharge prep',
       assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: nextRsa(state) },
-      commPreference, phone: phoneFor(index), status: person.discharged ? 'Discharged' : 'Admitted', monthlyAmount: person.monthly
+      commPreference, phone: phoneFor(index), status: person.discharged ? 'Discharged' : 'Admitted', monthlyAmount: person.monthly,
+      contacts: familyFor(person.name, index)
     };
     if (person.discharged) {
       patient.admittedAt = day(-person.days);
@@ -236,6 +251,15 @@ export function seed(now = new Date()) {
   seedPrograms(state, today);
   wallet({ patientId: residents[1].id, type: 'purchase', amountCents: 2400, description: '1 × Toiletries pack', date: day(-1), recordedBy: 'georgio', requestId: 'R-0003' });
   state.activity.push({ id: 'AC-1', at: ago(3), by: 'melyssa', text: 'Created inquiry for Georges Abi Nader from WhatsApp', link: '#/pipeline' });
+
+  // Assessments booked for the people in Assessment, at the assessor's earliest free hour; the last is left for Melyssa to book.
+  const assessing = state.inquiries.filter(item => item.stage === 'Assessment' && !item.outcome);
+  assessing.slice(0, -1).forEach((inquiry, index) => {
+    const provider = index % 2 ? 'nabila' : 'clinical-director';
+    const mode = ['In person', 'Video'][index % 2];
+    const made = book(state, { service: 'Assessment', provider, ...earliestSlot(state, { provider, minutes: 60, from: today }), inquiryId: inquiry.id, title: `${mode} assessment: ${inquiry.name}`, quiet: true }, 'melyssa');
+    made.mode = mode;
+  });
 
   // Everyone's day: the meetings and chores a centre runs on, beyond what the records generate.
   const name = index => residents[index]?.clinicalName || 'a resident';

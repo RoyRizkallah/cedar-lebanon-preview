@@ -44,7 +44,10 @@ const start = count();
 updateInquiry(state, inquiry.id, { urgency: 'Urgent' }, 'melyssa');
 const alerts = state.notifications.slice(0, count() - start);
 assert.deepEqual(alerts.map(item => item.to).sort(), ['ahmed', 'amer', 'clinical-director', 'melyssa']);
-assert.ok(alerts.every(item => item.link === `#/pipeline/${inquiry.id}` && item.channels.includes('WhatsApp (queued)')));
+assert.ok(alerts.every(item => item.channels.includes('WhatsApp (queued)')));
+// The link opens the inquiry for those who can see the pipeline; Wael, who can't, gets the alert without a dead link.
+assert.ok(alerts.filter(item => item.to !== 'clinical-director').every(item => item.link === `#/pipeline/${inquiry.id}`));
+assert.equal(alerts.find(item => item.to === 'clinical-director').link, '');
 updateInquiry(state, inquiry.id, { urgency: 'Urgent', phone: '+961 70 000 000' }, 'melyssa');
 assert.equal(count(), start + 4);
 

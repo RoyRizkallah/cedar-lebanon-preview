@@ -2,7 +2,7 @@
   import Icon from '../Icon.svelte';
   import SignaturePad from '../SignaturePad.svelte';
   import { db, session, commit } from '../../lib/store.svelte.js';
-  import { DOC_TYPES, SIGNED, addDocument, signDocument, attachScan, documentsFor } from '../../lib/documents.js';
+  import { DOC_TYPES, SIGNED, addDocument, signDocument, attachScan, documentsVisibleTo } from '../../lib/documents.js';
   import { staffName, canDo } from '../../lib/people.js';
   import { fmtDateTime } from '../../lib/dates.js';
   import { putFile, openFile } from '../../lib/files.js';
@@ -11,7 +11,7 @@
   let { patient } = $props();
   const me = session.staffId;
   const manage = canDo(me, 'manageDocuments');
-  const docs = $derived(documentsFor(db, patient.id).filter(item => me === 'fadia' ? ['Prescription', 'Consent'].includes(item.type) : true));
+  const docs = $derived(documentsVisibleTo(db, patient.id, me));
   let adding = $state(null);
   let signing = $state(null);
   let error = $state('');

@@ -3,6 +3,7 @@
   import FormView from '../components/FormView.svelte';
   import { db, session } from '../lib/store.svelte.js';
   import { sessionsWeek } from '../lib/sessions.js';
+  import { noteFormFor } from '../lib/scheduling.js';
   import { formById } from '../lib/forms/engine.js';
   import { staffName, canSeeTab } from '../lib/people.js';
   import { addDays, todayISO, weekday, fmtDate, fmtDay, minutesOf, hhmm } from '../lib/dates.js';
@@ -24,7 +25,7 @@
     const patient = db.patients.find(p => p.id === appointment.patientId);
     return patient ? (clinical ? patient.clinicalName : patient.fullName) : db.inquiries.find(i => i.id === appointment.inquiryId)?.name || '';
   };
-  const noteForm = appointment => appointment.service === 'Group' ? 'group' : ['Fitness session', 'Physiotherapy'].includes(appointment.service) ? 'attendance' : 'session';
+  const noteForm = appointment => noteFormFor(appointment.service);
   const canOpen = item => {
     const id = noteForm(item.appointment);
     const family = formById(id).family;

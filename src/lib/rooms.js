@@ -3,6 +3,7 @@ import { daysBetween, todayISO } from './dates.js';
 import { isActive } from './admission.js';
 import { log } from './activity.js';
 import { canDo } from './people.js';
+import { plannedDischarge } from './discharge.js';
 
 export const ROOM_STATUSES = ['Ready', 'Cleaning', 'Maintenance'];
 export const WINGS = ['Ground', 'Upper'];
@@ -12,13 +13,12 @@ const find = (state, id) => { const room = state.rooms.find(item => item.id === 
 
 export function roomBoard(state, now = new Date()) {
   const today = todayISO(now);
-  const plans = state.forms.filter(entry => entry.formId === 'plan' && entry.status === 'Filed');
   return state.rooms.map(room => {
     const beds = Array.from({ length: room.beds }, (_, index) => {
       const bed = index + 1;
       const patient = occupants(state, room.id).find(item => item.bed === bed);
       const hold = state.onboardings.find(item => isActive(state, item) && item.steps.room.done && item.steps.room.roomId === room.id && item.steps.room.bed === bed);
-      const planned = patient && plans.filter(entry => entry.patientId === patient.id).sort((a, b) => String(b.filedAt).localeCompare(String(a.filedAt)))[0]?.values.plannedDischarge;
+      const planned = patient && plannedDischarge(state, patient.id);
       return { bed, patient: patient || null, heldFor: hold ? state.inquiries.find(item => item.id === hold.inquiryId)?.name : null, day: patient ? daysBetween(patient.admittedAt, today) + 1 : null, plannedDischarge: planned || null };
     });
     return { ...room, status: room.status || 'Ready', beds, free: beds.filter(bed => !bed.patient && !bed.heldFor).length };

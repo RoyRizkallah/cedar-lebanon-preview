@@ -3,7 +3,7 @@
   import FormView from '../components/FormView.svelte';
   import { formById } from '../lib/forms/engine.js';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { SERVICES, serviceByName, earliestSlot, book, cancelAppointment, completeAppointment, needsNote, recordPsychiatrist, recordPrescription, scheduleScope, canCancel } from '../lib/scheduling.js';
+  import { SERVICES, noteFormFor, serviceByName, earliestSlot, book, cancelAppointment, completeAppointment, needsNote, recordPsychiatrist, recordPrescription, scheduleScope, canCancel } from '../lib/scheduling.js';
   import { staffName, canDo, canSeeTab, visiblePatients, hasRole } from '../lib/people.js';
   import { addDays, todayISO, weekday, fmtDay, fmtDate, minutesOf, hhmm } from '../lib/dates.js';
   import { putFile } from '../lib/files.js';
@@ -99,6 +99,7 @@
   }
   // Offer to write a form only to the people who complete it; others can open what exists.
   const writes = formId => formById(formId).owners.includes(me);
+  const NOTE_LABELS = { session: 'session note', group: 'group note', attendance: 'attendance log' };
   function openNote(formId, item) {
     form = { formId, entryId: item.noteFormId || null, patientId: item.patientId || null, appointmentId: item.id };
     selected = null;
@@ -200,11 +201,13 @@
     <footer class="drawer-foot">
       {#if item.status === 'Booked' && canCancel(me, item)}<button class="btn ghost danger" style="margin-right: auto" onclick={() => { if (run(state => cancelAppointment(state, item.id, me), 'Appointment cancelled')) selected = null; }}>Cancel appointment</button>{/if}
       {#if item.status === 'Booked' && mine && item.provider !== 'external'}<button class="btn" onclick={() => { if (run(state => completeAppointment(state, item.id, me), 'Marked completed')) selected = db.appointments.find(a => a.id === item.id); }}>Mark completed</button>{/if}
-      {#if item.status === 'Completed' && ['Psychologist session', 'Therapist session'].includes(item.service) && clinicalViewer && item.patientId && (item.noteFormId || writes('session'))}
-        <button class="btn primary" onclick={() => openNote('session', item)}>{item.noteFormId ? 'Open session note' : 'Write session note'}</button>
+      {#if item.status === 'Completed' && noteFormFor(item.service)}
+        {@const formId = noteFormFor(item.service)}
+        {@const family = formById(formId).family}
+        {#if canSeeTab(me, family === 'clinical' ? 'clinical' : 'fitness') && (item.patientId || item.patientIds) && (item.noteFormId || writes(formId))}
+          <button class="btn primary" onclick={() => openNote(formId, item)}>{item.noteFormId ? `Open ${NOTE_LABELS[formId]}` : `Write ${NOTE_LABELS[formId]}`}</button>
+        {/if}
       {/if}
-      {#if item.status === 'Completed' && item.service === 'Group' && clinicalViewer && (item.noteFormId || writes('group'))}<button class="btn primary" onclick={() => openNote('group', item)}>{item.noteFormId ? 'Open group note' : 'Write group note'}</button>{/if}
-      {#if item.status === 'Completed' && ['Fitness session', 'Physiotherapy'].includes(item.service) && canSeeTab(me, 'fitness') && (item.noteFormId || writes('attendance'))}<button class="btn primary" onclick={() => openNote('attendance', item)}>{item.noteFormId ? 'Open attendance log' : 'Attendance log'}</button>{/if}
     </footer>
   </section>
 {/if}

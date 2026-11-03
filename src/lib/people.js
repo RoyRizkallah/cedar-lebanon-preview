@@ -93,6 +93,11 @@ const ACTIONS = {
   reviewIncident: ['director', 'clinical-director'],
   managePrograms: ['clinical-director', 'psychologist', 'drama'],
   caseReview: ['director', 'clinical-director', 'psychologist'],
+  discharge: ['director', 'clinical-director', 'admin'],
+  manageContacts: [...INTAKE, 'nurse', 'clinical-director'],
+  viewIncidentDetail: ['gm', 'director', 'clinical-director', 'psychologist', 'drama', 'nurse', 'rsa-lead'],
+  viewTherapyBookings: [...CLINICIANS, 'nurse', 'admin', 'gm', 'pt', 'trainer'],
+  viewPrescriptions: ['director', 'clinical-director', 'nurse', 'nurse-aide'],
   viewRisk: [...CLINICIANS, 'nurse'],
   resetData: MANAGEMENT
 };
@@ -109,6 +114,15 @@ export const canDo = (staffId, action) => !isResident(staffId) && allowed(ACTION
 export const whoCan = action => STAFF.filter(person => canDo(person.id, action)).map(person => person.id);
 export const pagesFor = staffId => PAGES.filter(page => allowed(page.staff, staffId));
 export const tabsFor = staffId => TABS.filter(tab => canSeeTab(staffId, tab.id));
+// A link a person can actually open: a patient tab they can't see falls back to the patient file;
+// a page they can't open falls back to `fallback` (or no link at all).
+export function reachableLink(staffId, link, fallback = '') {
+  const [page, id, tab] = String(link || '').replace(/^#\//, '').split('/');
+  if (!page) return '';
+  if (!canSee(staffId, page)) return fallback && fallback !== link ? reachableLink(staffId, fallback) : '';
+  if (page === 'patients' && tab && !canSeeTab(staffId, tab)) return `#/patients/${id}`;
+  return link;
+}
 export const homePage = staffId => (isResident(staffId) ? 'home' : canSee(staffId, 'dashboard') ? 'dashboard' : 'today');
 
 // The RSA with the fewest residents in the house takes the next one.

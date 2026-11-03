@@ -77,6 +77,13 @@ function unbookFrom(state, assignment, fromDay, staffId) {
 // Books an existing assignment from a given day (used by the sample data).
 export const bookAssignment = (state, assignment, fromDay, staffId) => bookFrom(state, state.programs.find(item => item.id === assignment.programId), assignment, fromDay, staffId);
 
+// Discharge ends the program on the day; the discharge itself clears the calendar.
+export function endProgramFor(state, patientId, day, staffId) {
+  const assignment = activeAssignment(state, patientId);
+  if (assignment) Object.assign(assignment, { status: 'Ended', end: day, endedBy: staffId, conflicts: (assignment.conflicts || []).filter(item => item.date <= day) });
+  return assignment;
+}
+
 export const programBookings = (state, assignment) => state.appointments.filter(item => item.programId === assignment.programId && item.status === 'Booked' && (item.patientId === assignment.patientId || item.patientIds?.includes(assignment.patientId)));
 
 const allowed = staffId => { if (!canDo(staffId, 'managePrograms')) throw new Error('Programs are created by the therapists: Wael, Nabila and Nazha.'); };
@@ -162,7 +169,7 @@ export function assignProgram(state, programId, patientId, { start }, staffId, n
   state.programAssignments.push(assignment);
   bookFrom(state, program, assignment, from, staffId);
   const team = Object.values(patient.assigned || {}).filter(id => id && id !== staffId);
-  notify(state, { to: team, title: `${patient.clinicalName} starts ${program.name}`, body: `${program.weeks} weeks from ${from}, ${program.sessions.length} sessions a week`, link: `#/programs/${program.id}` });
+  notify(state, { to: team, title: `${patient.clinicalName} starts ${program.name}`, body: `${program.weeks} weeks from ${from}, ${program.sessions.length} sessions a week`, link: `#/programs/${program.id}`, fallback: `#/patients/${patient.id}` });
   log(state, staffId, `Put ${patient.clinicalName} on ${program.name}`, `#/programs/${program.id}`);
   return assignment;
 }

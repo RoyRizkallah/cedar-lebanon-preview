@@ -143,7 +143,11 @@ export function admit(state, onboardingId, staffId, now = new Date()) {
     id: nextId('P', state.patients), inquiryId: inquiry.id, fullName: inquiry.name, clinicalName: clinicalNameOf(inquiry.name), age: '', program: inquiry.program,
     roomId: onboarding.steps.room.roomId || '', bed: onboarding.steps.room.bed || null, admittedAt: today, phase: '1 Stabilization',
     assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: nextRsa(state) },
-    commPreference: inquiry.commPreference, phone: inquiry.phone, status: 'Admitted', monthlyAmount: onboarding.steps.financial.monthlyAmount
+    commPreference: inquiry.commPreference, phone: inquiry.phone, status: 'Admitted', monthlyAmount: onboarding.steps.financial.monthlyAmount,
+    // The family member who made the inquiry becomes the first contact.
+    contacts: inquiry.relationship && inquiry.relationship !== 'Self' && inquiry.callerName
+      ? [{ id: `CT-${inquiry.id}`, name: inquiry.callerName, relation: inquiry.relationship, phone: inquiry.phone || '', emergency: true, canDiscuss: true, canVisit: true }]
+      : []
   };
   state.patients.push(patient);
   openWallet(state, patient.id, today);

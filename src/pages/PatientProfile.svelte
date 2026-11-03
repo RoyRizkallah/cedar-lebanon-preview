@@ -9,11 +9,13 @@
   import Documents from '../components/patient/Documents.svelte';
   import Wallet from '../components/patient/Wallet.svelte';
   import Journey from '../components/Journey.svelte';
+  import DischargeDialog from '../components/DischargeDialog.svelte';
   import { db, session } from '../lib/store.svelte.js';
-  import { tabsFor, canDo, canSeeTab, visiblePatients, hasRole } from '../lib/people.js';
+  import { tabsFor, canDo, canSeeTab, visiblePatients } from '../lib/people.js';
   import { riskLevel, formById } from '../lib/forms/engine.js';
   import { daysBetween, todayISO, fmtDate } from '../lib/dates.js';
   import { noPhone } from '../lib/pipeline.js';
+  import { emergencyContact } from '../lib/contacts.js';
 
   let { id, tab = 'overview', entry = '' } = $props();
   const me = session.staffId;
@@ -31,6 +33,7 @@
   const linked = db.forms.find(item => item.id === entry && (item.patientId === id || item.patientIds?.includes(id)) && canSeeTab(me, tabOf(item.formId)));
   let form = $state(linked ? { formId: linked.formId, entryId: linked.id, patientId: id } : null);
   const openForm = (formId, entryId = null, extra = {}) => { form = { formId, entryId, patientId: id, ...extra }; };
+  let discharging = $state(false);
 </script>
 
 {#if !allowed}
@@ -48,15 +51,18 @@
             <span class="chip">{patient.program}</span>
             {#if patient.roomId}<span class="chip">Room {patient.roomId}, bed {patient.bed}</span>{/if}
             <span class="chip">{patient.status === 'Discharged' ? `Discharged ${fmtDate(patient.dischargedAt)}` : `Day ${day} of stay`}</span>
-            {#if patient.status === 'Discharged'}<span class="chip">After {day - 1} days</span>{/if}
+            {#if patient.status === 'Discharged'}<span class="chip">{patient.dischargeType ? `${patient.dischargeType}, after` : 'After'} {day - 1} days</span>{/if}
             {#if risk}<span class="chip risk-{risk}" title="Latest risk rating">{risk} risk</span>{/if}
+            {#if patient.status === 'Admitted' && !emergencyContact(patient)}<span class="chip warn"><Icon name="alert" size={13} />No emergency contact</span>{/if}
             {#if noPhone(patient)}<span class="chip warn"><Icon name="phone-off" size={13} />No phone calls</span>{/if}
           </div>
         </div>
-        {#if !hasRole(me, 'rsa')}<div class="journey-box"><Journey {patient} /></div>{/if}
+        {#if patient.status === 'Admitted' && canDo(me, 'discharge')}<button class="btn dark sm" onclick={() => { discharging = true; }}><Icon name="door" size={14} /><span>Discharge</span></button>{/if}
+        {#if canDo(me, 'viewTherapyBookings')}<div class="journey-box"><Journey {patient} /></div>{/if}
       </div>
     </section>
 
+    {#if tab !== current}<p class="notice" style="margin-bottom: 10px"><Icon name="lock" size={15} />That section of the file isn't open to you, so this is the overview.</p>{/if}
     <nav class="tabs patient-tabs" aria-label="Patient sections">
       {#each tabs as item (item.id)}
         <a class="tab-link" href={`#/patients/${id}/${item.id}`} aria-current={current === item.id ? 'page' : undefined}>{item.label}</a>
@@ -68,6 +74,7 @@
 {/if}
 
 {#if form}{#key form}<FormView {...form} onclose={() => { form = null; }} />{/key}{/if}
+{#if discharging && patient}<DischargeDialog {patient} onclose={() => { discharging = false; }} />{/if}
 
 <style>
   .banner { position: relative; overflow: hidden; isolation: isolate; padding: 15px 21px 20px; margin-bottom: 12px; border-radius: 20px; background: linear-gradient(115deg, var(--paper) 0%, var(--paper) 45%, var(--leaf) 100%); box-shadow: var(--shadow-1); }

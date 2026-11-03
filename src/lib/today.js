@@ -4,6 +4,7 @@ import { addDays, todayISO, daysBetween, localDay } from './dates.js';
 import { canSee, visiblePatients, STAFF } from './people.js';
 import { roundFor } from './medication.js';
 import { leaveStatus } from './safety.js';
+import { plannedDischarge } from './discharge.js';
 
 const WEEK = 7;
 const STAY_DAYS = [7, 30, 60, 90];
@@ -41,8 +42,8 @@ export function milestonesFor(state, staffId, now = new Date(), days = WEEK) {
     const assignment = state.programAssignments?.find(item => item.patientId === patient.id && item.status === 'Active');
     const program = assignment && state.programs.find(item => item.id === assignment.programId);
     if (program && inWindow(addDays(assignment.end, -1))) list.push({ date: addDays(assignment.end, -1), kind: 'program', patientId: patient.id, text: `${patient.clinicalName} finishes ${program.name}`, sub: 'Plan what comes next' });
-    const plan = state.forms.filter(entry => entry.formId === 'discharge' && entry.patientId === patient.id && entry.status === 'Filed').sort((a, b) => String(b.filedAt).localeCompare(String(a.filedAt)))[0];
-    if (inWindow(plan?.values?.plannedDischarge)) list.push({ date: plan.values.plannedDischarge, kind: 'discharge', patientId: patient.id, text: `${patient.clinicalName} leaves`, sub: 'Planned discharge' });
+    const leaving = plannedDischarge(state, patient.id);
+    if (inWindow(leaving)) list.push({ date: leaving, kind: 'discharge', patientId: patient.id, text: `${patient.clinicalName} leaves`, sub: 'Planned discharge' });
   }
   if (canSee(staffId, 'admissions')) {
     for (const onboarding of state.onboardings.filter(item => !item.admittedPatientId && inWindow(item.steps.room?.arrivalDate))) {

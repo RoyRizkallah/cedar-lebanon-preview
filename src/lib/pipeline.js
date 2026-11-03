@@ -1,7 +1,8 @@
 // The inquiry pipeline: New Inquiry → Assessment → Agreement. Admission happens separately.
 import { nextId } from './ids.js';
 import { addDays, hoursBetween, todayISO } from './dates.js';
-import { staffName } from './people.js';
+import { staffName, canDo, hasRole } from './people.js';
+import { book } from './scheduling.js';
 import { notify } from './notifications.js';
 import { log } from './activity.js';
 import { openOnboarding, releaseOnboarding } from './admission.js';
@@ -78,6 +79,41 @@ export function updateInquiry(state, id, patch, staffId) {
   return inquiry;
 }
 
+// The assessment is a real booking: a date, a time, an assessor (Wael or Nabila) and how it happens.
+export const ASSESSMENT_MODES = ['In person', 'Phone', 'Video'];
+export const assessmentFor = (state, inquiryId) => state.appointments
+  .filter(item => item.service === 'Assessment' && item.inquiryId === inquiryId && item.status !== 'Cancelled')
+  .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0] || null;
+
+function cancelAssessment(state, inquiryId, staffId, now) {
+  for (const item of state.appointments.filter(entry => entry.service === 'Assessment' && entry.inquiryId === inquiryId && entry.status === 'Booked')) {
+    Object.assign(item, { status: 'Cancelled', cancelledBy: staffId, cancelledAt: now.toISOString() });
+  }
+}
+
+export function scheduleAssessment(state, id, { date, start, provider = 'clinical-director', mode = 'In person' }, staffId, now = new Date()) {
+  if (!canDo(staffId, 'editInquiry')) throw new Error('You cannot book assessments.');
+  const inquiry = find(state, id);
+  if (inquiry.outcome) throw new Error(`This inquiry is closed as ${inquiry.outcome}.`);
+  if (!hasRole(provider, 'clinical-director', 'psychologist')) throw new Error('Assessments are done by Wael or Nabila.');
+  if (!ASSESSMENT_MODES.includes(mode)) throw new Error('Choose whether it happens in person, by phone or by video.');
+  // A rebooking frees the old slot first, so moving it half an hour never clashes with itself; if the new slot fails, the old one stays.
+  const replacing = assessmentFor(state, id)?.status === 'Booked' ? assessmentFor(state, id) : null;
+  if (replacing) replacing.status = 'Cancelled';
+  let appointment;
+  try {
+    appointment = book(state, { service: 'Assessment', provider, date, start, inquiryId: id, title: `${mode} assessment: ${inquiry.name}` }, staffId);
+  } catch (error) {
+    if (replacing) replacing.status = 'Booked';
+    throw error;
+  }
+  if (replacing) Object.assign(replacing, { cancelledBy: staffId, cancelledAt: now.toISOString() });
+  appointment.mode = mode;
+  if (inquiry.stage !== 'Assessment') moveInquiry(state, id, 'Assessment', staffId, now);
+  notify(state, { to: provider, title: `Assessment booked: ${inquiry.name}`, body: `${mode}, ${date} at ${start}`, link: `#/pipeline/${id}` });
+  return appointment;
+}
+
 export function moveInquiry(state, id, stage, staffId, now = new Date()) {
   const inquiry = find(state, id);
   if (!STAGES.includes(stage)) throw new Error('Choose New Inquiry, Assessment or Agreement.');
@@ -85,6 +121,7 @@ export function moveInquiry(state, id, stage, staffId, now = new Date()) {
   if (inquiry.stage === stage) return inquiry;
   if (inquiry.stage === 'Agreement') releaseOnboarding(state, id, now);
   if (inquiry.stage === FOLLOW_UP) delete inquiry.followUp;
+  if (stage === 'New Inquiry') cancelAssessment(state, id, staffId, now);
   inquiry.stage = stage;
   inquiry.stageHistory.push({ stage, at: now.toISOString(), by: staffId });
   if (stage === 'Agreement') openOnboarding(state, id, staffId, now);
@@ -98,6 +135,7 @@ export function startFollowUp(state, id, { days = FOLLOW_UP_DAYS, note = '' } = 
   const wait = Number(days);
   if (!Number.isInteger(wait) || wait < 1) throw new Error('Follow up in at least one day.');
   if (inquiry.stage === 'Agreement') releaseOnboarding(state, id, now);
+  cancelAssessment(state, id, staffId, now);
   const due = addDays(todayISO(now), wait);
   inquiry.followUp = { since: now.toISOString(), from: inquiry.stage === FOLLOW_UP ? inquiry.followUp?.from : inquiry.stage, due, note: String(note).trim(), round: 1, notified: false };
   if (inquiry.stage !== FOLLOW_UP) inquiry.stageHistory.push({ stage: FOLLOW_UP, at: now.toISOString(), by: staffId });
@@ -137,6 +175,7 @@ export function declineInquiry(state, id, reason, staffId, now = new Date()) {
   const inquiry = find(state, id);
   if (!String(reason || '').trim()) throw new Error('Add a short reason for declining.');
   Object.assign(inquiry, { outcome: 'Declined', declineReason: reason.trim(), closedAt: now.toISOString() });
+  cancelAssessment(state, id, staffId, now);
   cancelFollowups(state, id);
   releaseOnboarding(state, id, now);
   log(state, staffId, `Closed ${inquiry.name} as declined`, `#/pipeline/${id}`);

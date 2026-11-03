@@ -3,7 +3,7 @@ import { nextId } from './ids.js';
 import { todayISO, fmtDateTime } from './dates.js';
 import { notify } from './notifications.js';
 import { log } from './activity.js';
-import { canDo, whoCan } from './people.js';
+import { canDo, whoCan, visiblePatients } from './people.js';
 
 export const INCIDENT_TYPES = ['Aggression', 'Self-harm', 'Absconding', 'Substance found', 'Rule breach', 'Medical', 'Property damage', 'Other'];
 export const SEVERITIES = ['Low', 'Medium', 'High'];
@@ -66,4 +66,13 @@ export function reviewIncident(state, incidentId, { outcome }, staffId) {
   Object.assign(incident, { status: 'Reviewed', outcome: outcome.trim(), reviewedBy: staffId, reviewedAt: new Date().toISOString() });
   log(state, staffId, `Incident ${incident.id} reviewed`, '#/safety/incidents');
   return incident;
+}
+
+// Incidents someone may see: those about residents they look after (or about nobody in particular).
+// Only the care team, and whoever reported it, read what happened.
+export function incidentsFor(state, staffId) {
+  const mine = new Set(visiblePatients(state, staffId, { includeDischarged: true }).map(patient => patient.id));
+  const details = canDo(staffId, 'viewIncidentDetail');
+  return state.incidents.filter(item => !item.patientId || mine.has(item.patientId)).map(item =>
+    details || item.reportedBy === staffId ? item : { ...item, redacted: true, description: 'Details are with the care team.', actionTaken: '', outcome: item.outcome ? 'Reviewed.' : '' });
 }

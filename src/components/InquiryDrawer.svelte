@@ -3,8 +3,9 @@
   import InquiryFields from './InquiryFields.svelte';
   import ChannelBadge from './ChannelBadge.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { startFollowUp, FOLLOW_UP_DAYS, updateInquiry, declineInquiry, reopenInquiry, logCall, sendClarification, clarificationChannel, noPhone, money, timeInStageHours, reviewDue, CALL_OUTCOMES } from '../lib/pipeline.js';
+  import { assessmentFor, startFollowUp, FOLLOW_UP_DAYS, updateInquiry, declineInquiry, reopenInquiry, logCall, sendClarification, clarificationChannel, noPhone, money, timeInStageHours, reviewDue, CALL_OUTCOMES } from '../lib/pipeline.js';
   import { completeTask } from '../lib/tasks.js';
+  import AssessmentDialog from './AssessmentDialog.svelte';
   import { staffName, canDo } from '../lib/people.js';
   import { fmtDateTime, fmtDay, fmtDuration, todayISO } from '../lib/dates.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
@@ -18,6 +19,8 @@
   let call = $state({ outcome: 'Reached', notes: '' });
   let declining = $state(false);
   let following = $state(null);
+  let assessing = $state(false);
+  const assessment = $derived(assessmentFor(db, id));
   let reason = $state('');
   let error = $state('');
   const me = session.staffId;
@@ -66,6 +69,7 @@
           <button class="btn" onclick={() => run(state => sendClarification(state, id, me), `Clarification reply queued on ${clarificationChannel(inquiry)}`)} title="Sends the standard reply and keeps the inquiry where it is">
             <Icon name="send" size={15} />Answer &amp; keep
           </button>
+          {#if inquiry.stage !== 'Agreement'}<button class="btn" onclick={() => { assessing = true; }}><Icon name="calendar" size={15} />{assessment ? 'Rebook assessment' : 'Book assessment'}</button>{/if}
           <button class="btn" onclick={() => { following = following ? null : { days: FOLLOW_UP_DAYS, note: '' }; }}><Icon name="clock" size={15} />Follow up later</button>
           <button class="btn ghost danger" onclick={() => { declining = !declining; }}>Decline</button>
         {/if}
@@ -81,6 +85,8 @@
           <div class="row"><button class="btn dark" type="submit">Move to follow-up</button><button class="btn ghost" type="button" onclick={() => { following = null; }}>Cancel</button></div>
         </form>
       {/if}
+      {#if assessment}<p class="notice ok"><Icon name="calendar" size={15} />Assessment {assessment.status === 'Completed' ? 'done' : 'booked'}: {fmtDay(assessment.date)} at {assessment.start} with {staffName(assessment.provider)}, {(assessment.mode || 'In person').toLowerCase()}.</p>
+      {:else if inquiry.stage === 'Assessment'}<p class="notice warn"><Icon name="calendar" size={15} />In Assessment, but nothing is booked yet.</p>{/if}
       {#if inquiry.followUp}<p class="notice warn"><Icon name="clock" size={15} />In follow-up until {inquiry.followUp.due}. {inquiry.followUp.note}</p>{/if}
       {#if declining}
         <form class="panel panel-body stack" style="gap: 10px" onsubmit={event => { event.preventDefault(); if (run(state => declineInquiry(state, id, reason, me), 'Inquiry closed as declined')) onclose(); }}>
@@ -146,6 +152,8 @@
     </div>
   {/if}
 </section>
+
+{#if assessing}<AssessmentDialog {id} onclose={() => { assessing = false; }} />{/if}
 
 <style>
   .via { font-size: 13px; font-weight: 700; color: var(--moss); margin-top: 2px; }

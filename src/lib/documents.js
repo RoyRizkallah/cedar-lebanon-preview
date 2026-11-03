@@ -43,4 +43,9 @@ export function attachScan(state, id, { fileId, fileName }, staffId) {
   return document;
 }
 
+// Prescriptions stay with nursing and the clinical lead; the nurse's list is prescriptions and consents.
+export const documentsVisibleTo = (state, patientId, staffId) => documentsFor(state, patientId)
+  .filter(item => item.type !== 'Prescription' || canDo(staffId, 'viewPrescriptions'))
+  .filter(item => !hasRole(staffId, 'nurse') || ['Prescription', 'Consent'].includes(item.type));
+
 export const documentsFor = (state, patientId) => state.documents.filter(item => item.patientId === patientId).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));

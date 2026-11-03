@@ -18,6 +18,7 @@ export const SERVICES = [
   { name: 'Boxing / MMA', provider: 'raymond', minutes: 60 },
   { name: 'Drama therapy', provider: 'nazha', minutes: 60 },
   { name: 'Group', provider: 'clinical-director', minutes: 60 },
+  { name: 'Assessment', provider: 'clinical-director', minutes: 60 },
   { name: 'External psychiatrist', provider: 'external', minutes: 30, external: true }
 ];
 export const DAY_START = '09:00';
@@ -27,6 +28,18 @@ const SEARCH_DAYS = 14;
 const NOTE_SERVICES = ['Psychologist session', 'Therapist session'];
 
 export const serviceByName = name => SERVICES.find(service => service.name === name);
+
+// Which note each completed session needs, and how the Sessions page groups it. One map, used everywhere.
+const FITNESS_SERVICES = ['Fitness session', 'Physiotherapy', 'Movement & yoga', 'Tennis', 'Personal training', 'Boxing / MMA'];
+const NOTES = {
+  'Psychologist session': { form: 'session', kind: 'Individual' },
+  'Therapist session': { form: 'session', kind: 'Individual' },
+  Group: { form: 'group', kind: 'Group' },
+  'Drama therapy': { form: 'group', kind: 'Group' },
+  ...Object.fromEntries(FITNESS_SERVICES.map(name => [name, { form: 'attendance', kind: 'Fitness' }]))
+};
+export const noteFormFor = service => NOTES[service]?.form || null;
+export const sessionKind = service => NOTES[service]?.kind || null;
 const live = item => item.status !== 'Cancelled';
 const overlaps = (a, b) => minutesOf(a.start) < minutesOf(b.start) + b.minutes && minutesOf(b.start) < minutesOf(a.start) + a.minutes;
 const involves = (item, patientId) => !!patientId && (item.patientId === patientId || !!item.patientIds?.includes(patientId));

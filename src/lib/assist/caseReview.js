@@ -2,10 +2,11 @@
 // Raises the standing flags written on the Case Review Record; decisions stay with the team.
 import { addDays, todayISO, daysBetween, localDay, fmtDate } from '../dates.js';
 import { riskLevel } from '../forms/engine.js';
+import { plannedDischarge as dischargeDate } from '../discharge.js';
 
 const WINDOW_DAYS = 7;
 const DISCHARGE_SOON_DAYS = 14;
-const FLAG_ORDER = ['incident', 'relapse', 'refusal', 'medication', 'discharge'];
+const FLAG_ORDER = ['incident', 'relapse', 'refusal', 'concern', 'medication', 'discharge'];
 const day = moment => (moment ? localDay(moment) : '');
 const average = values => { const list = values.map(Number).filter(Boolean); return list.length ? Math.round((list.reduce((a, b) => a + b, 0) / list.length) * 10) / 10 : null; };
 
@@ -23,17 +24,25 @@ export function weekSummary(state, patientId, now = new Date()) {
     + filed('group').filter(inWeek).flatMap(entry => entry.values.attendance || []).filter(row => row.patientId === patientId && !row.present).length
     + filed('attendance').filter(inWeek).flatMap(entry => entry.values.patients || []).filter(row => row.patientId === patientId && row.attended === 'Absent').length;
   const prescriptions = (state.documents || []).filter(doc => doc.patientId === patientId && doc.type === 'Prescription' && day(doc.createdAt) >= from);
-  const plan = filed('plan').filter(entry => entry.patientId === patientId).sort((a, b) => String(b.filedAt).localeCompare(String(a.filedAt)))[0];
-  const plannedDischarge = plan?.values?.plannedDischarge;
+  const plannedDischarge = dischargeDate(state, patientId);
   const dischargeSoon = String(patient?.phase || '').startsWith('4') || (plannedDischarge && daysBetween(today, plannedDischarge) >= 0 && daysBetween(today, plannedDischarge) <= DISCHARGE_SOON_DAYS);
   const checkins = filed('wellbeing').filter(entry => entry.patientId === patientId).sort((a, b) => String(b.values.weekEnding).localeCompare(String(a.values.weekEnding)));
   const score = entry => entry && average(['energy', 'sleep', 'mood', 'activityFeel'].map(id => entry.values[id]));
 
+  // Beyond the therapy notes: incident reports, drug screens, the medication round and the RSAs' check-ins.
+  const thisWeek = item => item.patientId === patientId && (item.date || day(item.at)) >= from;
+  const reported = (state.incidents || []).filter(thisWeek);
+  const positives = (state.medication?.tests || []).filter(test => thisWeek(test) && test.result === 'Positive');
+  const ordersOf = new Set((state.medication?.orders || []).filter(order => order.patientId === patientId).map(order => order.id));
+  const dosesMissed = (state.medication?.doses || []).filter(dose => ordersOf.has(dose.orderId) && dose.date >= from && ['Refused', 'Missed'].includes(dose.status)).length;
+  const concerns = (state.checkins || []).filter(item => thisWeek(item) && item.mood !== 'Settled');
+
   const incidents = [...new Set(flagsRaised.filter(flag => ['Self-harm', 'Absconding', 'Aggression'].includes(flag)))];
   const flags = [];
-  if (incidents.length || injuries.length) flags.push({ key: 'incident', label: 'Incident', detail: [incidents.join(', ').toLowerCase(), injuries.length ? `injury (${injuries.map(entry => (entry.values.bodyPart || '').toLowerCase()).filter(Boolean).join(', ') || 'reported'})` : ''].filter(Boolean).join('; ') });
-  if (flagsRaised.includes('Relapse / craving')) flags.push({ key: 'relapse', label: 'Relapse', detail: 'relapse or craving flagged in session' });
-  if (refusals >= 2) flags.push({ key: 'refusal', label: 'Refusal pattern', detail: `${refusals} refusals or absences` });
+  if (incidents.length || injuries.length || reported.length) flags.push({ key: 'incident', label: 'Incident', detail: [incidents.join(', ').toLowerCase(), ...reported.map(item => `${item.type.toLowerCase()} (${String(item.severity || '').toLowerCase()})`), injuries.length ? `injury (${injuries.map(entry => (entry.values.bodyPart || '').toLowerCase()).filter(Boolean).join(', ') || 'reported'})` : ''].filter(Boolean).join('; ') });
+  if (flagsRaised.includes('Relapse / craving') || positives.length) flags.push({ key: 'relapse', label: 'Relapse', detail: [flagsRaised.includes('Relapse / craving') ? 'relapse or craving flagged in session' : '', ...positives.map(test => `positive drug screen (${(test.substances || []).join(', ').toLowerCase() || 'substance not named'})`)].filter(Boolean).join('; ') });
+  if (refusals + dosesMissed >= 2) flags.push({ key: 'refusal', label: 'Refusal pattern', detail: [refusals ? `${refusals} refusals or absences` : '', dosesMissed ? `${dosesMissed} doses refused or missed` : ''].filter(Boolean).join(', ') });
+  if (concerns.length) flags.push({ key: 'concern', label: 'RSA-reported concern', detail: `RSA check-in: ${concerns.map(item => item.mood.toLowerCase()).join(', ')}` });
   if (prescriptions.length) flags.push({ key: 'medication', label: 'Medication change', detail: 'new prescription received' });
   if (dischargeSoon) flags.push({ key: 'discharge', label: 'Approaching discharge', detail: plannedDischarge ? `planned discharge ${fmtDate(plannedDischarge)}` : 'in discharge preparation' });
   flags.sort((a, b) => FLAG_ORDER.indexOf(a.key) - FLAG_ORDER.indexOf(b.key));
