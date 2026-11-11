@@ -18,6 +18,12 @@ export function commit(change) {
   return result;
 }
 
+// The server sends a whole new view of the data; the screen follows it.
+export function replaceState(next) {
+  for (const key of Object.keys(db)) delete db[key];
+  Object.assign(db, next);
+}
+
 export function switchStaff(staffId) {
   session.staffId = staffId;
   write('cedar-rehab-staff', staffId);
