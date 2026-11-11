@@ -73,7 +73,7 @@ const balanced = state => trialBalance(buildJournal(state)).reduce((sum, row) =>
 // 5. Countersigning a case review opens that review.
 {
   const state = seed();
-  const review = fileForm(state, { formId: 'review', values: { weekOf: today, rows: [] }, staffId: 'clinical-director', final: true });
+  const review = fileForm(state, { formId: 'review', values: { weekOf: today, rows: [] }, staffId: 'ahmed', final: true });
   const sign = tasksFor(state, 'ahmed', now).today.concat(tasksFor(state, 'ahmed', now).overdue).find(item => item.id === `sign-${review.id}`);
   assert.equal(sign?.link, `#/patients/review/${review.id}`);
 }

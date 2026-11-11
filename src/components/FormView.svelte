@@ -11,6 +11,7 @@
   import { say } from '../lib/ui.svelte.js';
 
   let { formId, entryId = null, patientId = null, appointmentId = null, onclose } = $props();
+  const FAMILY = { clinical: 'Clinical', fitness: 'Physical therapy & fitness', medical: 'Nursing & medical' };
 
   const form = formById(formId);
   let currentId = $state(entryId);
@@ -167,7 +168,7 @@
                 {:else if column.type === 'one'}
                   <select class="select" aria-label={column.label} bind:value={values[field.id][index][column.id]}><option value="">—</option>{#each column.options as option}<option>{option}</option>{/each}</select>
                 {:else}
-                  <input class="input" type={column.type === 'date' ? 'date' : 'text'} aria-label={column.label} bind:value={values[field.id][index][column.id]} />
+                  <input class="input" type={['date', 'time', 'number'].includes(column.type) ? column.type : 'text'} aria-label={column.label} bind:value={values[field.id][index][column.id]} />
                 {/if}
               </td>
             {/each}
@@ -178,7 +179,7 @@
         {#if field.appendable && filed && form.owners.includes(me)}
           <tr class="append-row">
             {#each field.columns as column}
-              <td><input class="input" type={column.type === 'date' ? 'date' : 'text'} aria-label={`New ${column.label}`} bind:value={draftRow[column.id]} /></td>
+              <td><input class="input" type={['date', 'time', 'number'].includes(column.type) ? column.type : 'text'} aria-label={`New ${column.label}`} bind:value={draftRow[column.id]} /></td>
             {/each}
           </tr>
         {/if}
@@ -196,7 +197,7 @@
 <section class="drawer wide form-drawer" use:dialogFocus={{ onClose: onclose }}>
   <header class="drawer-head">
     <div class="grow">
-      <p class="faint" style="font-size: 12px; margin-bottom: 2px">{form.family === 'clinical' ? 'Clinical' : 'Physical therapy & fitness'} form {form.number}</p>
+      <p class="faint" style="font-size: 12px; margin-bottom: 2px">{FAMILY[form.family]} form {form.number}{form.sop ? ` · SOP ${form.sop}` : ''}</p>
       <h2>{form.title}</h2>
       <p class="muted" style="margin-top: 6px; max-width: 70ch">{form.purpose}</p>
     </div>
@@ -207,6 +208,8 @@
   <div class="drawer-body">
     {#if form.family === 'clinical'}
       <p class="confidential"><Icon name="lock" size={14} />Confidential clinical record. It never enters the CRM, the admin file, or family communication.</p>
+    {:else if form.family === 'medical'}
+      <p class="confidential"><Icon name="lock" size={14} />Medical record, held by the Head Nurse. It never enters the CRM or the admin file.</p>
     {/if}
 
     {#if carriedRisk === 'Medium' || carriedRisk === 'High'}

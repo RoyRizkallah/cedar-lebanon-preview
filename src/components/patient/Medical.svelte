@@ -1,5 +1,6 @@
 <script>
   import Icon from '../Icon.svelte';
+  import FormList from '../FormList.svelte';
   import { db, session } from '../../lib/store.svelte.js';
   import { staffName, canDo, hasRole } from '../../lib/people.js';
   import { fmtDay, fmtDate, fmtDateTime } from '../../lib/dates.js';
@@ -16,6 +17,10 @@
 
 <div class="stack" style="gap: 20px">
   {#if patient.nursingNote}<p class="notice"><Icon name="stethoscope" size={15} />At admission, nursing noted: {patient.nursingNote}</p>{/if}
+  <section>
+    <h3 style="margin-bottom: 10px">Nursing records</h3>
+    <FormList {patient} formIds={['admission-medical', 'psych-consult', 'escort']} onopen={(formId, entryId) => onform(formId, entryId)} />
+  </section>
   <section class="panel">
     <div class="panel-head"><h3>Medical clearance for activity</h3>{#if clearance || hasRole(me, 'nurse', 'pt')}<button class="btn sm" onclick={() => onform('clearance', clearance?.id || null)}>{clearance ? 'Open' : 'Start'}</button>{/if}</div>
     <div class="panel-body">

@@ -21,11 +21,11 @@ assert.ok(round.every(item => item.status === 'Due'));
 recordDose(state, { orderId: order.id, date: '2026-11-02', time: '08:00', status: 'Given' }, 'fadia');
 assert.throws(() => recordDose(state, { orderId: order.id, date: '2026-11-02', time: '08:00', status: 'Given' }, 'fadia'), /already recorded/);
 assert.throws(() => recordDose(state, { orderId: order.id, date: '2026-11-02', time: '20:00', status: 'Refused' }, 'fadia'), /Add a note/);
-const cd = count('clinical-director');
+const cd = count('ahmed');
 recordDose(state, { orderId: order.id, date: '2026-11-02', time: '20:00', status: 'Refused', note: 'Felt drowsy' }, 'fadia');
-assert.equal(count('clinical-director'), cd + 1, 'a refused dose alerts the Clinical Director');
+assert.equal(count('ahmed'), cd + 1, 'a refused dose alerts the Clinical Director');
 assert.deepEqual(roundFor(state, '2026-11-02').filter(item => item.orderId === order.id).map(item => item.status), ['Given', 'Refused']);
-stopOrder(state, order.id, 'fadia');
+stopOrder(state, order.id, 'fadia', new Date('2026-11-02T12:00:00'));
 assert.equal(roundFor(state, '2026-11-03').filter(item => item.orderId === order.id).length, 0, 'stopped orders leave the round');
 
 // ---- Drug tests ----
@@ -51,9 +51,9 @@ assert.equal(count('ahmed'), before + 1, 'a late return alerts Ahmed');
 assert.throws(() => reportIncident(state, { type: 'Aggression', severity: 'High', description: '' }, 'john'), /Describe what happened/);
 const urgentBefore = state.notifications.filter(item => item.urgent).length;
 const incident = reportIncident(state, { patientId: patient.id, type: 'Aggression', severity: 'High', description: 'Pushed a peer at dinner.', actionTaken: 'Separated; calm after 10 minutes.' }, 'john');
-assert.equal(state.notifications.filter(item => item.urgent).length, urgentBefore + 3, 'high severity alerts Ahmed, Wael and Omar urgently');
-assert.throws(() => reviewIncident(state, incident.id, { outcome: 'ok' }, 'john'), /reviewed by Ahmed or Wael/);
-reviewIncident(state, incident.id, { outcome: 'Discussed in case review; behaviour plan updated.' }, 'clinical-director');
+assert.equal(state.notifications.filter(item => item.urgent).length, urgentBefore + 2, 'high severity alerts Ahmed and Omar urgently');
+assert.throws(() => reviewIncident(state, incident.id, { outcome: 'ok' }, 'john'), /reviewed by Ahmed/);
+reviewIncident(state, incident.id, { outcome: 'Discussed in case review; behaviour plan updated.' }, 'ahmed');
 assert.equal(incident.status, 'Reviewed');
 
 // ---- Rooms ----
@@ -73,9 +73,9 @@ removeRoom(state, '201', 'melyssa');
 assert.throws(() => removeRoom(state, occupied.id, 'melyssa'), /has patients in it/);
 
 // ---- Sessions hub ----
-const week = sessionsWeek(state, 'clinical-director', '2026-10-26', now);
+const week = sessionsWeek(state, 'ahmed', '2026-10-26', now);
 assert.ok(week.items.length > 0);
-assert.ok(week.items.every(item => ['clinical-director', 'nabila', 'nazha'].includes(item.appointment.provider)), 'Wael sees his team, not fitness or nursing');
+assert.ok(week.items.some(item => item.appointment.provider === 'samar'), 'the Clinical Director sees the psychologists’ sessions');
 assert.ok(sessionsWeek(state, 'nabila', '2026-10-26', now).items.every(item => item.appointment.provider === 'nabila'), 'Nabila sees her own');
 assert.ok(week.items.some(item => item.appointment.service === 'Group' && item.attendance));
 const nabila = sessionsWeek(state, 'nabila', '2026-10-26', now);

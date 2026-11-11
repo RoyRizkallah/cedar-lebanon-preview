@@ -23,7 +23,7 @@ const ahead = () => state.appointments.filter(item => item.status === 'Booked' &
 assert.ok(ahead().length > 0, 'sessions are booked ahead');
 
 assert.deepEqual(DISCHARGE_TYPES, ['Planned', 'Early (agreed)', 'Self-discharge']);
-for (const id of ['clinical-director', 'ahmed', 'melyssa']) assert.equal(canDo(id, 'discharge'), true, id);
+for (const id of ['ahmed', 'melyssa']) assert.equal(canDo(id, 'discharge'), true, id);
 for (const id of ['fadia', 'nabila', 'omar', 'amer']) assert.equal(canDo(id, 'discharge'), false, id);
 
 // The planned date comes from the treatment plan until the discharge plan is filed, then from that.
@@ -31,7 +31,7 @@ const fromPlan = state.forms.filter(item => item.formId === 'plan' && item.patie
 assert.equal(plannedDischarge(state, patient.id), fromPlan || '');
 
 // Filing the discharge plan no longer discharges anyone: it plans the day.
-const plan = fileForm(state, { formId: 'discharge', patientId: patient.id, values: { dischargeDate: today, dischargeType: 'Planned', patientCopy: { name: patient.fullName, by: 'clinical-director', at: now.toISOString() } }, staffId: 'clinical-director', final: true });
+const plan = fileForm(state, { formId: 'discharge', patientId: patient.id, values: { dischargeDate: today, dischargeType: 'Planned', patientCopy: { name: patient.fullName, by: 'samar', at: now.toISOString() } }, staffId: 'samar', final: true });
 assert.equal(plan.status, 'Filed');
 assert.equal(patient.status, 'Admitted', 'still in care until the day itself');
 assert.equal(plannedDischarge(state, patient.id), today);
@@ -51,6 +51,10 @@ assert.throws(() => dischargePatient(state, patient.id, { date: addDays(today, 1
 assert.throws(() => dischargePatient(state, patient.id, { date: today, type: 'Lost' }, 'melyssa', now), /Choose the kind of discharge/);
 const unplanned = state.patients.find(item => item.status === 'Admitted' && item.id !== patient.id && !state.forms.some(f => f.formId === 'discharge' && f.patientId === item.id && f.status === 'Filed'));
 assert.throws(() => dischargePatient(state, unplanned.id, { date: today, type: 'Planned' }, 'melyssa', now), /File the Discharge & Aftercare Plan first/);
+
+// Ahmed, the Clinical Director, signs off the plan before anyone is discharged.
+assert.throws(() => dischargePatient(state, patient.id, { date: today, type: 'Planned' }, 'melyssa', now), /Ahmed signs off the discharge plan/);
+plan.values.directorSignature = { name: 'Ahmed Khattab', by: 'ahmed', at: now.toISOString() };
 
 // The day itself: bed, program, calendar, medication, wallet, bill and aftercare all follow.
 state.medication.orders.push({ id: 'MED-T1', patientId: patient.id, drug: 'Thiamine', dose: '100 mg', route: 'Oral', times: ['08:00'], startDate: addDays(today, -3), status: 'Active' });
@@ -78,7 +82,7 @@ assert.ok(!tasksFor(state, 'melyssa', now).today.some(item => item.kind === 'dis
 assert.throws(() => dischargePatient(state, patient.id, { date: today, type: 'Planned' }, 'melyssa', now), /already discharged/);
 
 // Someone who walks out can be discharged without a filed plan.
-dischargePatient(state, unplanned.id, { date: today, type: 'Self-discharge' }, 'clinical-director', now);
+dischargePatient(state, unplanned.id, { date: today, type: 'Self-discharge' }, 'ahmed', now);
 assert.equal(unplanned.status, 'Discharged');
 
 await withSsr(async ({ load, html }) => {

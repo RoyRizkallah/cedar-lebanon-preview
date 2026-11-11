@@ -9,8 +9,9 @@
 
 <aside class="sidebar" class:open aria-label="Main navigation">
   <a class="brand" href="#/" onclick={onnavigate}>
-    <img src="/logo-mark.png" alt="" width="40" height="40" />
-    <span><strong>Cedar <em>Rehab</em></strong><small>{isResident(staffId) ? 'Resident space' : 'Staff workspace'}</small></span>
+    <!-- The owner's logo exactly as supplied, colours untouched. -->
+    <img class="logo" src="/logo.png" alt="Cedar Rehab, Addiction Rehabilitation & Prevention Center" width="640" height="531" />
+    <small>{isResident(staffId) ? 'Resident space' : 'Staff workspace'}</small>
   </a>
   <nav class="nav">
     {#each sections as { group, pages } (group)}

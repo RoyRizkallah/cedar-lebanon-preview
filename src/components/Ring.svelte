@@ -18,7 +18,7 @@
   .ring { position: relative; margin: 0; flex: none; }
   .track { stroke: rgb(127 140 127 / 0.18); }
   .fill { transition: stroke-dasharray 0.6s cubic-bezier(.2,.7,.2,1); }
-  .tone-lime { stroke: var(--lime); filter: drop-shadow(0 0 6px rgb(124 252 0 / 0.45)); }
+  .tone-lime { stroke: var(--lime); filter: drop-shadow(0 0 6px rgb(var(--lime-rgb) / 0.45)); }
   .tone-ink { stroke: var(--strong); }
   .tone-warn { stroke: #f2a33a; }
   figcaption { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }

@@ -118,7 +118,7 @@
   .scale-row > span { font-weight: 700; font-size: 14px; }
   .home-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 11px; }
   .wallet-card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: var(--r-lg); background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
-  .wallet-card::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.33), transparent 70%); }
+  .wallet-card::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.33), transparent 70%); }
   .wallet-card .label { color: var(--on-ink-2); font-weight: 600; }
   .wallet-card strong { font: 800 52px/1 var(--font); color: var(--lime); letter-spacing: -0.04em; }
   .wallet-card .hint { color: var(--on-ink-2); font-size: 13px; margin-top: auto; }

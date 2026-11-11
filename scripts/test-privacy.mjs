@@ -9,15 +9,15 @@ import { withSsr } from './lib/ssr.mjs';
 
 // A notification only links to something the person can open; otherwise to the patient file, or nowhere.
 assert.equal(reachableLink('fadia', '#/patients/P-1/clinical'), '#/patients/P-1');
-assert.equal(reachableLink('clinical-director', '#/patients/P-1/clinical'), '#/patients/P-1/clinical');
+assert.equal(reachableLink('ahmed', '#/patients/P-1/clinical'), '#/patients/P-1/clinical');
 assert.equal(reachableLink('melyssa', '#/patients/P-1/fitness'), '#/patients/P-1');
 assert.equal(reachableLink('georgio', '#/programs/PRG-0001'), '');
 assert.equal(reachableLink('georgio', '#/programs/PRG-0001', '#/patients/P-1'), '#/patients/P-1');
 assert.equal(reachableLink('nabila', '#/programs/PRG-0001'), '#/programs/PRG-0001');
 {
   const state = { notifications: [] };
-  notify(state, { to: ['fadia', 'clinical-director'], title: 'Session risk flag', link: '#/patients/P-1/clinical' });
-  assert.deepEqual(Object.fromEntries(state.notifications.map(item => [item.to, item.link])), { fadia: '#/patients/P-1', 'clinical-director': '#/patients/P-1/clinical' });
+  notify(state, { to: ['fadia', 'ahmed'], title: 'Session risk flag', link: '#/patients/P-1/clinical' });
+  assert.deepEqual(Object.fromEntries(state.notifications.map(item => [item.to, item.link])), { fadia: '#/patients/P-1', 'ahmed': '#/patients/P-1/clinical' });
   notify(state, { to: ['georgio', 'nazha'], title: 'Starts a program', link: '#/programs/PRG-0001', fallback: '#/patients/P-1' });
   assert.equal(state.notifications.find(item => item.to === 'georgio').link, '#/patients/P-1');
   assert.equal(state.notifications.find(item => item.to === 'nazha').link, '#/programs/PRG-0001');
@@ -30,7 +30,7 @@ const state = seed();
   const mazen = incidentsFor(state, 'mazen').find(item => item.id === incident.id);
   assert.ok(mazen.redacted && !mazen.description.includes(incident.description), 'Operations sees that it happened, not what');
   assert.equal(incidentsFor(state, 'omar').find(item => item.id === incident.id).description, incident.description, 'the senior RSA reads it');
-  assert.equal(incidentsFor(state, 'clinical-director').find(item => item.id === incident.id).description, incident.description);
+  assert.equal(incidentsFor(state, 'ahmed').find(item => item.id === incident.id).description, incident.description);
   const owner = state.patients.find(item => item.id === incident.patientId).assigned.rsa;
   const stranger = ['georgio', 'alaa', 'dania', 'imad'].find(id => id !== owner);
   assert.ok(!incidentsFor(state, stranger).some(item => item.id === incident.id), 'another RSA does not see residents who are not theirs');

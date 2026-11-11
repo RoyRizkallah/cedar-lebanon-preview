@@ -4,7 +4,7 @@ import { staffName, hasRole } from './people.js';
 import { addDays, todayISO, daysBetween, fmtDay, localDay } from './dates.js';
 import { reviewDue, REVIEW_AFTER_HOURS, assessmentFor } from './pipeline.js';
 import { notesOverdue } from './scheduling.js';
-import { STEPS, STEP_LABELS, STEP_OWNERS } from './admission.js';
+import { STEPS, STEP_LABELS, STEP_OWNERS, placeLabel } from './admission.js';
 import { allFields, formById } from './forms/engine.js';
 import { dischargeDay } from './discharge.js';
 import { walletBalanceCents, formatCents } from './wallet.js';
@@ -44,7 +44,7 @@ export function tasksFor(state, staffId, now = new Date()) {
   // In Assessment with nothing booked: the contact person books it.
   for (const inquiry of state.inquiries) {
     if (inquiry.stage === 'Assessment' && !inquiry.outcome && inquiry.contactPerson === staffId && !assessmentFor(state, inquiry.id)) {
-      push({ id: `assessment-${inquiry.id}`, kind: 'assessment', title: `Book the assessment: ${inquiry.name}`, sub: 'In Assessment with nothing booked', due: today, link: `#/pipeline/${inquiry.id}` });
+      push({ id: `assessment-${inquiry.id}`, kind: 'assessment', title: `Book the assessment: ${inquiry.name}`, sub: inquiry.noShows ? `Did not come${inquiry.noShows > 1 ? ` (${inquiry.noShows} times)` : ''}: rebook` : 'In Assessment with nothing booked', due: today, link: `#/pipeline/${inquiry.id}` });
     }
   }
 
@@ -73,7 +73,7 @@ export function tasksFor(state, staffId, now = new Date()) {
     }
   }
 
-  if (staffId === 'clinical-director') {
+  if (hasRole(staffId, 'clinical-director')) {
     const filed = (formId, patientId) => state.forms.some(entry => entry.formId === formId && entry.patientId === patientId && entry.status === 'Filed');
     for (const patient of state.patients.filter(item => item.status === 'Admitted')) {
       for (const [formId, days] of [['intake', 3], ['plan', 7]]) {
@@ -84,7 +84,7 @@ export function tasksFor(state, staffId, now = new Date()) {
   }
 
   // Treatment plans are reviewed monthly: a dated review entry, not a rewrite (Form 2).
-  if (staffId === 'clinical-director') {
+  if (hasRole(staffId, 'clinical-director')) {
     for (const patient of state.patients.filter(item => item.status === 'Admitted')) {
       const plan = state.forms.filter(entry => entry.formId === 'plan' && entry.patientId === patient.id && entry.status === 'Filed').sort((a, b) => String(b.filedAt).localeCompare(String(a.filedAt)))[0];
       if (!plan) continue;
@@ -115,7 +115,7 @@ export function tasksFor(state, staffId, now = new Date()) {
     for (const onboarding of state.onboardings.filter(item => !item.admittedPatientId && item.steps.room?.arrivalDate)) {
       const inquiry = state.inquiries.find(item => item.id === onboarding.inquiryId);
       if (inquiry?.stage !== 'Agreement' || inquiry.outcome) continue;
-      push({ id: `arrival-${onboarding.id}`, kind: 'admission', title: `Arrival: ${inquiry.name}`, sub: onboarding.steps.room.roomId ? `Room ${onboarding.steps.room.roomId}, bed ${onboarding.steps.room.bed}` : 'Outpatient', due: onboarding.steps.room.arrivalDate, link: '#/admissions' });
+      push({ id: `arrival-${onboarding.id}`, kind: 'admission', title: `Arrival: ${inquiry.name}`, sub: onboarding.steps.room.roomId ? placeLabel(state, onboarding.steps.room.roomId, onboarding.steps.room.bed) : 'Outpatient', due: onboarding.steps.room.arrivalDate, link: '#/admissions' });
     }
   }
 

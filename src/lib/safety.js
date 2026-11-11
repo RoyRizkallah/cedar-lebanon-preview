@@ -61,7 +61,7 @@ export function reportIncident(state, { patientId = '', date, time = '', type, s
 }
 
 export function reviewIncident(state, incidentId, { outcome }, staffId) {
-  if (!canDo(staffId, 'reviewIncident')) throw new Error('Incidents are reviewed by Ahmed or Wael.');
+  if (!canDo(staffId, 'reviewIncident')) throw new Error('Incidents are reviewed by Ahmed.');
   const incident = state.incidents.find(item => item.id === incidentId);
   if (!incident || incident.status === 'Reviewed') throw new Error('This incident is already reviewed.');
   if (!String(outcome || '').trim()) throw new Error('Record the outcome of the review.');

@@ -41,30 +41,34 @@ await withSsr(async ({ load, html }) => {
   assert.ok(melyssa.includes('Follow-up log'));
   assert.ok(!melyssa.includes('Intake Psychological Assessment'), 'admin never sees clinical forms');
   assert.ok(!melyssa.includes('>Clinical<'));
-  assert.ok((await view('clinical-director', 'clinical')).includes('Intake Psychological Assessment'));
+  assert.ok((await view('ahmed', 'clinical')).includes('Intake Psychological Assessment'));
   // A direct link to a clinical form opens it for clinical staff and never for Admin.
   const intake = db.forms.find(entry => entry.formId === 'intake' && entry.patientId === id);
-  session.staffId = 'clinical-director';
+  session.staffId = 'ahmed';
   assert.ok((await html('/src/pages/Patients.svelte', { args: [id, 'clinical', intake.id] })).includes('Risk notes &amp; basis'));
   session.staffId = 'melyssa';
   assert.ok(!(await html('/src/pages/Patients.svelte', { args: [id, 'clinical', intake.id] })).includes('Risk notes &amp; basis'));
 
   const rsa = await view('omar');
   const tabs = [...rsa.matchAll(/class="tab-link[^"]*"[^>]*>([^<]+)</g)].map(match => match[1].trim());
-  assert.deepEqual(tabs, ['Overview', 'Wallet & requests'.replace('&', '&amp;')]);
+  // RSAs run the meds window and escort trips out (SOP 2.1, 2.7), so they reach the Medical tab, never prescriptions.
+  assert.deepEqual(tabs, ['Overview', 'Medical', 'Wallet & requests'.replace('&', '&amp;')]);
+  const rsaMedical = await view('omar', 'medical');
+  assert.ok(rsaMedical.includes('Off-Site Escort Log') && !rsaMedical.includes('Prescriptions'));
 
   const fitness = await view('john', 'fitness');
   for (const text of ['Physical Assessment &amp; Activity Clearance', 'Weekly Wellbeing Check-in']) assert.ok(fitness.includes(text), text);
-  assert.ok((await view('fadia', 'medical')).includes('Prescriptions'));
+  const medical = await view('fadia', 'medical');
+  for (const text of ['Prescriptions', 'Admission Medical Assessment', 'Psychiatric Consultation Record']) assert.ok(medical.includes(text), text);
 
   session.staffId = 'nabila';
   const list = await html('/src/pages/Patients.svelte', { args: [] });
   assert.ok(list.includes('Weekly case review'));
   session.staffId = 'melyssa';
   assert.ok(!(await html('/src/pages/Patients.svelte', { args: [] })).includes('Weekly case review'));
-  // Ahmed signs case reviews; he is never offered an empty form he cannot fill.
+  // Ahmed, the Clinical Director, chairs and writes the weekly case review.
   session.staffId = 'ahmed';
-  assert.ok(!(await html('/src/pages/Patients.svelte', { args: [] })).includes('Weekly case review'));
+  assert.ok((await html('/src/pages/Patients.svelte', { args: [] })).includes('Weekly case review'));
 });
 
 console.log('Patient checks passed.');

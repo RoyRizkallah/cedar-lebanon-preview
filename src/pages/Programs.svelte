@@ -88,7 +88,7 @@
     <div><h1>Programs</h1><p>Weekly plans the therapists build and give to patients. Giving a program books its sessions on the Schedule, and the care team sees it on each patient's file.</p></div>
     {#if manage}<div class="actions"><button class="btn primary" onclick={() => openProgram(null)}><Icon name="plus" size={16} />New program</button></div>{/if}
   </div>
-  {#if !manage}<p class="notice" style="margin-bottom: 18px"><Icon name="lock" size={16} />Programs are built by Wael, Nabila and Nazha, who give them to patients. You can read them here. In this preview, switch to one of them from the profile menu to build one.</p>{/if}
+  {#if !manage}<p class="notice" style="margin-bottom: 18px"><Icon name="lock" size={16} />Programs are built by Ahmed, Nabila, Samar and Nazha, who give them to patients. You can read them here. In this preview, switch to one of them from the profile menu to build one.</p>{/if}
 
   {#if !program}
     <section class="panel empty-state"><p>No programs yet.{manage ? ' Start one with "New program".' : ' The therapists will add them here.'}</p></section>
@@ -252,7 +252,7 @@
 
   .prog-main { display: flex; flex-direction: column; gap: 11px; min-width: 0; }
   .prog-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; padding: 18px 20px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
-  .prog-hero::before { content: ""; position: absolute; right: -60px; top: -120px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.18), transparent 65%); pointer-events: none; }
+  .prog-hero::before { content: ""; position: absolute; right: -60px; top: -120px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.18), transparent 65%); pointer-events: none; }
   .hero-text { position: relative; display: flex; flex-direction: column; gap: 6px; }
   .eyebrow { font-size: 12.5px; font-weight: 700; color: var(--lime); }
   .prog-hero h2 { font-size: 23px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--on-ink); }

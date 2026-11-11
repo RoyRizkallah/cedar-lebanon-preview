@@ -21,7 +21,7 @@ export function navCounts(state, staffId, now = new Date()) {
   const today = todayISO(now);
   const dueFollowUps = state.inquiries.filter(item => item.stage === 'Follow-up' && !item.outcome && item.followUp?.due <= today).length;
   if (dueFollowUps && canDo(staffId, 'editInquiry')) counts.followups = { value: dueFollowUps, hot: true, title: `${dueFollowUps} follow-ups due` };
-  if (canDo(staffId, 'recordMedication')) {
+  if (canDo(staffId, 'giveMedication')) {
     const due = roundFor(state, today).filter(item => item.status === 'Due').length;
     if (due) counts.medication = { value: due, title: `${due} doses still to record today` };
   }

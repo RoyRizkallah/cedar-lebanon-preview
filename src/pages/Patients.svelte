@@ -7,6 +7,7 @@
   const floor = hasRole(session.staffId, 'rsa');
   import { PROGRAMS } from '../lib/pipeline.js';
   import { riskLevel, onWatch, formById } from '../lib/forms/engine.js';
+  import { placeLabel } from '../lib/admission.js';
   import { upcomingFor } from '../lib/scheduling.js';
   import { daysBetween, todayISO, fmtDay, fmtDate } from '../lib/dates.js';
   import { go } from '../lib/ui.svelte.js';
@@ -87,7 +88,7 @@
             <tr class="clickable" onclick={() => go(`patients/${patient.id}`)}>
               <td class="lead-cell"><a href={`#/patients/${patient.id}`} style="color: var(--ink); font-weight: 600">{patient.fullName}</a></td>
               <td data-label="Program">{patient.program}</td>
-              <td data-label="Room">{patient.roomId ? `${patient.roomId} / ${patient.bed}` : '—'}</td>
+              <td data-label="Room">{patient.roomId ? placeLabel(db, patient.roomId, patient.bed) : '—'}</td>
               <td data-label={view === 'Admitted' ? 'Day' : 'Discharged'} class="num">{view === 'Admitted' ? daysBetween(patient.admittedAt, today) + 1 : fmtDate(patient.dischargedAt)}</td>
               {#if !floor}
                 <td data-label="Phase">{patient.phase}</td>
@@ -119,7 +120,7 @@
   .phases { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
   .phases i { height: 6px; border-radius: 6px; background: var(--sunk); }
   .phases i.done { background: var(--strong); }
-  .phases i.now { background: var(--lime); box-shadow: 0 0 8px rgb(124 252 0 / 0.5); }
+  .phases i.now { background: var(--lime); box-shadow: 0 0 8px rgb(var(--lime-rgb) / 0.5); }
   .phase-name { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-top: -6px; }
   .person footer { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
   .person footer strong { display: block; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }

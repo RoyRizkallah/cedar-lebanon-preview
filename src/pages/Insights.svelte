@@ -71,9 +71,9 @@
 <style>
   /* Cedar Intelligence: one headline figure, then each observation as its own card */
   .brain { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 17px; align-items: end; padding: 21px 22px; border-radius: 22px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
-  .brain::before { content: ""; position: absolute; left: 30%; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.2), transparent 65%); pointer-events: none; }
+  .brain::before { content: ""; position: absolute; left: 30%; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.2), transparent 65%); pointer-events: none; }
   .brain-main { position: relative; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-  .brain-mark { width: 46px; height: 46px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; background: var(--lime); color: var(--on-lime); box-shadow: 0 0 30px rgb(124 252 0 / 0.45); margin-bottom: 8px; }
+  .brain-mark { width: 46px; height: 46px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; background: var(--lime); color: var(--on-lime); box-shadow: 0 0 30px rgb(var(--lime-rgb) / 0.45); margin-bottom: 8px; }
   .eyebrow { font-size: 12.5px; font-weight: 750; color: var(--on-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
   .big { font-size: 56px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: var(--lime); }
   .big small { font-size: 23px; }

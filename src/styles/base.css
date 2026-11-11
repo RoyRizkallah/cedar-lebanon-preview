@@ -39,4 +39,4 @@ img { display: block; max-width: 100%; }
 }
 
 /* The rail's white column runs the full height on wide screens. */
-@media (min-width: 901px) { body { background: linear-gradient(to right, var(--paper) calc(var(--rail) - 1px), var(--line) calc(var(--rail) - 1px), var(--line) var(--rail), var(--canvas) var(--rail)); } }
+@media (min-width: 901px) { body { background: linear-gradient(to right, var(--sidebar) calc(var(--rail) - 1px), var(--line) calc(var(--rail) - 1px), var(--line) var(--rail), var(--canvas) var(--rail)); } }

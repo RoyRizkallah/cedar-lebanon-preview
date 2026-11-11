@@ -1,12 +1,13 @@
 // Rooms and beds: who is in each bed, what is held for an admission, and whether the room is ready.
 import { daysBetween, todayISO } from './dates.js';
-import { isActive } from './admission.js';
+import { isActive, placeLabel, bedName } from './admission.js';
 import { log } from './activity.js';
 import { canDo } from './people.js';
 import { plannedDischarge } from './discharge.js';
 
 export const ROOM_STATUSES = ['Ready', 'Cleaning', 'Maintenance'];
-export const WINGS = ['Ground', 'Upper'];
+export const WINGS = ['Upper', 'Ground', 'Lower'];
+export const ROOM_TYPES = ['Standard', 'Bungalow'];
 const allowed = staffId => { if (!canDo(staffId, 'manageRooms')) throw new Error('Rooms are managed by Mazen, Melyssa or the partners.'); };
 const occupants = (state, roomId) => state.patients.filter(patient => patient.status === 'Admitted' && patient.roomId === roomId);
 // Beds promised to an admission in progress count as taken for any change to the room.
@@ -14,7 +15,7 @@ const held = (state, roomId) => state.onboardings.filter(item => isActive(state,
 const heldFor = (state, item) => state.inquiries.find(entry => entry.id === item.inquiryId)?.name || 'an admission';
 function guardHeld(state, roomId, beds = 0) {
   const hold = held(state, roomId).find(item => item.steps.room.bed > beds);
-  if (hold) throw new Error(`Room ${roomId}, bed ${hold.steps.room.bed} is held for ${heldFor(state, hold)}.`);
+  if (hold) throw new Error(`${placeLabel(state, roomId, hold.steps.room.bed)} is held for ${heldFor(state, hold)}.`);
 }
 const find = (state, id) => { const room = state.rooms.find(item => item.id === id); if (!room) throw new Error('This room was not found.'); return room; };
 
@@ -26,7 +27,7 @@ export function roomBoard(state, now = new Date()) {
       const patient = occupants(state, room.id).find(item => item.bed === bed);
       const hold = state.onboardings.find(item => isActive(state, item) && item.steps.room.done && item.steps.room.roomId === room.id && item.steps.room.bed === bed);
       const planned = patient && plannedDischarge(state, patient.id);
-      return { bed, patient: patient || null, heldFor: hold ? state.inquiries.find(item => item.id === hold.inquiryId)?.name : null, day: patient ? daysBetween(patient.admittedAt, today) + 1 : null, plannedDischarge: planned || null };
+      return { bed, label: bedName(room, bed), patient: patient || null, heldFor: hold ? state.inquiries.find(item => item.id === hold.inquiryId)?.name : null, day: patient ? daysBetween(patient.admittedAt, today) + 1 : null, plannedDischarge: planned || null };
     });
     return { ...room, status: room.status || 'Ready', beds, free: beds.filter(bed => !bed.patient && !bed.heldFor).length };
   });
@@ -43,14 +44,14 @@ export function setRoomStatus(state, roomId, status, staffId) {
   return room;
 }
 
-export function addRoom(state, { id, wing = 'Ground', beds = 2, access = 'Standard', notes = '' }, staffId) {
+export function addRoom(state, { id, wing = 'Upper', beds = 2, type = 'Standard', access = 'Standard', notes = '' }, staffId) {
   allowed(staffId);
   const code = String(id || '').trim();
   if (!code) throw new Error('Give the room a number.');
   if (state.rooms.some(room => room.id === code)) throw new Error(`Room ${code} already exists.`);
   const count = Number(beds);
   if (!Number.isInteger(count) || count < 1 || count > 4) throw new Error('A room has 1 to 4 beds.');
-  const room = { id: code, name: `Room ${code}`, wing, beds: count, access, notes: String(notes).trim(), status: 'Ready' };
+  const room = { id: code, name: /^\d+$/.test(code) ? `Room ${code}` : code, wing, beds: count, type: ROOM_TYPES.includes(type) ? type : 'Standard', access, notes: String(notes).trim(), status: 'Ready' };
   state.rooms.push(room);
   log(state, staffId, `Added room ${code}`, '#/rooms');
   return room;

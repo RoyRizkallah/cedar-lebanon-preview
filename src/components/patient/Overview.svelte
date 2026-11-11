@@ -1,6 +1,7 @@
 <script>
   import { db, session, commit } from '../../lib/store.svelte.js';
   import { addComment } from '../../lib/support.js';
+  import { placeLabel } from '../../lib/admission.js';
   import Contacts from './Contacts.svelte';
   import { staffName, hasRole, canSeeTab, canSee, canDo } from '../../lib/people.js';
   import { programFor, DAYS } from '../../lib/programs.js';
@@ -28,7 +29,7 @@
     <div class="panel-head"><h3>Stay</h3></div>
     <dl class="kv panel-body">
       <dt>Program</dt><dd>{patient.program}</dd>
-      <dt>Room</dt><dd>{patient.roomId ? `Room ${patient.roomId}, bed ${patient.bed}` : 'No room (outpatient)'}</dd>
+      <dt>Room</dt><dd>{patient.roomId ? placeLabel(db, patient.roomId, patient.bed) : 'No room (outpatient)'}</dd>
       <dt>Admitted</dt><dd>{fmtDate(patient.admittedAt, { day: 'numeric', month: 'long', year: 'numeric' })}</dd>
       {#if seesPhase}<dt>Phase</dt><dd>{patient.phase}</dd>{/if}
       <dt>Contact preference</dt><dd>{patient.commPreference}</dd>

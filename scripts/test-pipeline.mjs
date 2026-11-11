@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { STAGES, PROGRAMS, COMM_PREFS, RELATIONSHIPS, startFollowUp, followUpAgain, runFollowUpAlerts, createInquiry, updateInquiry, moveInquiry, declineInquiry, logCall, reviewDue, potentialTotals, sendClarification, timeInStageHours } from '../src/lib/pipeline.js';
+import { STAGES, PROGRAMS, COMM_PREFS, RELATIONSHIPS, startFollowUp, recordFollowUp, runFollowUpAlerts, createInquiry, updateInquiry, moveInquiry, declineInquiry, logCall, reviewDue, potentialTotals, sendClarification, timeInStageHours } from '../src/lib/pipeline.js';
 import { seed } from '../src/lib/seed.js';
 import { tasksFor } from '../src/lib/tasks.js';
 import { withSsr } from './lib/ssr.mjs';
@@ -43,13 +43,12 @@ const count = () => state.notifications.length;
 const start = count();
 updateInquiry(state, inquiry.id, { urgency: 'Urgent' }, 'melyssa');
 const alerts = state.notifications.slice(0, count() - start);
-assert.deepEqual(alerts.map(item => item.to).sort(), ['ahmed', 'amer', 'clinical-director', 'melyssa']);
+assert.deepEqual(alerts.map(item => item.to).sort(), ['ahmed', 'amer', 'melyssa']);
 assert.ok(alerts.every(item => item.channels.includes('WhatsApp (queued)')));
-// The link opens the inquiry for those who can see the pipeline; Wael, who can't, gets the alert without a dead link.
-assert.ok(alerts.filter(item => item.to !== 'clinical-director').every(item => item.link === `#/pipeline/${inquiry.id}`));
-assert.equal(alerts.find(item => item.to === 'clinical-director').link, '');
+// Everyone alerted can open the pipeline, so every alert links to the inquiry.
+assert.ok(alerts.every(item => item.link === `#/pipeline/${inquiry.id}`));
 updateInquiry(state, inquiry.id, { urgency: 'Urgent', phone: '+961 70 000 000' }, 'melyssa');
-assert.equal(count(), start + 4);
+assert.equal(count(), start + 3);
 
 // A save that fails changes nothing, so a later retry still raises the urgent alert.
 const careful = createInquiry(state, { name: 'Careful Save', potentialRevenue: 1000 }, 'melyssa', now);
@@ -57,7 +56,7 @@ const alertsBefore = state.notifications.length;
 assert.throws(() => updateInquiry(state, careful.id, { name: '', urgency: 'Urgent', potentialRevenue: 9000 }, 'melyssa'), /Add the person’s name/);
 assert.deepEqual([careful.name, careful.urgency, careful.potentialRevenue], ['Careful Save', 'Normal', 1000]);
 updateInquiry(state, careful.id, { name: 'Careful Save', urgency: 'Urgent' }, 'melyssa');
-assert.equal(state.notifications.length, alertsBefore + 4);
+assert.equal(state.notifications.length, alertsBefore + 3);
 
 const call = logCall(state, inquiry.id, { outcome: 'Reached', notes: 'Booked assessment' }, 'melyssa', now);
 assert.equal(call.by, 'melyssa');
@@ -93,8 +92,10 @@ assert.equal(alertsFor(), 1, 'due: one reminder');
 runFollowUpAlerts(state, new Date('2026-11-04T15:00:00'));
 assert.equal(alertsFor(), 1, 'never twice for the same round');
 assert.ok(tasksFor(state, 'melyssa', new Date('2026-11-04T09:00:00')).today.some(item => item.title === 'Follow up with Needs Time'));
-followUpAgain(state, waiting.id, { days: 2, outcome: 'No answer' }, 'melyssa', new Date('2026-11-04T11:00:00'));
-assert.deepEqual([waiting.followUp.due, waiting.followUp.round, waiting.followUp.notified], ['2026-11-06', 2, false]);
+// The follow-up is made with no assessment booked: the inquiry moves to its own log.
+recordFollowUp(state, waiting.id, { outcome: 'No answer' }, 'melyssa', new Date('2026-11-04T11:00:00'));
+assert.equal(waiting.stage, 'Inactive');
+assert.equal(waiting.followUp, undefined);
 assert.equal(waiting.calls.at(-1).outcome, 'No answer');
 moveInquiry(state, waiting.id, 'Assessment', 'melyssa', new Date('2026-11-06T10:00:00'));
 assert.equal(waiting.stage, 'Assessment');

@@ -28,6 +28,7 @@ assert.ok(psych[0].date > '2026-11-02', 'booked from the next day');
 assert.throws(() => completeStep(state, onboarding.id, 'nursing', {}, 'melyssa'), /This step belongs to Fadia, Ahmed Khattab./);
 assert.throws(() => admit(state, onboarding.id, 'melyssa', now), /Complete all admission steps first\./);
 completeStep(state, onboarding.id, 'nursing', { note: 'Vitals normal' }, 'fadia');
+completeStep(state, onboarding.id, 'physio', { note: 'Fit for the gym, no impact work' }, 'john');
 assert.throws(() => completeStep(state, onboarding.id, 'psychologist', {}, 'nabila'), /once the psychologist session is completed/);
 completeAppointment(state, psych[0].id, 'nabila', now);
 completeStep(state, onboarding.id, 'psychologist', {}, 'nabila');
@@ -47,10 +48,10 @@ setRoomStatus(state, closing.id, 'Ready', 'mazen');
 addRoom(state, { id: '201', wing: 'Upper', beds: 2 }, 'mazen');
 const [room, bed] = ['201', 2];
 assert.ok(freeBeds(state).some(([id, number]) => id === room && number === bed));
-assert.throws(() => completeStep(state, onboarding.id, 'room', { roomId: '101', bed: 1 }, 'melyssa'), /already taken/);
+assert.throws(() => completeStep(state, onboarding.id, 'room', { roomId: '1', bed: 1 }, 'melyssa'), /Room 1, bed a is not free/);
 completeStep(state, onboarding.id, 'room', { roomId: room, bed }, 'melyssa');
 assert.equal(canAdmit(onboarding), true);
-assert.throws(() => setRoomStatus(state, room, 'Maintenance', 'mazen'), /bed 2 is held for Rami Khoury/);
+assert.throws(() => setRoomStatus(state, room, 'Maintenance', 'mazen'), /Room 201, bed b is held for Rami Khoury/);
 assert.throws(() => removeRoom(state, room, 'mazen'), /held for/);
 assert.throws(() => updateRoom(state, room, { beds: 1, wing: 'Upper' }, 'mazen'), /held for/);
 
@@ -75,7 +76,7 @@ assert.equal(patient.payer, 'Employer');
 assert.equal(patient.paymentTerms, 'Monthly in advance');
 assert.equal(patient.nursingNote, 'Vitals normal');
 const told = state.notifications.slice(0, state.notifications.length - before).map(item => item.to);
-for (const id of ['fadia', 'nabila', 'clinical-director', 'john', patient.assigned.rsa, 'mazen', 'rabih']) assert.ok(told.includes(id), `${id} is told`);
+for (const id of ['fadia', 'nabila', 'ahmed', 'john', patient.assigned.rsa, 'mazen', 'rabih']) assert.ok(told.includes(id), `${id} is told`);
 assert.ok(tasksFor(state, 'fadia', now).upcoming.concat(tasksFor(state, 'fadia', now).today).some(item => item.kind === 'clearance' && item.patientId === patient.id), 'Fadia clears the new patient for activity');
 
 // Leaving Agreement, or declining, gives back the bed and the psychologist slot.

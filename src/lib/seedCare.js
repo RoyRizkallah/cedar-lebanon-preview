@@ -79,7 +79,7 @@ export function seedCare(state, today) {
     { id: 'LV-0002', patientId: byName('Karim Haddad').id, out: at(0, '09:30'), dueBack: at(0, '17:00'), escort: 'Sister', reason: 'Job interview', by: 'melyssa' }
   );
   state.incidents.push(
-    { id: 'INC-0001', patientId: byName('Elie Mansour').id, date: day(-4), time: '20:15', type: 'Aggression', severity: 'Medium', description: 'Shouted at a peer over the TV remote.', actionTaken: 'Separated; talked down by RSA.', reportedBy: 'omar', status: 'Reviewed', outcome: 'Discussed in individual session.', reviewedBy: 'clinical-director' },
+    { id: 'INC-0001', patientId: byName('Elie Mansour').id, date: day(-4), time: '20:15', type: 'Aggression', severity: 'Medium', description: 'Shouted at a peer over the TV remote.', actionTaken: 'Separated; talked down by RSA.', reportedBy: 'omar', status: 'Reviewed', outcome: 'Discussed in individual session.', reviewedBy: 'ahmed' },
     { id: 'INC-0002', patientId: byName('Marc Aoun').id, date: day(-3), time: '19:40', type: 'Substance found', severity: 'High', description: 'Cannabis found in jacket after leave.', actionTaken: 'Confiscated; drug screen done.', reportedBy: 'fadia', status: 'Open' }
   );
 
@@ -93,5 +93,5 @@ export function seedCare(state, today) {
   );
 
   // Rooms: wing, access and readiness.
-  state.rooms.forEach((room, index) => Object.assign(room, { wing: index < 3 ? 'Ground' : 'Upper', access: index === 0 ? 'Step-free' : 'Standard', status: index === 5 ? 'Cleaning' : 'Ready', notes: index === 5 ? 'Bed 2: deep clean after a discharge, ready tomorrow.' : '' }));
+  state.rooms.forEach(room => Object.assign(room, { access: room.wing === 'Ground' ? 'Step-free' : 'Standard', status: room.id === '7' ? 'Cleaning' : 'Ready', notes: room.id === '7' ? 'Deep clean after a discharge, ready tomorrow.' : '' }));
 }

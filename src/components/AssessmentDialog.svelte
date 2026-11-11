@@ -1,9 +1,9 @@
 <script>
   import Icon from './Icon.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { ASSESSMENT_MODES, scheduleAssessment, assessmentFor } from '../lib/pipeline.js';
+  import { ASSESSMENT_MODES, ASSESSORS, scheduleAssessment, assessmentFor } from '../lib/pipeline.js';
   import { earliestSlot } from '../lib/scheduling.js';
-  import { STAFF, hasRole } from '../lib/people.js';
+  import { staffName } from '../lib/people.js';
   import { todayISO, fmtDay } from '../lib/dates.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
   import { say } from '../lib/ui.svelte.js';
@@ -14,9 +14,10 @@
   const today = todayISO(session.now);
   const inquiry = db.inquiries.find(item => item.id === id);
   const current = assessmentFor(db, id);
-  const ASSESSORS = STAFF.filter(person => hasRole(person.id, 'clinical-director', 'psychologist'));
   const first = (provider) => { try { return earliestSlot(db, { provider, minutes: 60, from: today }); } catch { return { date: '', start: '' }; } };
-  let booking = $state({ provider: current?.provider || 'clinical-director', mode: current?.mode || 'In person', ...(current ? { date: current.date, start: current.start } : first('clinical-director')) });
+  // The assessor is Amer, Ahmad, or someone named; staff assessors start at their earliest free hour.
+  const startingAssessor = current ? (current.assessorName ? 'other' : current.provider) : 'ahmed';
+  let booking = $state({ assessor: startingAssessor, assessorName: current?.assessorName || '', mode: current?.mode || 'In person', ...(current ? { date: current.date, start: current.start } : first('ahmed')) });
   let error = $state('');
 
   function save() {
@@ -35,17 +36,18 @@
   <div class="drawer-body stack">
     <div class="grid-2">
       <label class="field"><span>Assessor</span>
-        <select class="select" bind:value={booking.provider} onchange={() => { if (!current) Object.assign(booking, first(booking.provider)); }}>
-          {#each ASSESSORS as person (person.id)}<option value={person.id}>{person.name}, {person.title}</option>{/each}
+        <select class="select" bind:value={booking.assessor} onchange={() => { if (!current && booking.assessor !== 'other') Object.assign(booking, first(booking.assessor)); }}>
+          {#each ASSESSORS as id (id)}<option value={id}>{id === 'other' ? 'Someone else' : staffName(id)}</option>{/each}
         </select>
       </label>
+      {#if booking.assessor === 'other'}<label class="field"><span>Assessor's name</span><input class="input" bind:value={booking.assessorName} placeholder="For example: Dr. Rami Khoury" /></label>{/if}
       <fieldset class="field"><legend>How</legend><div class="seg" style="margin-top: 6px">{#each ASSESSMENT_MODES as mode}<button type="button" aria-pressed={booking.mode === mode} onclick={() => { booking.mode = mode; }}>{mode}</button>{/each}</div></fieldset>
     </div>
     <div class="grid-2">
       <label class="field"><span>Date</span><input class="input" type="date" bind:value={booking.date} min={today} required /></label>
       <label class="field"><span>Time <span class="hint">60 minutes</span></span><input class="input" type="time" bind:value={booking.start} required /></label>
     </div>
-    <p class="faint" style="margin: 0; font-size: 12.5px"><Icon name="calendar" size={13} /> Filled with the assessor's earliest free hour. Change it if the family asked for another time.</p>
+    <p class="faint" style="margin: 0; font-size: 12.5px"><Icon name="calendar" size={13} /> Filled with the assessor's earliest free hour; for someone from outside, set the time you agreed.</p>
     {#if error}<p class="error" role="alert">{error}</p>{/if}
   </div>
   <footer class="drawer-foot"><button class="btn" type="button" onclick={onclose}>Cancel</button><button class="btn primary" type="submit"><Icon name="calendar" size={16} />Book assessment</button></footer>

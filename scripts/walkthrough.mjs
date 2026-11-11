@@ -86,6 +86,11 @@ try {
   await click('Mark nursing assessment done');
   check(await run(`return ${article('Nour Zein')}.innerText.includes('Fadia,');`), 'Fadia completed nursing');
 
+  await open('admissions', 'john');
+  await click('Physiotherapy assessment', article('Nour Zein'));
+  await click('Mark physiotherapy assessment done');
+  check(await run(`return ${article('Nour Zein')}.innerText.includes('John,');`), 'John completed physiotherapy');
+
   await open('schedule', 'nabila');
   const moved = await run(`const next = () => document.querySelector('[aria-label="Next week"]');
     for (let i = 0; i < 3; i++) { if ([...document.querySelectorAll('.appt')].some(a => a.innerText.includes('Nour Zein'))) break; next().click(); await new Promise(r => setTimeout(r, 300)); }
@@ -108,7 +113,7 @@ try {
   await click('Sign', `document.querySelector('.dialog .drawer-foot')`);
   await click('Room assigned', article('Nour Zein'));
   await click('Assign bed');
-  check(await run(`return ${article('Nour Zein')}.innerText.includes('5/5');`), 'all five steps done');
+  check(await run(`return ${article('Nour Zein')}.innerText.includes('6/6');`), 'all six steps done');
   await click('Admit patient', article('Nour Zein'));
   await sleep(600);
   check(await run(`return location.hash.startsWith('#/patients/P-');`), 'admitting opens the new patient file');
@@ -129,7 +134,7 @@ try {
 
   console.log('Clinical Director sees the clinical side');
   const patientHash = await run('return location.hash;');
-  await open(`patients/${patientHash.split('/')[2]}/clinical`, 'clinical-director');
+  await open(`patients/${patientHash.split('/')[2]}/clinical`, 'ahmed');
   check(await bodyHas('Intake Psychological Assessment'), 'clinical forms listed for the new patient');
   check(await bodyHas('Due by'), 'intake shows its 72-hour deadline');
 

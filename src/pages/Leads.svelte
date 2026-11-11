@@ -181,7 +181,7 @@
   .lt-title p { color: var(--text-2); margin-top: 4px; }
   .lt-hero { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 14px 17px; border-radius: 19px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .lt-hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgb(239 90 36 / 0.45), transparent 65%); }
-  .lt-hero.calm::after { background: radial-gradient(circle, rgb(124 252 0 / 0.35), transparent 65%); }
+  .lt-hero.calm::after { background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.35), transparent 65%); }
   .lt-hero .label, .lt-hero .note { position: relative; z-index: 1; color: var(--on-ink-2); font-weight: 650; font-size: 13px; }
   .lt-hero strong { position: relative; z-index: 1; font-size: 41px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: #ffb59a; margin: 4px 0; }
   .lt-hero.calm strong { color: var(--lime); }

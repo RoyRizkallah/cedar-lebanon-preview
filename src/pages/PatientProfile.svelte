@@ -15,6 +15,7 @@
   import { riskLevel, onWatch, formById } from '../lib/forms/engine.js';
   import { daysBetween, todayISO, fmtDate } from '../lib/dates.js';
   import { noPhone } from '../lib/pipeline.js';
+  import { placeLabel } from '../lib/admission.js';
   import { emergencyContact } from '../lib/contacts.js';
 
   let { id, tab = 'overview', entry = '' } = $props();
@@ -49,7 +50,7 @@
           <h1>{current === 'clinical' ? patient.clinicalName : patient.fullName}</h1>
           <div class="chips">
             <span class="chip">{patient.program}</span>
-            {#if patient.roomId}<span class="chip">Room {patient.roomId}, bed {patient.bed}</span>{/if}
+            {#if patient.roomId}<span class="chip">{placeLabel(db, patient.roomId, patient.bed)}</span>{/if}
             <span class="chip">{patient.status === 'Discharged' ? `Discharged ${fmtDate(patient.dischargedAt)}` : `Day ${day} of stay`}</span>
             {#if patient.status === 'Discharged'}<span class="chip">{patient.dischargeType ? `${patient.dischargeType}, after` : 'After'} {day - 1} days</span>{/if}
             {#if risk}<span class="chip risk-{risk}" title="Latest risk rating">{risk} risk</span>
@@ -79,7 +80,7 @@
 
 <style>
   .banner { position: relative; overflow: hidden; isolation: isolate; padding: 15px 21px 20px; margin-bottom: 12px; border-radius: 20px; background: linear-gradient(115deg, var(--paper) 0%, var(--paper) 45%, var(--leaf) 100%); box-shadow: var(--shadow-1); }
-  .banner::after { content: ""; position: absolute; z-index: -1; right: -100px; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.2), transparent 65%); }
+  .banner::after { content: ""; position: absolute; z-index: -1; right: -100px; top: -140px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.2), transparent 65%); }
   .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 650; color: var(--text-3); margin-bottom: 14px; }
   .banner-main { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
   .portrait { width: 84px; height: 84px; font-size: 20px; box-shadow: 0 0 0 6px var(--paper), 0 12px 30px rgb(80 160 0 / 0.25); }

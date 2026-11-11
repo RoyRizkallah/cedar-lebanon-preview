@@ -33,7 +33,7 @@
 <main class="content wide">
   <div class="page-head">
     <div><h1>Rooms & beds</h1><p>Who is in each bed, what is held for an admission, and whether the room is ready.</p></div>
-    {#if manage}<div class="actions"><button class="btn primary" onclick={() => { error = ''; editing = { isNew: true, id: '', wing: 'Ground', beds: 2, access: 'Standard', notes: '' }; }}><Icon name="plus" size={16} />Add room</button></div>{/if}
+    {#if manage}<div class="actions"><button class="btn primary" onclick={() => { error = ''; editing = { isNew: true, id: '', wing: 'Upper', beds: 2, access: 'Standard', notes: '' }; }}><Icon name="plus" size={16} />Add room</button></div>{/if}
   </div>
 
   <div class="house">
@@ -79,14 +79,14 @@
                     {#if bed.patient}
                       <a class="bed taken" href={`#/patients/${bed.patient.id}`} title={bed.patient.fullName}>
                         <span class="pillow"></span>
-                        <span class="bed-no">{bed.bed}</span>
+                        {#if bed.label}<span class="bed-no">{bed.label}</span>{/if}
                         <strong>{bed.patient.fullName}</strong>
                         <span class="sub">Day {bed.day}{bed.plannedDischarge ? `, leaving ${fmtDate(bed.plannedDischarge)}` : ''}</span>
                       </a>
                     {:else if bed.heldFor}
-                      <div class="bed held"><span class="pillow"></span><span class="bed-no">{bed.bed}</span><strong>Held</strong><span class="sub">For {bed.heldFor}</span></div>
+                      <div class="bed held"><span class="pillow"></span>{#if bed.label}<span class="bed-no">{bed.label}</span>{/if}<strong>Held</strong><span class="sub">For {bed.heldFor}</span></div>
                     {:else}
-                      <div class="bed free"><span class="pillow"></span><span class="bed-no">{bed.bed}</span><strong>Free</strong><span class="sub">{room.status === 'Ready' ? 'Ready for admission' : room.status}</span></div>
+                      <div class="bed free"><span class="pillow"></span>{#if bed.label}<span class="bed-no">{bed.label}</span>{/if}<strong>Free</strong><span class="sub">{room.status === 'Ready' ? 'Ready for admission' : room.status}</span></div>
                     {/if}
                   {/each}
                 </div>
@@ -128,7 +128,7 @@
   /* The house at a glance: one dark occupancy card, three small counters */
   .house { display: grid; grid-template-columns: minmax(340px, 1.6fr) repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 17px; }
   .occ-hero { display: flex; align-items: center; gap: 14px; padding: 17px 18px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); position: relative; overflow: hidden; }
-  .occ-hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.22), transparent 70%); pointer-events: none; }
+  .occ-hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.22), transparent 70%); pointer-events: none; }
   .occ-hero :global(.ring) { color: var(--on-ink); }
   .eyebrow { font-size: 12.5px; font-weight: 750; color: var(--on-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
   .big { font-size: 42px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; margin: 6px 0 12px; color: var(--lime); }

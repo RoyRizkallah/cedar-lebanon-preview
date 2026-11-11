@@ -11,7 +11,7 @@ const admitted = state.patients.filter(patient => patient.status === 'Admitted')
 for (const patient of admitted) assert.ok(emergencyContact(patient), `${patient.id} has an emergency contact`);
 assert.ok(!CONTACT_RELATIONS.includes('Self'));
 
-for (const id of ['melyssa', 'ahmed', 'amer', 'fadia', 'clinical-director']) assert.equal(canDo(id, 'manageContacts'), true, id);
+for (const id of ['melyssa', 'ahmed', 'amer', 'fadia', 'ahmed']) assert.equal(canDo(id, 'manageContacts'), true, id);
 for (const id of ['georgio', 'john', 'rabih']) assert.equal(canDo(id, 'manageContacts'), false, id);
 
 const patient = admitted[0];

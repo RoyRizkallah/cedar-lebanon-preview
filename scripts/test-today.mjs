@@ -17,7 +17,9 @@ assert.equal(amer.find(item => item.id === 'in-care').value, admitted.length);
 assert.ok(!amer.some(item => item.id === 'doses'), 'Amer does not run medication');
 const fadia = houseToday(state, 'fadia', now);
 assert.equal(fadia.find(item => item.id === 'doses').value, roundFor(state, today).filter(item => item.status === 'Due').length);
-assert.ok(!houseToday(state, 'georgio', now).some(item => item.id === 'doses' || item.id === 'arriving'));
+// RSAs run the meds window (SOP 2.1), so the doses still due are on their day; arrivals are not.
+assert.ok(houseToday(state, 'georgio', now).some(item => item.id === 'doses'));
+assert.ok(!houseToday(state, 'georgio', now).some(item => item.id === 'arriving'));
 for (const item of amer) assert.ok(item.label && item.link?.startsWith('#/'), item.id);
 
 // Milestones this week: stay days, programs finishing, planned discharges, for the patients the person can see.
@@ -62,7 +64,7 @@ for (const item of amer) assert.ok(item.label && item.link?.startsWith('#/'), it
 // Every member of staff starts the sample day with something real to do.
 {
   const { tasksFor } = await import('../src/lib/tasks.js');
-  for (const id of ['amer', 'ahmed', 'clinical-director', 'nazha', 'rabih', 'kteish', 'mazen', 'john', 'omar']) {
+  for (const id of ['amer', 'ahmed', 'ahmed', 'nazha', 'rabih', 'kteish', 'mazen', 'john', 'omar']) {
     const work = tasksFor(state, id, now);
     assert.ok(work.overdue.length + work.today.length + work.upcoming.length > 0, `${id} has work`);
   }

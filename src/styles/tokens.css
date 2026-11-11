@@ -2,9 +2,11 @@
 
 /* Serene: calm, airy, a health app. Ink from the logo carries weight; cedar lime marks what is yours, now, or good. */
 :root {
-  --lime: #7cfc00;
-  --lime-press: #6fe300;
-  --on-lime: #142800;
+  /* The brand green, softened from the logo's neon so it reads calmly on screens all day. */
+  --lime: #8cc63f;
+  --lime-rgb: 140 198 63;
+  --lime-press: #7ab02f;
+  --on-lime: #16290a;
   --ink-fixed: #17201a;
   --on-ink: #f3f7f1;
   --on-ink-2: #b9c7b4;
@@ -46,9 +48,11 @@
   --text-2: #5b665e;
   --text-3: #94a097;
   --moss: #2f6b00;
-  --leaf: #e9fbd6;
-  --lime-soft: #e9fbd6;
-  --lime-line: #c9f2a0;
+  --leaf: #eef6e3;
+  --lime-soft: #eef6e3;
+  --lime-line: #d2e8b4;
+  /* The sidebar sits on a light sage, apart from the white work area. */
+  --sidebar: #f1f5ec;
   --urgent: #c2410c;
   --urgent-soft: #fdeee9;
   --warn: #946200;

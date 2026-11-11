@@ -5,6 +5,7 @@ import { canSee, visiblePatients, STAFF } from './people.js';
 import { roundFor } from './medication.js';
 import { leaveStatus } from './safety.js';
 import { plannedDischarge } from './discharge.js';
+import { placeLabel } from './admission.js';
 
 const WEEK = 7;
 const STAY_DAYS = [7, 30, 60, 90];
@@ -48,7 +49,7 @@ export function milestonesFor(state, staffId, now = new Date(), days = WEEK) {
   if (canSee(staffId, 'admissions')) {
     for (const onboarding of state.onboardings.filter(item => !item.admittedPatientId && inWindow(item.steps.room?.arrivalDate))) {
       const inquiry = state.inquiries.find(item => item.id === onboarding.inquiryId);
-      if (inquiry && !inquiry.outcome) list.push({ date: onboarding.steps.room.arrivalDate, kind: 'arrival', patientId: '', text: `${inquiry.name} arrives`, sub: onboarding.steps.room.roomId ? `Room ${onboarding.steps.room.roomId}` : 'Room to confirm', link: '#/admissions' });
+      if (inquiry && !inquiry.outcome) list.push({ date: onboarding.steps.room.arrivalDate, kind: 'arrival', patientId: '', text: `${inquiry.name} arrives`, sub: onboarding.steps.room.roomId ? placeLabel(state, onboarding.steps.room.roomId, onboarding.steps.room.bed) : 'Room to confirm', link: '#/admissions' });
     }
   }
   return list.sort((a, b) => a.date.localeCompare(b.date) || a.text.localeCompare(b.text));

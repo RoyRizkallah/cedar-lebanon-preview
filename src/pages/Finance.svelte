@@ -282,7 +282,7 @@
   /* Overview bento: what Cedar is owed leads, the other balances sit beside it */
   .bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(132px, auto); gap: 10px; }
   .owed { grid-column: span 2; grid-row: span 2; position: relative; overflow: hidden; display: flex; align-items: center; gap: 15px; padding: 20px 21px; border-radius: 22px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
-  .owed::after { content: ""; position: absolute; right: -90px; top: -90px; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.22), transparent 70%); pointer-events: none; }
+  .owed::after { content: ""; position: absolute; right: -90px; top: -90px; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.22), transparent 70%); pointer-events: none; }
   .owed-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
   .eyebrow { font-size: 12.5px; font-weight: 750; color: var(--on-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
   .big { font-size: clamp(30px, 4.4vw, 47px); font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: var(--lime); }

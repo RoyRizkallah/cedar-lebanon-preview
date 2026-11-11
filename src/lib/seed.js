@@ -7,20 +7,26 @@ import { seedPrograms } from './seedPrograms.js';
 import { book, earliestSlot } from './scheduling.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 6;
+export const SEED_VERSION = 7;
 
-const ROOMS = ['101', '102', '103', '104', '105', '106'].map(id => ({ id, name: `Room ${id}`, beds: 2 }));
+// The centre's layout: Upper floor rooms 1–4 (beds a, b); Ground floor Bungalow 1 (one bed); Lower floor room 5 (a, b, c) and rooms 6, 7 (a, b).
+const ROOMS = [
+  ...['1', '2', '3', '4'].map(id => ({ id, name: `Room ${id}`, wing: 'Upper', beds: 2, type: 'Standard' })),
+  { id: 'Bungalow 1', name: 'Bungalow 1', wing: 'Ground', beds: 1, type: 'Bungalow' },
+  { id: '5', name: 'Room 5', wing: 'Lower', beds: 3, type: 'Standard' },
+  ...['6', '7'].map(id => ({ id, name: `Room ${id}`, wing: 'Lower', beds: 2, type: 'Standard' }))
+];
 
 const PEOPLE = [
   // admitted
-  { name: 'Karim Haddad', age: 34, program: 'Inpatient', room: '101', bed: 1, days: 41, drug: 'Alcohol', years: 9, monthly: 6000, phase: '3 Consolidation' },
-  { name: 'Jad Saliba', age: 27, program: 'Detox + Inpatient', room: '101', bed: 2, days: 19, drug: 'Opioids', years: 4, monthly: 8500, phase: '2 Core treatment' },
-  { name: 'Elie Mansour', age: 45, program: 'Inpatient', room: '102', bed: 1, days: 33, drug: 'Cocaine', years: 12, monthly: 6000, phase: '2 Core treatment' },
-  { name: 'Tony Farah', age: 31, program: 'Detox', room: '102', bed: 2, days: 4, drug: 'Benzodiazepines', years: 3, monthly: 3500, phase: '1 Stabilization' },
-  { name: 'Marc Aoun', age: 23, program: 'Inpatient', room: '103', bed: 1, days: 12, drug: 'Cannabis', years: 6, monthly: 6000, phase: '1 Stabilization' },
-  { name: 'Hadi Nasr', age: 39, program: 'Detox + Inpatient', room: '104', bed: 1, days: 58, drug: 'Alcohol', years: 15, monthly: 8500, phase: '4 Discharge prep' },
-  { name: 'Lara Khalil', age: 29, program: 'Inpatient', room: '105', bed: 1, days: 26, drug: 'Amphetamines', years: 5, monthly: 6000, phase: '2 Core treatment' },
-  { name: 'Ziad Fakhoury', age: 52, program: 'Inpatient', room: '106', bed: 1, days: 2, drug: 'Alcohol', years: 20, monthly: 6000, phase: '1 Stabilization' },
+  { name: 'Karim Haddad', age: 34, program: 'Inpatient', room: '1', bed: 1, days: 41, drug: 'Alcohol', years: 9, monthly: 6000, phase: '3 Consolidation' },
+  { name: 'Jad Saliba', age: 27, program: 'Detox + Inpatient', room: '1', bed: 2, days: 19, drug: 'Opioids', years: 4, monthly: 8500, phase: '2 Core treatment' },
+  { name: 'Elie Mansour', age: 45, program: 'Inpatient', room: '2', bed: 1, days: 33, drug: 'Cocaine', years: 12, monthly: 6000, phase: '2 Core treatment' },
+  { name: 'Tony Farah', age: 31, program: 'Detox', room: '2', bed: 2, days: 4, drug: 'Benzodiazepines', years: 3, monthly: 3500, phase: '1 Stabilization' },
+  { name: 'Marc Aoun', age: 23, program: 'Inpatient', room: '3', bed: 1, days: 12, drug: 'Cannabis', years: 6, monthly: 6000, phase: '1 Stabilization' },
+  { name: 'Hadi Nasr', age: 39, program: 'Detox + Inpatient', room: '4', bed: 1, days: 58, drug: 'Alcohol', years: 15, monthly: 8500, phase: '4 Discharge prep' },
+  { name: 'Lara Khalil', age: 29, program: 'Inpatient', room: '5', bed: 1, days: 26, drug: 'Amphetamines', years: 5, monthly: 6000, phase: '2 Core treatment' },
+  { name: 'Ziad Fakhoury', age: 52, program: 'Inpatient', room: 'Bungalow 1', bed: 1, days: 2, drug: 'Alcohol', years: 20, monthly: 6000, phase: '1 Stabilization' },
   { name: 'Sami Daher', age: 36, program: 'Outpatient', days: 47, drug: 'Cannabis', years: 8, monthly: 1200, phase: '3 Consolidation' },
   { name: 'Nadim Rizk', age: 25, program: 'Outpatient', days: 15, drug: 'Cocaine', years: 2, monthly: 1200, phase: '2 Core treatment' },
   // discharged
@@ -92,7 +98,7 @@ export function seed(now = new Date()) {
     const patient = {
       id: patientId, inquiryId, fullName: person.name, clinicalName: clinicalNameOf(person.name), age: person.age, program: person.program,
       roomId: person.room || '', bed: person.bed || null, admittedAt, phase: person.phase || '4 Discharge prep',
-      assigned: { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: person.program === 'Outpatient' ? '' : nextRsa(state) },
+      assigned: { psychologist: index % 2 ? 'samar' : 'nabila', therapist: 'ahmed', nurse: 'fadia', fitness: 'john', rsa: person.program === 'Outpatient' ? '' : nextRsa(state) },
       commPreference, phone: phoneFor(index), status: person.discharged ? 'Discharged' : 'Admitted', monthlyAmount: person.monthly,
       contacts: familyFor(person.name, index)
     };
@@ -153,7 +159,7 @@ export function seed(now = new Date()) {
     task({ kind: 'inquiry-followup', title: 'Follow-up call 1 of 2', owner: 'melyssa', due: addDays(createdDay, 7), inquiryId: id, link: `#/pipeline/${id}`, status: followStatus });
     task({ kind: 'inquiry-followup', title: 'Final follow-up call', owner: 'melyssa', due: addDays(createdDay, 30), inquiryId: id, link: `#/pipeline/${id}`, status: followStatus });
     if (item.urgency === 'Urgent') {
-      for (const to of ['ahmed', 'clinical-director', 'melyssa']) {
+      for (const to of ['ahmed', 'samar', 'melyssa']) {
         state.notifications.push({ id: `N-${state.notifications.length + 1}`, to, title: `Urgent inquiry: ${item.name}`, body: `${item.program} · ${item.drug}`, link: `#/pipeline/${id}`, urgent: true, channels: ['In-app', 'Email (queued)', 'WhatsApp (queued)'], at: ago(item.hours), read: false });
       }
     }
@@ -178,10 +184,10 @@ export function seed(now = new Date()) {
     });
     admitted.forEach((patient, index) => {
       if ((index + n + 21) % 4 !== 0) return;
-      appt({ service: 'Therapist session', provider: 'clinical-director', patientId: patient.id, date, start: ['09:30', '11:00', '14:00'][index % 3], minutes: 50, status: past ? 'Completed' : 'Booked', completedAt: past ? new Date(`${date}T12:00:00`).toISOString() : undefined });
+      appt({ service: 'Therapist session', provider: 'samar', patientId: patient.id, date, start: ['09:30', '11:00', '14:00'][index % 3], minutes: 50, status: past ? 'Completed' : 'Booked', completedAt: past ? new Date(`${date}T12:00:00`).toISOString() : undefined });
     });
     const inpatients = admitted.filter(patient => patient.program !== 'Outpatient');
-    appt({ service: 'Group', provider: 'clinical-director', patientIds: inpatients.map(patient => patient.id), date, start: '16:00', minutes: 60, status: past ? 'Completed' : 'Booked', title: ['Therapy group', 'Psychoeducation', 'Drama therapy'][(n + 6) % 3] });
+    appt({ service: 'Group', provider: 'samar', patientIds: inpatients.map(patient => patient.id), date, start: '16:00', minutes: 60, status: past ? 'Completed' : 'Booked', title: ['Therapy group', 'Psychoeducation', 'Drama therapy'][(n + 6) % 3] });
     appt({ service: 'Fitness session', provider: 'john', patientIds: inpatients.slice(0, 5).map(patient => patient.id), date, start: '15:00', minutes: 60, status: past ? 'Completed' : 'Booked', title: 'Gym' });
     if (n % 2 === 0) appt({ service: 'Physiotherapy', provider: 'john', patientId: inpatients[(n + 6) % inpatients.length].id, date, start: '10:00', minutes: 45, status: past ? 'Completed' : 'Booked' });
     if (n % 3 === 0) appt({ service: 'Nursing appointment', provider: 'fadia', patientId: admitted[(n + 9) % admitted.length].id, date, start: '09:00', minutes: 30, status: past ? 'Completed' : 'Booked' });
@@ -201,8 +207,8 @@ export function seed(now = new Date()) {
     state.onboardings.push({
       id: `ON-${String(index + 1).padStart(4, '0')}`, inquiryId: inquiry.id, openedAt: inquiry.stageHistory.at(-1).at, psychologistAppointmentId: psych.id,
       steps: index
-        ? { nursing: by('fadia', -2), psychologist: by('nabila', -1), financial: { ...by('ahmed', -1), monthlyAmount: inquiry.potentialRevenue, terms: 'Monthly in advance' }, agreement: { ...by('melyssa', -1) }, room: notDone }
-        : { nursing: by('fadia', -1), psychologist: notDone, financial: notDone, agreement: notDone, room: notDone }
+        ? { nursing: by('fadia', -2), physio: by('john', -2), psychologist: by('nabila', -1), financial: { ...by('ahmed', -1), monthlyAmount: inquiry.potentialRevenue, terms: 'Monthly in advance' }, agreement: { ...by('melyssa', -1) }, room: notDone }
+        : { nursing: by('fadia', -1), physio: notDone, psychologist: notDone, financial: notDone, agreement: notDone, room: notDone }
     });
     if (index) state.onboardings.at(-1).steps.agreement.documentId = doc({ inquiryId: inquiry.id, type: 'Admission agreement', title: 'Admission agreement', status: 'Signed scan uploaded', createdAt: moment(-1, '10:00'), createdBy: 'melyssa', signedBy: inquiry.name, signedAt: moment(-1, '10:00') }).id;
   });
@@ -255,7 +261,7 @@ export function seed(now = new Date()) {
   // Assessments booked for the people in Assessment, at the assessor's earliest free hour; the last is left for Melyssa to book.
   const assessing = state.inquiries.filter(item => item.stage === 'Assessment' && !item.outcome);
   assessing.slice(0, -1).forEach((inquiry, index) => {
-    const provider = index % 2 ? 'nabila' : 'clinical-director';
+    const provider = index % 2 ? 'samar' : 'ahmed';
     const mode = ['In person', 'Video'][index % 2];
     const made = book(state, { service: 'Assessment', provider, ...earliestSlot(state, { provider, minutes: 60, from: today }), inquiryId: inquiry.id, title: `${mode} assessment: ${inquiry.name}`, quiet: true }, 'melyssa');
     made.mode = mode;
@@ -268,7 +274,8 @@ export function seed(now = new Date()) {
     ['amer', 2, 'meeting', 'Partners’ meeting with Ahmed: November numbers', '#/dashboard'],
     ['ahmed', 0, 'meeting', 'Weekly case review, 14:00', '#/sessions'],
     ['ahmed', 3, 'todo', 'Approve the December group timetable', '#/programs'],
-    ['clinical-director', 0, 'meeting', 'Supervision with Nabila: two case files', '#/patients'],
+    ['ahmed', 0, 'meeting', 'Clinical supervision with Nabila and Samar', '#/patients'],
+    ['samar', 0, 'todo', 'Prepare Thursday’s process group', '#/sessions'],
     ['nabila', 1, 'todo', `Prepare relapse-prevention worksheet for ${name(1)}`, '#/patients'],
     ['nazha', 0, 'todo', 'Prepare props for playback theatre', '#/programs/PRG-0002'],
     ['nazha', 1, 'meeting', 'Share drama observations at case review', '#/programs'],
@@ -297,7 +304,7 @@ export function seed(now = new Date()) {
     [1, 'fadia', 'Recorded the 08:00 medication round', '#/medication'],
     [2, 'nazha', 'Added "Letters not sent" to Expression & reconnection', '#/programs/PRG-0002'],
     [5, 'mazen', 'Set room 106 to cleaning', '#/rooms'],
-    [7, 'clinical-director', `Filed a session note for ${name(0)}`, '#/sessions'],
+    [7, 'samar', `Filed a session note for ${name(0)}`, '#/sessions'],
     [9, 'omar', 'Logged the evening check-in round', '#/requests'],
     [20, 'rabih', 'Approved the Beirut Pharma bill', '#/finance/expenses'],
     [26, 'john', `Cleared ${name(2)} for the gym`, '#/patients'],

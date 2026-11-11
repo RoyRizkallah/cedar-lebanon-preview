@@ -32,7 +32,7 @@
   li { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .bar { height: 6px; border-radius: 999px; background: var(--sunk); }
   .done .bar { background: var(--strong); }
-  .now .bar { background: var(--lime); box-shadow: 0 0 10px rgb(124 252 0 / 0.5); }
+  .now .bar { background: var(--lime); box-shadow: 0 0 10px rgb(var(--lime-rgb) / 0.5); }
   .name { font-size: 12px; color: var(--text-3); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .now .name { color: var(--text); }
   .stay { font-size: 13px; color: var(--text-2); }

@@ -65,7 +65,7 @@ export const FITNESS_FORMS = [
       ] },
       { title: 'Close', fields: [
         f('reportedToJohn', 'Reported to John', 'one', { options: ['Yes'] }),
-        f('escalatedTo', 'Escalated to', 'all', { options: ['Wael', 'Fadia', 'Ahmed', 'Admin', 'None'] }),
+        f('escalatedTo', 'Escalated to', 'all', { options: ['Fadia', 'Ahmed', 'Admin', 'None'] }),
         f('instructorSignature', 'Instructor signature', 'signature')
       ] }
     ]

@@ -39,7 +39,7 @@ export function dischargePreview(state, patientId, date) {
 }
 
 export function dischargePatient(state, patientId, { date, type, note = '' }, staffId, now = new Date()) {
-  if (!canDo(staffId, 'discharge')) throw new Error('Patients are discharged by Wael, Ahmed or Melyssa.');
+  if (!canDo(staffId, 'discharge')) throw new Error('Patients are discharged by Ahmed or Melyssa.');
   const patient = state.patients.find(item => item.id === patientId);
   if (!patient) throw new Error('This patient was not found.');
   if (patient.status !== 'Admitted') throw new Error(`${patient.clinicalName} is already discharged.`);
@@ -47,6 +47,9 @@ export function dischargePatient(state, patientId, { date, type, note = '' }, st
   if (day > todayISO(now)) throw new Error('Discharge a patient on the day they leave, not before.');
   if (!DISCHARGE_TYPES.includes(type)) throw new Error('Choose the kind of discharge.');
   if (type !== 'Self-discharge' && !latestFiled(state, 'discharge', patientId)) throw new Error('File the Discharge & Aftercare Plan first. Only a self-discharge can go without it.');
+  // The Clinical Director (Ahmed) signs off every discharge plan before the patient leaves.
+  const plan = latestFiled(state, 'discharge', patientId);
+  if (type !== 'Self-discharge' && !(plan.values.directorSignature?.at || plan.values.ahmedSignature?.at)) throw new Error('Ahmed signs off the discharge plan before the patient is discharged.');
 
   const preview = dischargePreview(state, patientId, day);
   const stamp = now.toISOString();

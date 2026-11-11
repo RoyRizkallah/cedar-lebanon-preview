@@ -3,7 +3,7 @@
   import InquiryFields from './InquiryFields.svelte';
   import ChannelBadge from './ChannelBadge.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { assessmentFor, startFollowUp, FOLLOW_UP_DAYS, updateInquiry, declineInquiry, reopenInquiry, logCall, sendClarification, clarificationChannel, noPhone, money, timeInStageHours, reviewDue, CALL_OUTCOMES } from '../lib/pipeline.js';
+  import { assessmentFor, assessorName, drugLabel, markNoShow, startFollowUp, FOLLOW_UP_DAYS, updateInquiry, declineInquiry, reopenInquiry, logCall, sendClarification, clarificationChannel, noPhone, money, timeInStageHours, reviewDue, CALL_OUTCOMES } from '../lib/pipeline.js';
   import { completeTask } from '../lib/tasks.js';
   import AssessmentDialog from './AssessmentDialog.svelte';
   import { staffName, canDo } from '../lib/people.js';
@@ -53,8 +53,7 @@
         </div>
         <h2>{inquiry.name}</h2>
         {#if inquiry.relationship && inquiry.relationship !== 'Self'}<p class="via">Inquiry by {inquiry.callerName || 'a family member'}, {inquiry.relationship.toLowerCase()}</p>{/if}
-        <p class="muted" style="margin-top: 2px">{inquiry.program}{inquiry.drugOfChoice ? `, ${inquiry.drugOfChoice}` : ''}{inquiry.yearsOfUse !== '' ? `, ${inquiry.yearsOfUse} years` : ''}. Potential {money(inquiry.potentialRevenue)}. Contact: {staffName(inquiry.contactPerson)}.</p>
-      </div>
+        <p class="muted" style="margin-top: 2px">{inquiry.program}{drugLabel(inquiry) ? `, ${drugLabel(inquiry)}` : ''}{inquiry.yearsOfUse !== '' ? `, ${inquiry.yearsOfUse} years` : ''}. Potential {money(inquiry.potentialRevenue)}. Contact: {staffName(inquiry.contactPerson)}.</p>      </div>
       <button class="btn ghost icon" aria-label="Close" data-autofocus onclick={onclose}><Icon name="close" /></button>
     </header>
 
@@ -85,7 +84,8 @@
           <div class="row"><button class="btn dark" type="submit">Move to follow-up</button><button class="btn ghost" type="button" onclick={() => { following = null; }}>Cancel</button></div>
         </form>
       {/if}
-      {#if assessment}<p class="notice ok"><Icon name="calendar" size={15} />Assessment {assessment.status === 'Completed' ? 'done' : 'booked'}: {fmtDay(assessment.date)} at {assessment.start} with {staffName(assessment.provider)}, {(assessment.mode || 'In person').toLowerCase()}.</p>
+      {#if assessment?.status === 'Booked' && editable}<button class="btn sm ghost" onclick={() => run(state => markNoShow(state, id, me), 'Marked as no-show. Rebook when you reach them.')}>They didn't come: mark no-show</button>{/if}
+      {#if assessment}<p class="notice ok"><Icon name="calendar" size={15} />Assessment {assessment.status === 'Completed' ? 'done' : 'booked'}: {fmtDay(assessment.date)} at {assessment.start} with {assessorName(assessment)}, {(assessment.mode || 'In person').toLowerCase()}.</p>
       {:else if inquiry.stage === 'Assessment'}<p class="notice warn"><Icon name="calendar" size={15} />In Assessment, but nothing is booked yet.</p>{/if}
       {#if inquiry.followUp}<p class="notice warn"><Icon name="clock" size={15} />In follow-up until {inquiry.followUp.due}. {inquiry.followUp.note}</p>{/if}
       {#if declining}

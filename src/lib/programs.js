@@ -86,7 +86,7 @@ export function endProgramFor(state, patientId, day, staffId) {
 
 export const programBookings = (state, assignment) => state.appointments.filter(item => item.programId === assignment.programId && item.status === 'Booked' && (item.patientId === assignment.patientId || item.patientIds?.includes(assignment.patientId)));
 
-const allowed = staffId => { if (!canDo(staffId, 'managePrograms')) throw new Error('Programs are created by the therapists: Wael, Nabila and Nazha.'); };
+const allowed = staffId => { if (!canDo(staffId, 'managePrograms')) throw new Error('Programs are created by the clinical team: Ahmed, Nabila, Samar and Nazha.'); };
 const find = (state, id) => {
   const program = state.programs.find(item => item.id === id);
   if (!program) throw new Error('This program was not found.');

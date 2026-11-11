@@ -1,6 +1,6 @@
 // The inquiry pipeline: New Inquiry → Assessment → Agreement. Admission happens separately.
 import { nextId } from './ids.js';
-import { addDays, hoursBetween, todayISO } from './dates.js';
+import { addDays, daysBetween, hoursBetween, todayISO } from './dates.js';
 import { staffName, canDo, hasRole } from './people.js';
 import { book } from './scheduling.js';
 import { notify } from './notifications.js';
@@ -11,7 +11,17 @@ export const STAGES = ['New Inquiry', 'Assessment', 'Agreement'];
 export const PROGRAMS = ['Inpatient', 'Outpatient', 'Detox', 'Detox + Inpatient'];
 export const COMM_PREFS = ['Phone call', 'WhatsApp', 'Email', 'Not comfortable talking on the phone'];
 export const SOURCES = ['WhatsApp', 'Instagram', 'Facebook', 'Email', 'Website', 'Phone', 'Referral', 'Walk-in'];
-export const DRUGS = ['Alcohol', 'Cannabis', 'Cocaine', 'Opioids', 'Benzodiazepines', 'Amphetamines', 'Other'];
+export const DRUGS = ['Alcohol', 'Cannabis', 'Cocaine', 'Opioids', 'Benzodiazepines', 'Amphetamines', 'Ketamine', 'Other'];
+// The rooms a family can ask for, and the monthly rate the owner set for each.
+export const ROOM_RATES = { 'Standard room': 7500, 'Private room': 12000, Bungalow: 15000 };
+export const ROOM_PREFERENCES = Object.keys(ROOM_RATES);
+// "Other" means the drug was typed in.
+export const drugLabel = inquiry => inquiry?.drugOfChoice === 'Other' ? inquiry.drugOther || 'Other' : inquiry?.drugOfChoice || '';
+// Quiet inquiries: after 72 hours in New Inquiry they move to the follow-up log, due a week after the first contact.
+export const AUTO_FOLLOW_UP_HOURS = 72;
+export const FIRST_FOLLOW_UP_DAYS = 7;
+// After the follow-up, an inquiry still without an assessment moves to its own log.
+export const INACTIVE = 'Inactive';
 export const CALL_OUTCOMES = ['Reached', 'No answer', 'Messaged instead', 'Call back requested'];
 export const RELATIONSHIPS = ['Self', 'Parent', 'Spouse or partner', 'Sibling', 'Child', 'Other family', 'Friend', 'Employer', 'Doctor or therapist', 'Other'];
 // Not ready for an assessment yet: the inquiry waits here until its follow-up date.
@@ -31,25 +41,43 @@ const find = (state, id) => {
 
 export function notifyUrgent(state, inquiry) {
   notify(state, {
-    to: ['amer', 'ahmed', 'clinical-director', inquiry.contactPerson],
+    to: ['amer', 'ahmed', inquiry.contactPerson],
     title: `Urgent inquiry: ${inquiry.name}`,
-    body: [inquiry.program, inquiry.drugOfChoice, noPhone(inquiry) ? 'Not comfortable on the phone' : ''].filter(Boolean).join(', '),
+    body: [inquiry.program, drugLabel(inquiry), noPhone(inquiry) ? 'Not comfortable on the phone' : ''].filter(Boolean).join(', '),
     link: `#/pipeline/${inquiry.id}`,
     urgent: true
   });
 }
 
+// A referral records who referred them; "Other" drugs and previous detox or rehab say what they were.
+function checkDetails(fields) {
+  if (fields.source === 'Referral' && !String(fields.referrerName || '').trim()) throw new Error('Type who referred them.');
+  if (fields.drugOfChoice === 'Other' && !String(fields.drugOther || '').trim()) throw new Error('Type the drug when you choose Other.');
+  if (fields.previousDetox === 'Yes' && !String(fields.detoxDetail || '').trim()) throw new Error('Say where and when the previous detox was.');
+  if (fields.previousRehab === 'Yes' && !String(fields.rehabDetail || '').trim()) throw new Error('Say where and when the previous rehab was.');
+}
+const detailsOf = fields => ({
+  drugOther: fields.drugOfChoice === 'Other' ? String(fields.drugOther || '').trim() : '',
+  previousRehab: ['Yes', 'No'].includes(fields.previousRehab) ? fields.previousRehab : '',
+  detoxDetail: fields.previousDetox === 'Yes' ? String(fields.detoxDetail || '').trim() : '',
+  rehabDetail: fields.previousRehab === 'Yes' ? String(fields.rehabDetail || '').trim() : '',
+  roomPreference: ROOM_PREFERENCES.includes(fields.roomPreference) ? fields.roomPreference : ''
+});
+
 export function createInquiry(state, fields, staffId, now = new Date()) {
   const name = String(fields.name || '').trim();
   if (!name) throw new Error('Add the person’s name.');
+  checkDetails(fields);
   const at = now.toISOString();
   const inquiry = {
     id: nextId('INQ', state.inquiries), name, phone: String(fields.phone || '').trim(), email: String(fields.email || '').trim(),
     source: fields.source || 'Phone', program: PROGRAMS.includes(fields.program) ? fields.program : 'Inpatient', contactPerson: fields.contactPerson || staffId,
     drugOfChoice: fields.drugOfChoice || '', yearsOfUse: fields.yearsOfUse === '' || fields.yearsOfUse == null ? '' : Math.max(0, Number(fields.yearsOfUse) || 0),
     previousDetox: ['Yes', 'No'].includes(fields.previousDetox) ? fields.previousDetox : '', commPreference: COMM_PREFS.includes(fields.commPreference) ? fields.commPreference : 'Phone call',
-    urgency: fields.urgency === 'Urgent' ? 'Urgent' : 'Normal', potentialRevenue: toRevenue(fields.potentialRevenue),
+    urgency: fields.urgency === 'Urgent' ? 'Urgent' : 'Normal', potentialRevenue: toRevenue(fields.potentialRevenue) || ROOM_RATES[fields.roomPreference] || 0,
     relationship: RELATIONSHIPS.includes(fields.relationship) ? fields.relationship : 'Self', callerName: String(fields.callerName || '').trim(),
+    referrerName: fields.source === 'Referral' ? String(fields.referrerName || '').trim() : '',
+    ...detailsOf(fields),
     stage: 'New Inquiry', createdAt: at, stageHistory: [{ stage: 'New Inquiry', at, by: staffId }], calls: [], notes: String(fields.notes || '').trim()
   };
   if (fields.leadId) inquiry.leadId = fields.leadId;
@@ -63,7 +91,7 @@ export function createInquiry(state, fields, staffId, now = new Date()) {
   return inquiry;
 }
 
-const EDITABLE = ['name', 'relationship', 'callerName', 'phone', 'email', 'source', 'program', 'contactPerson', 'drugOfChoice', 'yearsOfUse', 'previousDetox', 'commPreference', 'urgency', 'potentialRevenue', 'notes'];
+const EDITABLE = ['name', 'relationship', 'callerName', 'phone', 'email', 'source', 'referrerName', 'program', 'contactPerson', 'drugOfChoice', 'drugOther', 'yearsOfUse', 'previousDetox', 'detoxDetail', 'previousRehab', 'rehabDetail', 'roomPreference', 'commPreference', 'urgency', 'potentialRevenue', 'notes'];
 
 export function updateInquiry(state, id, patch, staffId) {
   const inquiry = find(state, id);
@@ -72,6 +100,7 @@ export function updateInquiry(state, id, patch, staffId) {
   const next = {};
   for (const key of EDITABLE) if (key in patch) next[key] = key === 'potentialRevenue' ? toRevenue(patch[key]) : typeof patch[key] === 'string' ? patch[key].trim() : patch[key];
   if ('name' in next && !next.name) throw new Error('Add the person’s name.');
+  checkDetails({ ...inquiry, ...next });
   Object.assign(inquiry, next);
   if ('contactPerson' in patch) for (const task of state.tasks) if (task.inquiryId === id && task.status === 'open') task.owner = inquiry.contactPerson;
   if (becameUrgent) notifyUrgent(state, inquiry);
@@ -79,10 +108,12 @@ export function updateInquiry(state, id, patch, staffId) {
   return inquiry;
 }
 
-// The assessment is a real booking: a date, a time, an assessor (Wael or Nabila) and how it happens.
+// The assessment is a real booking: a date, a time, an assessor (Amer, Ahmad, or someone named) and how it happens.
 export const ASSESSMENT_MODES = ['In person', 'Phone', 'Video'];
+export const ASSESSORS = ['amer', 'ahmed', 'other'];
+export const assessorName = appointment => appointment?.assessorName || staffName(appointment?.provider);
 export const assessmentFor = (state, inquiryId) => state.appointments
-  .filter(item => item.service === 'Assessment' && item.inquiryId === inquiryId && item.status !== 'Cancelled')
+  .filter(item => item.service === 'Assessment' && item.inquiryId === inquiryId && !['Cancelled', 'No-show'].includes(item.status))
   .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0] || null;
 
 function cancelAssessment(state, inquiryId, staffId, now) {
@@ -91,11 +122,14 @@ function cancelAssessment(state, inquiryId, staffId, now) {
   }
 }
 
-export function scheduleAssessment(state, id, { date, start, provider = 'clinical-director', mode = 'In person' }, staffId, now = new Date()) {
+export function scheduleAssessment(state, id, { date, start, assessor = 'ahmed', assessorName: typed = '', mode = 'In person' }, staffId, now = new Date()) {
   if (!canDo(staffId, 'editInquiry')) throw new Error('You cannot book assessments.');
   const inquiry = find(state, id);
   if (inquiry.outcome) throw new Error(`This inquiry is closed as ${inquiry.outcome}.`);
-  if (!hasRole(provider, 'clinical-director', 'psychologist')) throw new Error('Assessments are done by Wael or Nabila.');
+  if (!ASSESSORS.includes(assessor)) throw new Error('The assessor is Amer, Ahmad or someone you name.');
+  if (assessor === 'other' && !String(typed).trim()) throw new Error('Type the assessor’s name.');
+  // Someone from outside the staff list has no calendar here, so their slot never clashes.
+  const provider = assessor === 'other' ? 'external' : assessor;
   if (!ASSESSMENT_MODES.includes(mode)) throw new Error('Choose whether it happens in person, by phone or by video.');
   // A rebooking frees the old slot first, so moving it half an hour never clashes with itself; if the new slot fails, the old one stays.
   const replacing = assessmentFor(state, id)?.status === 'Booked' ? assessmentFor(state, id) : null;
@@ -103,6 +137,7 @@ export function scheduleAssessment(state, id, { date, start, provider = 'clinica
   let appointment;
   try {
     appointment = book(state, { service: 'Assessment', provider, date, start, inquiryId: id, title: `${mode} assessment: ${inquiry.name}` }, staffId);
+    if (assessor === 'other') appointment.assessorName = String(typed).trim();
   } catch (error) {
     if (replacing) replacing.status = 'Booked';
     throw error;
@@ -110,8 +145,20 @@ export function scheduleAssessment(state, id, { date, start, provider = 'clinica
   if (replacing) Object.assign(replacing, { cancelledBy: staffId, cancelledAt: now.toISOString() });
   appointment.mode = mode;
   if (inquiry.stage !== 'Assessment') moveInquiry(state, id, 'Assessment', staffId, now);
-  notify(state, { to: provider, title: `Assessment booked: ${inquiry.name}`, body: `${mode}, ${date} at ${start}`, link: `#/pipeline/${id}` });
+  if (assessor !== 'other') notify(state, { to: provider, title: `Assessment booked: ${inquiry.name}`, body: `${mode}, ${date} at ${start}`, link: `#/pipeline/${id}` });
   return appointment;
+}
+
+// They didn't come: the booking is kept as a no-show, they stay in Assessment, and rebooking becomes a task.
+export function markNoShow(state, id, staffId, now = new Date()) {
+  if (!canDo(staffId, 'editInquiry')) throw new Error('You cannot change assessments.');
+  const inquiry = find(state, id);
+  const booked = assessmentFor(state, id);
+  if (booked?.status !== 'Booked') throw new Error('There is no booked assessment to mark.');
+  Object.assign(booked, { status: 'No-show', markedBy: staffId, markedAt: now.toISOString() });
+  inquiry.noShows = (inquiry.noShows || 0) + 1;
+  log(state, staffId, `${inquiry.name} did not come to the assessment`, `#/pipeline/${id}`);
+  return booked;
 }
 
 export function moveInquiry(state, id, stage, staffId, now = new Date()) {
@@ -144,15 +191,27 @@ export function startFollowUp(state, id, { days = FOLLOW_UP_DAYS, note = '' } = 
   return inquiry;
 }
 
-export function followUpAgain(state, id, { days = FOLLOW_UP_DAYS, outcome = 'No answer', note = '' } = {}, staffId, now = new Date()) {
+// The follow-up is made: the call is logged, and with no assessment booked the inquiry moves to its own log.
+export function recordFollowUp(state, id, { outcome = 'No answer', note = '' } = {}, staffId, now = new Date()) {
   const inquiry = find(state, id);
   if (inquiry.stage !== FOLLOW_UP) throw new Error('This inquiry is not waiting for a follow-up.');
-  const wait = Number(days);
-  if (!Number.isInteger(wait) || wait < 1) throw new Error('Follow up in at least one day.');
   logCall(state, id, { outcome, notes: note }, staffId, now);
-  Object.assign(inquiry.followUp, { due: addDays(todayISO(now), wait), round: (inquiry.followUp.round || 1) + 1, notified: false });
+  if (assessmentFor(state, id)) return inquiry;
+  delete inquiry.followUp;
+  inquiry.stage = INACTIVE;
+  inquiry.stageHistory.push({ stage: INACTIVE, at: now.toISOString(), by: staffId });
+  log(state, staffId, `${inquiry.name} moved to the inactive log after the follow-up`, `#/followups/${id}`);
   return inquiry;
 }
+
+// An inquiry left in New Inquiry for 72 hours goes to the follow-up log, due a week after the first contact.
+export function runInquiryAging(state, now = new Date()) {
+  for (const inquiry of state.inquiries.filter(item => !item.outcome && item.stage === 'New Inquiry' && timeInStageHours(item, now) >= AUTO_FOLLOW_UP_HOURS)) {
+    const due = addDays(todayISO(new Date(inquiry.createdAt)), FIRST_FOLLOW_UP_DAYS);
+    startFollowUp(state, inquiry.id, { days: Math.max(1, daysBetween(todayISO(now), due)), note: 'Moved automatically after 72 hours in New Inquiry.' }, 'system', now);
+  }
+}
+export const inquiriesToAge = (state, now = new Date()) => state.inquiries.some(item => !item.outcome && item.stage === 'New Inquiry' && timeInStageHours(item, now) >= AUTO_FOLLOW_UP_HOURS);
 
 // Remind the contact person once per round when a follow-up comes due.
 export function runFollowUpAlerts(state, now = new Date()) {

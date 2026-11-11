@@ -16,7 +16,7 @@ const now = new Date(2026, 10, 2, 10, 0);
 const state = { leads: [], inquiries: [], onboardings: [], appointments: [], documents: [], requests: [], tasks: [], notifications: [], activity: [],
   patients: [{ id: 'P-1', clinicalName: 'Test P.', fullName: 'Test Person', status: 'Admitted', admittedAt: '2026-10-20', phase: '2 Core treatment' }],
   forms: [{ id: 'F-1', formId: 'intake', patientId: 'P-1', status: 'Filed', filedAt: earlyMorning, values: { riskSelfHarm: 'Low', riskAbscond: 'Low', riskAggression: 'Low' } }] };
-const work = tasksFor(state, 'clinical-director', now);
+const work = tasksFor(state, 'ahmed', now);
 assert.ok(work.today.some(item => item.kind === 'sign'), 'countersign is due today');
 assert.ok(!work.overdue.some(item => item.kind === 'sign'));
 

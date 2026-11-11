@@ -48,15 +48,15 @@ const now = new Date();
   assert.equal(plain.status, 'Open', 'an RSA request for an ordinary item goes straight to purchase');
 }
 
-// Wael oversees his team: his calendar and Sessions page include Nabila's and Nazha's sessions.
+// The Clinical Director oversees the team: his calendar and Sessions page include Nabila's, Samar's and Nazha's sessions.
 {
   const state = seed();
-  const scope = scheduleScope('clinical-director');
-  for (const id of ['clinical-director', 'nabila', 'nazha']) assert.ok(scope.includes(id), id);
-  assert.ok(!scope.includes('john'));
+  // Ahmed, the Clinical Director and a partner, sees every calendar.
+  assert.equal(scheduleScope('ahmed'), 'all');
+  assert.deepEqual(scheduleScope('nabila'), ['nabila']);
   const today = todayISO(now);
   const monday = addDays(today, -((weekday(today) + 6) % 7));
-  const providers = new Set([0, 7].flatMap(offset => sessionsWeek(state, 'clinical-director', addDays(monday, offset)).items.map(item => item.appointment.provider)));
+  const providers = new Set([0, 7].flatMap(offset => sessionsWeek(state, 'ahmed', addDays(monday, offset)).items.map(item => item.appointment.provider)));
   assert.ok(providers.has('nabila') && providers.has('nazha'), 'Wael sees his team');
 }
 

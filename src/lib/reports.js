@@ -5,7 +5,7 @@ import { STAGES, PROGRAMS } from './pipeline.js';
 import { riskLevel } from './forms/engine.js';
 import { buildJournal, trialBalance, payerBalances, openBalance, invoiceStatus, paidOf } from './finance.js';
 import { INCIDENT_TYPES } from './safety.js';
-import { staffName } from './people.js';
+import { staffName, PSYCHOLOGISTS } from './people.js';
 import { dashboard } from './kpis.js';
 import { patientsOn, programBookings } from './programs.js';
 
@@ -56,7 +56,7 @@ export function buildReports(state, group, now = new Date()) {
   if (group === 'care') {
     const sessions = state.appointments.filter(a => ['Psychologist session', 'Therapist session'].includes(a.service) && a.status === 'Completed');
     tables.push({ id: 'notes', title: 'Session notes by clinician, all time', columns: [{ label: 'Clinician', value: 'who' }, { label: 'Completed sessions', value: 'sessions' }, { label: 'Notes filed', value: 'filed' }, { label: 'Filed within 24 hours', value: 'onTime' }],
-      rows: ['clinical-director', 'nabila'].map(id => {
+      rows: PSYCHOLOGISTS().map(id => {
         const list = sessions.filter(a => a.provider === id);
         const notes = list.map(a => state.forms.find(f => f.id === a.noteFormId)).filter(f => f?.status === 'Filed');
         const onTime = list.filter(a => { const f = state.forms.find(x => x.id === a.noteFormId); return f?.filedAt && (new Date(f.filedAt) - new Date(a.completedAt)) / 3600000 <= 24; }).length;

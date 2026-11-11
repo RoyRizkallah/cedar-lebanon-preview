@@ -11,6 +11,7 @@ export const SUBSTANCES = ['Alcohol', 'Cannabis', 'Cocaine', 'Opioids', 'Benzodi
 
 const med = state => (state.medication ||= { orders: [], doses: [], tests: [] });
 const allowed = staffId => { if (!canDo(staffId, 'recordMedication')) throw new Error('Medication is recorded by Fadia, or Imad under her supervision.'); };
+const gives = staffId => { if (!canDo(staffId, 'giveMedication')) throw new Error('Doses are recorded by the RSA running the meds window, Imad or Fadia.'); };
 const patientOf = (state, id) => { const patient = state.patients.find(item => item.id === id && item.status === 'Admitted'); if (!patient) throw new Error('Choose a patient in care.'); return patient; };
 
 export function addOrder(state, { patientId, drug, dose, route = 'Oral', times = [], startDate, endDate = '', prescriptionDocId = '', note = '' }, staffId) {
@@ -26,11 +27,11 @@ export function addOrder(state, { patientId, drug, dose, route = 'Oral', times =
   return order;
 }
 
-export function stopOrder(state, orderId, staffId) {
+export function stopOrder(state, orderId, staffId, now = new Date()) {
   allowed(staffId);
   const order = med(state).orders.find(item => item.id === orderId);
   if (!order) throw new Error('This medication was not found.');
-  Object.assign(order, { status: 'Stopped', endDate: todayISO(), stoppedBy: staffId });
+  Object.assign(order, { status: 'Stopped', endDate: todayISO(now), stoppedBy: staffId });
   log(state, staffId, `Medication stopped: ${order.drug}`, '#/medication');
   return order;
 }
@@ -47,7 +48,7 @@ export function roundFor(state, date) {
 }
 
 export function recordDose(state, { orderId, date, time, status, note = '' }, staffId, now = new Date()) {
-  allowed(staffId);
+  gives(staffId);
   if (date > todayISO(now)) throw new Error('Doses are recorded when they happen, not ahead of time.');
   const order = med(state).orders.find(item => item.id === orderId);
   if (!order) throw new Error('This medication was not found.');
@@ -63,7 +64,8 @@ export function recordDose(state, { orderId, date, time, status, note = '' }, st
 function alertIfNotGiven(state, order, dose) {
   if (dose.status !== 'Refused' && dose.status !== 'Missed') return;
   const patient = state.patients.find(item => item.id === order.patientId);
-  notify(state, { to: 'clinical-director', title: `Dose ${dose.status.toLowerCase()}: ${patient.clinicalName}`, body: `${order.drug} ${order.dose} at ${dose.time}. ${dose.note}`, link: '#/medication' });
+  // SOP 2.1: any refused or missed dose goes to the Head Nurse the same shift.
+  notify(state, { to: ['fadia', 'ahmed'].filter(id => id !== dose.by), title: `Dose ${dose.status.toLowerCase()}: ${patient.clinicalName}`, body: `${order.drug} ${order.dose} at ${dose.time}. ${dose.note}`, link: '#/medication' });
 }
 
 // A dose recorded wrongly is corrected, never overwritten: the history stays on the record.
@@ -89,7 +91,7 @@ export function recordTest(state, { patientId, date, result, substances = [], no
   if (result === 'Positive' && !substances.length) throw new Error('Choose the substances detected.');
   const test = { id: nextId('UDS', med(state).tests), patientId, date: date || todayISO(), type: 'Urine drug screen', result, substances: result === 'Positive' ? substances : [], note: String(note).trim(), by: staffId, at: new Date().toISOString() };
   med(state).tests.push(test);
-  if (result === 'Positive') notify(state, { to: ['ahmed', 'clinical-director'], title: `Positive drug screen: ${patient.clinicalName}`, body: test.substances.join(', '), link: '#/medication/tests' });
+  if (result === 'Positive') notify(state, { to: 'ahmed', title: `Positive drug screen: ${patient.clinicalName}`, body: test.substances.join(', '), link: '#/medication/tests' });
   log(state, staffId, `Drug screen for ${patient.clinicalName}: ${result}`, '#/medication/tests');
   return test;
 }

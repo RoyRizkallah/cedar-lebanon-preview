@@ -4,7 +4,7 @@ import { tasksFor } from '../src/lib/tasks.js';
 import { potentialTotals } from '../src/lib/pipeline.js';
 import { seed } from '../src/lib/seed.js';
 import { openBalance } from '../src/lib/finance.js';
-import { completeStep } from '../src/lib/admission.js';
+import { completeStep, freeBeds } from '../src/lib/admission.js';
 import { withSsr } from './lib/ssr.mjs';
 
 const now = new Date('2026-11-02T12:00:00');
@@ -33,7 +33,7 @@ assert.equal(kpi.aftercare.onTimePct, null, 'no calls due yet gives no percentag
 const notes = base();
 notes.appointments = [
   { id: 'A1', service: 'Psychologist session', provider: 'nabila', patientId: 'P-1', date: '2026-10-28', start: '10:00', minutes: 50, status: 'Completed', completedAt: at('2026-10-28', '10:50'), noteFormId: 'F1' },
-  { id: 'A2', service: 'Therapist session', provider: 'clinical-director', patientId: 'P-1', date: '2026-10-29', start: '10:00', minutes: 50, status: 'Completed', completedAt: at('2026-10-29', '10:50'), noteFormId: 'F2' },
+  { id: 'A2', service: 'Therapist session', provider: 'ahmed', patientId: 'P-1', date: '2026-10-29', start: '10:00', minutes: 50, status: 'Completed', completedAt: at('2026-10-29', '10:50'), noteFormId: 'F2' },
   { id: 'A3', service: 'Psychologist session', provider: 'nabila', patientId: 'P-1', date: '2026-10-30', start: '10:00', minutes: 50, status: 'Completed', completedAt: at('2026-10-30', '10:50') },
   { id: 'A4', service: 'Fitness session', provider: 'john', patientIds: ['P-1'], date: '2026-10-30', start: '15:00', minutes: 60, status: 'Completed', completedAt: at('2026-10-30', '16:00') }
 ];
@@ -64,7 +64,7 @@ assert.ok(melyssa.today.some(item => item.taskId === 'T-9001'));
 assert.ok(![...melyssa.overdue, ...melyssa.today, ...melyssa.upcoming].some(item => item.taskId === 'T-9002'));
 assert.ok([...melyssa.overdue, ...melyssa.today].some(item => item.kind === 'review'), 'the 60-hour-old inquiry needs review');
 assert.ok(tasksFor(state, 'nabila', now).overdue.some(item => item.kind === 'note'), 'the missing session note is overdue');
-assert.ok(tasksFor(state, 'clinical-director', now).overdue.concat(tasksFor(state, 'clinical-director', now).today, tasksFor(state, 'clinical-director', now).upcoming).some(item => item.kind === 'form'), 'Ziad needs an intake');
+assert.ok(tasksFor(state, 'ahmed', now).overdue.concat(tasksFor(state, 'ahmed', now).today, tasksFor(state, 'ahmed', now).upcoming).some(item => item.kind === 'form'), 'Ziad needs an intake');
 assert.ok(tasksFor(state, 'georgio', now).today.some(item => item.kind === 'request'));
 assert.ok(tasksFor(state, 'fadia', now).today.some(item => item.kind === 'prescription'));
 
@@ -76,12 +76,12 @@ assert.ok(tasksFor(state, 'fadia', now).today.some(item => item.kind === 'prescr
   assert.equal(k.safety.openIncidents, fresh.incidents.filter(i => i.status === 'Open').length);
   assert.equal(k.safety.onLeave, 1);
   // Monthly plan review: Hadi's last review was 24 days ago, so it is due within the fortnight.
-  const cd = tasksFor(fresh, 'clinical-director', now);
+  const cd = tasksFor(fresh, 'ahmed', now);
   assert.ok([...cd.today, ...cd.upcoming, ...cd.overdue].some(item => item.title.startsWith('Monthly plan review: Hadi')));
   // A planned arrival shows on Melyssa's Today.
   const hiba = fresh.onboardings.find(item => item.steps.room && !item.steps.room.done && item.steps.nursing.done && item.steps.agreement.done);
-  const [room, bed] = [fresh.rooms.find(r => !fresh.patients.some(p => p.status === 'Admitted' && p.roomId === r.id))?.id || '104', 2];
-  completeStep(fresh, hiba.id, 'room', { roomId: '104', bed: 2, arrivalDate: '2026-11-02' }, 'melyssa');
+  const [room, bed] = freeBeds(fresh, hiba.id, fresh.inquiries.find(item => item.id === hiba.inquiryId).roomPreference || '')[0];
+  completeStep(fresh, hiba.id, 'room', { roomId: room, bed, arrivalDate: '2026-11-02' }, 'melyssa');
   assert.ok(tasksFor(fresh, 'melyssa', now).today.some(item => item.title.startsWith('Arrival:')));
   assert.ok(room && bed);
 }

@@ -32,20 +32,20 @@ assert.ok(validateForm(session, { riskFlags: ['Self-harm'] }, { final: true }).i
 const state = seed();
 const patient = state.patients.find(item => item.status === 'Admitted');
 const before = state.notifications.filter(item => item.to === 'ahmed').length;
-const signature = { name: 'Clinical Director', by: 'clinical-director', at: new Date().toISOString() };
-assert.throws(() => fileForm(state, { formId: 'intake', patientId: patient.id, values: { riskAggression: 'High' }, staffId: 'clinical-director', final: true }), /Risk notes & basis is required/);
-const filed = fileForm(state, { formId: 'intake', patientId: patient.id, values: { riskSelfHarm: 'Low', riskAbscond: 'Low', riskAggression: 'High', riskNotes: 'Threatened staff on arrival.', conductedBy: signature }, staffId: 'clinical-director', final: true });
+const signature = { name: 'Clinical Director', by: 'ahmed', at: new Date().toISOString() };
+assert.throws(() => fileForm(state, { formId: 'intake', patientId: patient.id, values: { riskAggression: 'High' }, staffId: 'ahmed', final: true }), /Risk notes & basis is required/);
+const filed = fileForm(state, { formId: 'intake', patientId: patient.id, values: { riskSelfHarm: 'Low', riskAbscond: 'Low', riskAggression: 'High', riskNotes: 'Threatened staff on arrival.', conductedBy: signature }, staffId: 'ahmed', final: true });
 assert.equal(filed.status, 'Filed');
 assert.equal(state.notifications.filter(item => item.to === 'ahmed').length, before + 1);
 assert.equal(riskLevel(state, patient.id), 'High');
 
 // A countersignature can be added after filing, only by the person it names.
-assert.throws(() => signLater(state, filed.id, 'countersigned', { name: 'Nabila', by: 'nabila', at: new Date().toISOString() }, 'nabila'), /Only Wael can sign this/);
-signLater(state, filed.id, 'countersigned', signature, 'clinical-director');
-assert.equal(filed.values.countersigned.by, 'clinical-director');
+assert.throws(() => signLater(state, filed.id, 'countersigned', { name: 'Nabila', by: 'nabila', at: new Date().toISOString() }, 'nabila'), /Only Ahmed Khattab can sign this/);
+signLater(state, filed.id, 'countersigned', signature, 'ahmed');
+assert.equal(filed.values.countersigned.by, 'ahmed');
 
 // Filing the discharge plan sets the day and tells Melyssa; the discharge itself (and the aftercare calls) come on that day.
-const discharge = fileForm(state, { formId: 'discharge', patientId: patient.id, values: { dischargeDate: '2026-11-10', dischargeType: 'Planned', patientCopy: { name: patient.fullName, by: 'clinical-director', at: new Date().toISOString() } }, staffId: 'clinical-director', final: true });
+const discharge = fileForm(state, { formId: 'discharge', patientId: patient.id, values: { dischargeDate: '2026-11-10', dischargeType: 'Planned', patientCopy: { name: patient.fullName, by: 'ahmed', at: new Date().toISOString() } }, staffId: 'ahmed', final: true });
 assert.equal(discharge.status, 'Filed');
 assert.equal(patient.status, 'Admitted');
 assert.ok(state.notifications.some(item => item.to === 'melyssa' && item.title.startsWith('Discharge planned')));
@@ -84,7 +84,7 @@ await withSsr(async ({ load, html }) => {
   const filedNote = db.forms.find(entry => entry.formId === 'session' && entry.status === 'Filed');
   assert.ok(!(await html('/src/components/FormView.svelte', { formId: 'session', entryId: filedNote.id, onclose() {} })).includes('Dictate this note'));
   assert.ok((await html('/src/components/FormView.svelte', { formId: 'review', onclose() {} })).includes('Prepare this week'));
-  session.staffId = 'clinical-director';
+  session.staffId = 'ahmed';
   const calm = db.patients.find(item => item.status === 'Admitted' && !['P-0002', 'P-0003'].includes(item.id)).id;
   assert.ok(!(await html('/src/components/FormView.svelte', { formId: 'session', patientId: calm, onclose() {} })).includes(' risk</strong>'), 'no banner for low risk');
 });

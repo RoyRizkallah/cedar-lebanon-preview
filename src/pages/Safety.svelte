@@ -184,7 +184,7 @@
   .watchboard { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 10px; margin-bottom: 16px; }
   .watch { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 4px; padding: 17px 18px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
   .watch::after { content: ""; position: absolute; right: -70px; bottom: -70px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(255 110 90 / 0.28), transparent 70%); pointer-events: none; }
-  .watch.calm::after { background: radial-gradient(circle, rgb(124 252 0 / 0.22), transparent 70%); }
+  .watch.calm::after { background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.22), transparent 70%); }
   .eyebrow { font-size: 12.5px; font-weight: 750; color: var(--on-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
   .big { font-size: 50px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: #ff8a7a; margin: 6px 0 4px; }
   .watch.calm .big { color: var(--lime); }

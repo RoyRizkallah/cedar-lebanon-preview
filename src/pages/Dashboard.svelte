@@ -32,11 +32,11 @@
         </div>
         <Ring value={k.census.occupancyPct} size={96} label="Occupancy" />
       </div>
-      <div class="hero-figure">
-        <span>Potential revenue in play</span>
-        <strong class="num">{money(k.pipeline.potential.combined)}</strong>
-        <em>Combined new inquiry and assessment, per month. Potential, not collected.</em>
-      </div>
+      <a class="hero-figure" href={books}>
+        <span>Collected this month</span>
+        <strong class="num">{money(k.money.collectedThisMonth)}</strong>
+        <em>Of {money(k.money.invoicedThisMonth)} invoiced this month. {show(k.money.collectionPct, '%')} of everything billed so far has been collected.</em>
+      </a>
       <div class="hero-row">
         <div><strong class="num">{k.census.admitted}</strong><span>In care</span></div>
         <div><strong class="num">{k.census.occupied}/{k.census.beds}</strong><span>Beds used</span></div>
@@ -45,20 +45,20 @@
       </div>
     </article>
 
-    <a class="tile mini" href="#/pipeline"><span class="label">Inquiry potential</span><strong class="num">{money(k.pipeline.potential.inquiry)}</strong><span class="note">{k.pipeline.counts['New Inquiry']} in New Inquiry</span></a>
-    <a class="tile mini" href="#/pipeline"><span class="label">Assessment potential</span><strong class="num">{money(k.pipeline.potential.assessment)}</strong><span class="note">{k.pipeline.counts.Assessment} in Assessment</span></a>
-    <a class="tile mini leafy" href="#/admissions"><span class="label">Agreement</span><strong class="num">{money(k.pipeline.potential.agreement)}</strong><span class="note">{k.pipeline.counts.Agreement} in admission, not in combined</span></a>
+    <a class="tile mini" href={books}><span class="label">Invoiced this month</span><strong class="num">{money(k.money.invoicedThisMonth)}</strong><span class="note">Net of voids</span></a>
+    <a class="tile mini" href={books}><span class="label">Owed to Cedar</span><strong class="num">{money(k.money.owed)}</strong><span class="note">Open balance on invoices</span></a>
+    <a class="tile mini" class:urgent={k.money.overdue > 0} href={books}><span class="label">Overdue</span><strong class="num">{money(k.money.overdue)}</strong><span class="note">{k.money.overdueCount} invoices past due</span></a>
     <div class="tile mini"><span class="label">Admissions this month</span><strong class="num">{k.census.admissionsThisMonth}</strong><span class="note">{k.census.dischargesThisMonth} discharges</span></div>
 
     <article class="tile money-tile">
-      <header><h2>Money</h2>{#if books}<a href="#/finance" class="faint">Finance</a>{/if}</header>
+      <header><h2>Potential revenue in play</h2><a href="#/pipeline" class="faint">Pipeline</a></header>
       <div class="money-grid">
-        <a href={books}><span>Invoiced this month</span><strong class="num">{money(k.money.invoicedThisMonth)}</strong></a>
-        <a href={books}><span>Collected this month</span><strong class="num">{money(k.money.collectedThisMonth)}</strong></a>
-        <a href={books}><span>Owed to Cedar</span><strong class="num">{money(k.money.owed)}</strong></a>
-        <a href={books} class:alert={k.money.overdue > 0}><span>Overdue, {k.money.overdueCount} invoices</span><strong class="num">{money(k.money.overdue)}</strong></a>
+        <a href="#/pipeline" class="lead"><span>Combined, per month</span><strong class="num">{money(k.pipeline.potential.combined)}</strong></a>
+        <a href="#/pipeline"><span>New inquiry, {k.pipeline.counts['New Inquiry']} people</span><strong class="num">{money(k.pipeline.potential.inquiry)}</strong></a>
+        <a href="#/pipeline"><span>Assessment, {k.pipeline.counts.Assessment} people</span><strong class="num">{money(k.pipeline.potential.assessment)}</strong></a>
+        <a href="#/admissions"><span>Agreement, {k.pipeline.counts.Agreement} admitting (not in combined)</span><strong class="num">{money(k.pipeline.potential.agreement)}</strong></a>
       </div>
-      <div class="collect"><Ring value={k.money.collectionPct} size={76} stroke={9} tone="ink" label="Collected" /><p>Of everything billed so far, {show(k.money.collectionPct, '%')} has been collected.</p></div>
+      <div class="collect"><Ring value={k.pipeline.admittedPct} size={76} stroke={9} tone="ink" label="Admitted" /><p>Of inquiries in the last 90 days, {show(k.pipeline.admittedPct, '%')} were admitted.</p></div>
     </article>
 
     <article class="tile safety-tile">
@@ -109,15 +109,16 @@
   .tile header a, .tile header .faint { font-size: 13px; }
 
   .hero-tile { grid-column: span 8; grid-row: span 2; position: relative; overflow: hidden; background: var(--hero); color: var(--on-ink); display: flex; flex-direction: column; gap: 12px; padding: 18px 22px; }
-  .hero-tile::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.25), transparent 65%); pointer-events: none; }
+  .hero-tile::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.25), transparent 65%); pointer-events: none; }
   .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; position: relative; z-index: 1; }
   .hero-top :global(.ring) { color: #fff; }
   .eyebrow-date { color: var(--lime); font-weight: 750; font-size: 12.5px; }
   .hero-tile h1 { color: #fff; font-size: 26px; letter-spacing: -0.03em; }
   .hero-line { color: var(--on-ink-2); margin-top: 2px; font-size: 13px; }
-  .hero-figure { position: relative; z-index: 1; }
+  .hero-figure { position: relative; z-index: 1; display: block; color: inherit; text-decoration: none; }
+  .hero-figure:hover { text-decoration: none; }
   .hero-figure span { color: var(--on-ink-2); font-weight: 650; font-size: 13px; }
-  .hero-figure strong { display: block; font-size: 42px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; color: var(--lime); margin: 4px 0; text-shadow: 0 0 30px rgb(124 252 0 / 0.25); }
+  .hero-figure strong { display: block; font-size: 42px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; color: var(--lime); margin: 4px 0; text-shadow: 0 0 30px rgb(var(--lime-rgb) / 0.25); }
   .hero-figure em { font-style: normal; color: var(--on-ink-2); font-size: 12.5px; }
   .hero-row { position: relative; z-index: 1; margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .hero-row div { padding: 9px 12px; border-radius: 13px; background: rgb(255 255 255 / 0.07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
@@ -139,7 +140,9 @@
   .money-grid a:hover { background: var(--paper); box-shadow: var(--shadow-1); text-decoration: none; }
   .money-grid span { display: block; color: var(--text-2); font-size: 12.5px; font-weight: 650; }
   .money-grid strong { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; }
-  .money-grid a.alert strong { color: var(--urgent); }
+  .money-grid a.lead { background: var(--leaf); box-shadow: none; }
+  .money-grid a.lead strong { color: var(--moss); }
+  .mini.urgent strong { color: var(--urgent); }
   .collect { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 150px; text-align: center; }
   .collect p { font-size: 12px; color: var(--text-2); }
 

@@ -8,14 +8,14 @@ export function seedPrograms(state, today) {
     {
       id: 'PRG-0001', name: 'Foundations: first 28 days', focus: 'Stabilise, build routine and name the patterns behind use.', weeks: 4, status: 'Active',
       goals: ['Keep a daily routine for two weeks', 'Name three personal triggers', 'Write a first relapse-prevention plan'],
-      createdBy: 'clinical-director', createdAt: `${addDays(today, -40)}T09:00:00.000Z`,
+      createdBy: 'samar', createdAt: `${addDays(today, -40)}T09:00:00.000Z`,
       sessions: [
-        s('Mon', '08:30', 45, 'Fitness', 'Morning walk', 'john'), s('Mon', '10:00', 60, 'Group', 'Process group', 'clinical-director'), s('Mon', '13:00', 50, 'Individual', 'Individual therapy', 'nabila'),
-        s('Tue', '10:00', 60, 'Psychoeducation', 'How addiction works', 'clinical-director'), s('Tue', '11:30', 60, 'Fitness', 'Movement & yoga', 'zeina'),
-        s('Wed', '10:00', 60, 'Group', 'Process group', 'clinical-director'), s('Wed', '13:00', 60, 'Drama therapy', 'Role play: saying no', 'nazha'),
+        s('Mon', '08:30', 45, 'Fitness', 'Morning walk', 'john'), s('Mon', '10:00', 60, 'Group', 'Process group', 'samar'), s('Mon', '13:00', 50, 'Individual', 'Individual therapy', 'nabila'),
+        s('Tue', '10:00', 60, 'Psychoeducation', 'How addiction works', 'samar'), s('Tue', '11:30', 60, 'Fitness', 'Movement & yoga', 'zeina'),
+        s('Wed', '10:00', 60, 'Group', 'Process group', 'samar'), s('Wed', '13:00', 60, 'Drama therapy', 'Role play: saying no', 'nazha'),
         s('Thu', '10:00', 60, 'Mindfulness', 'Urge surfing', 'nabila'), s('Thu', '13:00', 50, 'Individual', 'Individual therapy', 'nabila'),
-        s('Fri', '10:00', 60, 'Group', 'Relapse prevention', 'clinical-director'), s('Fri', '11:30', 60, 'Fitness', 'Boxing basics', 'raymond'),
-        s('Sat', '11:00', 90, 'Family', 'Family session', 'clinical-director')
+        s('Fri', '10:00', 60, 'Group', 'Relapse prevention', 'samar'), s('Fri', '11:30', 60, 'Fitness', 'Boxing basics', 'raymond'),
+        s('Sat', '11:00', 90, 'Family', 'Family session', 'samar')
       ].map((item, index) => ({ ...item, id: `PRG-0001-S-${index + 1}` }))
     },
     {
@@ -23,9 +23,9 @@ export function seedPrograms(state, today) {
       goals: ['Take part in every drama session', 'Rebuild one family relationship'],
       createdBy: 'nazha', createdAt: `${addDays(today, -20)}T11:00:00.000Z`,
       sessions: [
-        s('Mon', '11:30', 60, 'Drama therapy', 'Warm-up and story', 'nazha'), s('Tue', '13:00', 60, 'Group', 'Process group', 'clinical-director'),
+        s('Mon', '11:30', 60, 'Drama therapy', 'Warm-up and story', 'nazha'), s('Tue', '13:00', 60, 'Group', 'Process group', 'samar'),
         s('Wed', '11:30', 60, 'Drama therapy', 'Playback theatre', 'nazha'), s('Thu', '11:30', 60, 'Fitness', 'Tennis', 'tony-j'),
-        s('Fri', '13:00', 60, 'Drama therapy', 'Letters not sent', 'nazha'), s('Sat', '13:00', 90, 'Family', 'Family session', 'clinical-director')
+        s('Fri', '13:00', 60, 'Drama therapy', 'Letters not sent', 'nazha'), s('Sat', '13:00', 90, 'Family', 'Family session', 'samar')
       ].map((item, index) => ({ ...item, id: `PRG-0002-S-${index + 1}` }))
     }
   );
@@ -34,7 +34,7 @@ export function seedPrograms(state, today) {
     const programId = index < 3 ? 'PRG-0001' : 'PRG-0002';
     const weeks = programId === 'PRG-0001' ? 4 : 3;
     const start = patient.admittedAt > addDays(today, -14) ? patient.admittedAt : addDays(today, -7 * (index + 1));
-    const assignment = { id: `PA-${String(index + 1).padStart(4, '0')}`, programId, patientId: patient.id, start, end: addDays(start, weeks * 7), status: 'Active', by: programId === 'PRG-0001' ? 'clinical-director' : 'nazha', at: `${start}T09:00:00.000Z` };
+    const assignment = { id: `PA-${String(index + 1).padStart(4, '0')}`, programId, patientId: patient.id, start, end: addDays(start, weeks * 7), status: 'Active', by: programId === 'PRG-0001' ? 'samar' : 'nazha', at: `${start}T09:00:00.000Z` };
     state.programAssignments.push(assignment);
     // What is still ahead goes on the Schedule, like a program given in the app.
     bookAssignment(state, assignment, today, assignment.by);

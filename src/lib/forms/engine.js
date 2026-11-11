@@ -1,13 +1,14 @@
 // Draws no UI: prefill, computed fields, gates, validation, filing and the rules written under each form.
 import { CLINICAL_FORMS } from './clinical.js';
 import { FITNESS_FORMS } from './fitness.js';
+import { NURSING_FORMS } from './nursing.js';
 import { addDays, fmtDate, todayISO } from '../dates.js';
 import { nextId } from '../ids.js';
 import { staffName, isResident, RESIDENTS } from '../people.js';
 import { notify } from '../notifications.js';
 import { log } from '../activity.js';
 
-export const FORMS = [...CLINICAL_FORMS, ...FITNESS_FORMS];
+export const FORMS = [...CLINICAL_FORMS, ...FITNESS_FORMS, ...NURSING_FORMS];
 export const formById = id => FORMS.find(form => form.id === id);
 export const allFields = form => [...form.header, ...form.sections.flatMap(section => section.fields)];
 const fieldOf = (form, id) => allFields(form).find(field => field.id === id);
@@ -72,7 +73,9 @@ export function prefillValues(form, { state, patient, appointment, staffId, now 
     caseloadRoster: () => state.patients.filter(item => item.status === 'Admitted').map(item => ({ patientId: item.id, patient: item.clinicalName, phase: item.phase, status: '', decisions: '', action: '' })),
     highRiskList: () => state.patients.filter(item => item.status === 'Admitted' && ['Medium', 'High'].includes(riskLevel(state, item.id))).map(item => item.clinicalName).join(', '),
     followupRows: () => FOLLOWUP_OFFSETS.map(([contact, days]) => ({ contact, due: patient?.dischargedAt ? addDays(patient.dischargedAt, days) : '', madeBy: '', reached: '', status: '', notes: '' })),
-    progressRows: () => PROGRESS_METRICS.map(metric => ({ metric, baseline: '', m1: '', m2: '', m3: '' }))
+    progressRows: () => PROGRESS_METRICS.map(metric => ({ metric, baseline: '', m1: '', m2: '', m3: '' })),
+    firstThreeDays: () => ['Day 1 (0–24 h)', 'Day 2 (24–48 h)', 'Day 3 (48–72 h)'].map(period => ({ period, checks: '', watch: '', initials: '' })),
+    residentRows: () => state.patients.filter(item => item.status === 'Admitted').map(item => ({ patientId: item.id, patient: item.fullName, againstRecord: '', preparer: '', checker: '', notes: '' }))
   };
   const values = {};
   for (const field of allFields(form)) {
@@ -128,7 +131,7 @@ const EFFECTS = {
     notify(state, { to, title: `Session risk flag: ${patient.clinicalName}`, body: flags.join(', '), link: `#/patients/${patient.id}/clinical` });
   },
   group(state, entry) {
-    const map = { 'Clinical Director': 'clinical-director', Ahmed: 'ahmed', Fadia: 'fadia' };
+    const map = { 'Clinical Director': 'ahmed', Ahmed: 'ahmed', Fadia: 'fadia' };
     const to = (entry.values.escalations || []).map(name => map[name]).filter(Boolean);
     if (to.length) notify(state, { to, title: `Group escalation: ${entry.values.group || 'group session'}`, body: entry.values.observations, link: '#/schedule' });
   },
@@ -147,7 +150,7 @@ const EFFECTS = {
     const added = (entry.values.routed || []).filter(item => item !== 'Not needed' && !(previous?.routed || []).includes(item));
     if (added.length) {
       const patient = patientOf(state, entry.patientId);
-      notify(state, { to: 'clinical-director', title: `Follow-up concern routed: ${patient.clinicalName}`, body: `${added.join(', ')} call`, link: `#/patients/${patient.id}/followup` });
+      notify(state, { to: 'ahmed', title: `Follow-up concern routed: ${patient.clinicalName}`, body: `${added.join(', ')} call`, link: `#/patients/${patient.id}/followup` });
     }
   },
   wellbeing(state, entry, staffId) {
@@ -166,13 +169,30 @@ const EFFECTS = {
     const map = { Fadia: 'fadia', Ahmed: 'ahmed', Admin: 'melyssa' };
     const to = [...(alarming.length && staffId !== 'john' ? ['john'] : []), ...(entry.values.escalatedTo || []).map(name => map[name]).filter(Boolean)];
     if (to.length) notify(state, { to, title: `Fitness session escalation (${entry.values.activity || 'session'})`, body: alarming.map(row => `${row.patient}: ${row.observations || 'flagged'}`).join('; '), link: '#/schedule' });
-    if ((entry.values.escalatedTo || []).includes('Wael')) log(state, staffId, 'Fitness session escalated to Wael', '#/schedule');
   },
   injury(state, entry) {
     if (entry.values.severity === 'Significant' || entry.values.escalatedFadia === 'Yes') {
       const patient = patientOf(state, entry.patientId);
       notify(state, { to: 'fadia', title: `Injury report: ${patient.fullName}`, body: `${entry.values.severity || ''} ${entry.values.bodyPart || ''}`.trim(), link: `#/patients/${patient.id}/fitness`, urgent: entry.values.emergency === 'Yes' });
     }
+  },
+  'admission-medical'(state, entry) {
+    const patient = patientOf(state, entry.patientId);
+    const risk = entry.values.withdrawalRisk;
+    notify(state, { to: 'ahmed', title: risk === 'High' ? `High withdrawal risk: ${patient.clinicalName}` : `Admission medical assessment done: ${patient.clinicalName}`, body: [risk && `${risk} withdrawal risk`, entry.values.psychiatricConsult].filter(Boolean).join('. '), link: `#/patients/${patient.id}/medical`, urgent: risk === 'High' });
+  },
+  'psych-consult'(state, entry) {
+    if (entry.values.planImpact !== 'Yes') return;
+    const patient = patientOf(state, entry.patientId);
+    notify(state, { to: 'ahmed', title: `Psychiatric consultation: ${patient.clinicalName}`, body: entry.values.outcome || 'The outcome affects the treatment plan.', link: `#/patients/${patient.id}/medical` });
+  },
+  escort(state, entry, staffId) {
+    const patient = patientOf(state, entry.patientId);
+    if (staffId !== 'omar') notify(state, { to: 'omar', title: `Escort log to review: ${patient.clinicalName}`, body: entry.values.destination, link: `#/patients/${patient.id}/medical` });
+  },
+  'weekly-count'(state, entry) {
+    if (entry.values.controlled === 'None' && entry.values.resolved !== 'No, escalated') return;
+    notify(state, { to: entry.values.controlled === 'None' ? 'ahmed' : ['ahmed', 'amer'], title: 'Medication count difference', body: `Week ending ${fmtDate(entry.values.weekEnding, { day: 'numeric', month: 'short' })}`, link: '#/medication/logs', urgent: entry.values.controlled !== 'None' });
   },
   nutrition(state, entry, staffId, previous) {
     if (entry.values.sentToKitchen === 'Yes' && previous?.sentToKitchen !== 'Yes') log(state, staffId, 'Nutrition requirements sent to Shady (kitchen)', `#/patients/${entry.patientId}/fitness`);
@@ -213,7 +233,7 @@ export function fileForm(state, { entryId, formId, patientId = null, patientIds,
     if (appointment) { appointment.noteFormId = entry.id; entry.appointmentId = appointment.id; }
     if (!wasFiled || form.living) EFFECTS[formId]?.(state, entry, staffId, previous);
     const subject = patientId ? (form.family === 'clinical' ? patientOf(state, patientId)?.clinicalName : patientOf(state, patientId)?.fullName) : '';
-    log(state, staffId, `${wasFiled ? 'Updated' : 'Filed'} ${form.title}${subject ? ` for ${subject}` : ''}`, patientId ? `#/patients/${patientId}/${form.family}` : '');
+    log(state, staffId, `${wasFiled ? 'Updated' : 'Filed'} ${form.title}${subject ? ` for ${subject}` : ''}`, patientId ? `#/patients/${patientId}/${form.family}` : form.ward ? '#/medication/logs' : '');
   }
   return entry;
 }

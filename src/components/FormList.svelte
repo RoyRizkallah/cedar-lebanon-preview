@@ -8,7 +8,7 @@
   let { patient, formIds, onopen } = $props();
 
   // Forms filled once per stay, with the deadline the form itself states.
-  const SINGLE = { intake: 3, plan: 7, discharge: null, clearance: null, progress: null, aftercare: null };
+  const SINGLE = { 'admission-medical': 1, intake: 3, plan: 7, discharge: null, clearance: null, progress: null, aftercare: null };
   // Group, case review and attendance logs start from the schedule or the patient list, not here.
   const STARTED_ELSEWHERE = ['group', 'review', 'attendance'];
   const today = todayISO(session.now);
@@ -45,7 +45,7 @@
         {#if !single && entries.length}
           <ul class="entries">
             {#each entries.slice(0, 4) as entry (entry.id)}
-              <li><button class="linkish" onclick={() => onopen(id, entry.id)}>{fmtDate(entry.values.date || entry.values.weekEnding || entry.createdAt)}{entry.status === 'Draft' ? ' (draft)' : ''}{entry.values.sessionNo ? `, session ${entry.values.sessionNo}` : ''}{entry.values.group ? `, ${entry.values.group}` : ''}{entry.values.severity ? `, ${entry.values.severity.toLowerCase()} ${entry.values.bodyPart || ''}` : ''}</button><span class="faint" style="margin-left: 6px">{staffName(entry.filedBy || entry.createdBy)}</span></li>
+              <li><button class="linkish" onclick={() => onopen(id, entry.id)}>{fmtDate(entry.values.date || entry.values.weekEnding || entry.values.weekBeginning || entry.createdAt)}{entry.status === 'Draft' ? ' (draft)' : ''}{entry.values.sessionNo ? `, session ${entry.values.sessionNo}` : ''}{entry.values.group ? `, ${entry.values.group}` : ''}{entry.values.severity ? `, ${entry.values.severity.toLowerCase()} ${entry.values.bodyPart || ''}` : ''}{entry.values.destination ? `, ${entry.values.destination}` : ''}{entry.values.psychiatrist ? `, ${entry.values.psychiatrist}` : ''}</button><span class="faint" style="margin-left: 6px">{staffName(entry.filedBy || entry.createdBy)}</span></li>
             {/each}
             {#if entries.length > 4}<li class="faint">and {entries.length - 4} earlier</li>{/if}
           </ul>

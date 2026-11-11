@@ -146,7 +146,7 @@
 
 <style>
   .greeting { position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 17px; flex-wrap: wrap; padding: 18px 22px; margin-bottom: 12px; border-radius: 22px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); }
-  .greeting::after { content: ""; position: absolute; right: -90px; top: -110px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.3), transparent 65%); pointer-events: none; }
+  .greeting::after { content: ""; position: absolute; right: -90px; top: -110px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.3), transparent 65%); pointer-events: none; }
   .hello { position: relative; z-index: 1; }
   .date { color: var(--lime); font-weight: 750; font-size: 14px; }
   .greeting h1 { color: #fff; font-size: 28px; letter-spacing: -0.04em; margin-top: 4px; }

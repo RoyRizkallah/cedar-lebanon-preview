@@ -5,13 +5,13 @@
   import CaseReport from '../CaseReport.svelte';
   import { db, session, commit } from '../../lib/store.svelte.js';
   import { riskLevel, reviewRisk } from '../../lib/forms/engine.js';
-  import { staffName } from '../../lib/people.js';
+  import { staffName, hasRole } from '../../lib/people.js';
   import { fmtDateTime } from '../../lib/dates.js';
   import { say } from '../../lib/ui.svelte.js';
 
   let { patient, onform } = $props();
   const me = session.staffId;
-  const canReview = ['clinical-director', 'nabila'].includes(me);
+  const canReview = hasRole(me, 'clinical-director', 'psychologist');
   const risk = $derived(riskLevel(db, patient.id));
   let reviewing = $state(false);
   let level = $state('Low');

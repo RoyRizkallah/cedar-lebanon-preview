@@ -22,3 +22,10 @@ artifacts/
 
 # The owner's source forms stay out of this public repo
 *.docx
+
+# The owner's SOPs, checklists and meeting notes stay out of this public repo
+*.pdf
+*.zip
+Cedar_Rehab_*
+notes-*
+Re__*

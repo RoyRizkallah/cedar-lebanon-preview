@@ -7,7 +7,7 @@ import { log } from './activity.js';
 
 export const SERVICES = [
   { name: 'Psychologist session', provider: 'nabila', minutes: 50, auto: true },
-  { name: 'Therapist session', provider: 'clinical-director', minutes: 50 },
+  { name: 'Therapist session', provider: 'samar', minutes: 50 },
   { name: 'Nursing appointment', provider: 'fadia', minutes: 30 },
   { name: 'Blood test', provider: 'fadia', minutes: 15 },
   { name: 'Physiotherapy', provider: 'john', minutes: 45 },
@@ -17,8 +17,8 @@ export const SERVICES = [
   { name: 'Personal training', provider: 'tony-am', minutes: 45 },
   { name: 'Boxing / MMA', provider: 'raymond', minutes: 60 },
   { name: 'Drama therapy', provider: 'nazha', minutes: 60 },
-  { name: 'Group', provider: 'clinical-director', minutes: 60 },
-  { name: 'Assessment', provider: 'clinical-director', minutes: 60 },
+  { name: 'Group', provider: 'samar', minutes: 60 },
+  { name: 'Assessment', provider: 'ahmed', minutes: 60 },
   { name: 'External psychiatrist', provider: 'external', minutes: 30, external: true }
 ];
 export const DAY_START = '09:00';

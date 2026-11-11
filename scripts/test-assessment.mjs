@@ -6,31 +6,31 @@ import { tasksFor } from '../src/lib/tasks.js';
 const now = new Date('2026-11-03T09:00:00');
 const empty = () => ({ inquiries: [], onboardings: [], appointments: [], patients: [], rooms: [], tasks: [], notifications: [], activity: [], documents: [], forms: [] });
 
-assert.ok(SERVICES.some(service => service.name === 'Assessment' && service.provider === 'clinical-director'));
+assert.ok(SERVICES.some(service => service.name === 'Assessment' && service.provider === 'ahmed'));
 assert.deepEqual(ASSESSMENT_MODES, ['In person', 'Phone', 'Video']);
 
 // Moving someone to Assessment means booking it: a date, a time, an assessor and how it happens.
 const state = empty();
 const inquiry = createInquiry(state, { name: 'Rami Aoun', phone: '+961 70 111 222' }, 'melyssa', now);
 assert.throws(() => scheduleAssessment(state, inquiry.id, { date: '2026-11-04', start: '10:00' }, 'fadia', now), /cannot/i);
-assert.throws(() => scheduleAssessment(state, inquiry.id, { date: '2026-11-04', start: '10:00', provider: 'john' }, 'melyssa', now), /Wael or Nabila/);
+assert.throws(() => scheduleAssessment(state, inquiry.id, { date: '2026-11-04', start: '10:00', assessor: 'john' }, 'melyssa', now), /Amer, Ahmad or someone you name/);
 assert.throws(() => scheduleAssessment(state, inquiry.id, { date: '2026-11-04', start: '10:00', mode: 'Pigeon' }, 'melyssa', now), /in person, by phone or by video/);
 const first = scheduleAssessment(state, inquiry.id, { date: '2026-11-04', start: '10:00', mode: 'Video' }, 'melyssa', now);
 assert.equal(inquiry.stage, 'Assessment');
 assert.equal(first.service, 'Assessment');
-assert.equal(first.provider, 'clinical-director');
+assert.equal(first.provider, 'ahmed');
 assert.equal(first.inquiryId, inquiry.id);
 assert.equal(first.mode, 'Video');
 assert.match(first.title, /Rami Aoun/);
 assert.equal(assessmentFor(state, inquiry.id).id, first.id);
-assert.ok(state.notifications.some(item => item.to === 'clinical-director' && /Rami Aoun/.test(item.title)), 'the assessor is told');
+assert.ok(state.notifications.some(item => item.to === 'ahmed' && /Rami Aoun/.test(item.title)), 'the assessor is told');
 
 // Rebooking replaces the old slot; the assessor's calendar never double-books.
-const second = scheduleAssessment(state, inquiry.id, { date: '2026-11-05', start: '11:00', provider: 'nabila' }, 'melyssa', now);
+const second = scheduleAssessment(state, inquiry.id, { date: '2026-11-05', start: '11:00', assessor: 'amer' }, 'melyssa', now);
 assert.equal(first.status, 'Cancelled');
 assert.equal(assessmentFor(state, inquiry.id).id, second.id);
 const other = createInquiry(state, { name: 'Lina Haddad', phone: '+961 70 333 444' }, 'melyssa', now);
-assert.throws(() => scheduleAssessment(state, other.id, { date: '2026-11-05', start: '11:30', provider: 'nabila' }, 'melyssa', now), /overlaps/);
+assert.throws(() => scheduleAssessment(state, other.id, { date: '2026-11-05', start: '11:30', assessor: 'amer' }, 'melyssa', now), /overlaps/);
 
 // Someone in Assessment with nothing booked becomes a task for their contact person.
 moveInquiry(state, other.id, 'Assessment', 'melyssa', now);

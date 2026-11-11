@@ -23,35 +23,35 @@ export function seedForms(state, today) {
     if (stay >= 3) {
       const [selfHarm, abscond, aggression, notes] = risks[patient.id] || ['Low', 'Low', 'Low', ''];
       const date = addDays(patient.admittedAt, 2);
-      add('intake', { patientId: patient.id, by: 'clinical-director', date, values: {
+      add('intake', { patientId: patient.id, by: 'samar', date, values: {
         patient: patient.clinicalName, age: patient.age, admissionDate: patient.admittedAt, assessmentDate: date,
         substances: `${patient.program === 'Outpatient' ? 'Weekend' : 'Daily'} use; history recorded at assessment.`, previousTreatment: 'One previous attempt without structured aftercare.',
         mentalHealth: 'Low mood and poor sleep during heavy use.', familySocial: 'Lives with family; supportive sibling.', legal: 'Voluntary',
         stageOfChange: 'Preparation', motivation: '“I want my mornings back.”', riskSelfHarm: selfHarm, riskAbscond: abscond, riskAggression: aggression, riskNotes: notes,
         strengths: 'Employed before admission; engaged in first group.', crossChecked: 'Yes — pictures agree', impression: 'Build routine first; relapse prevention from week two.',
-        conductedBy: sig('clinical-director', 'Clinical Director', date), countersigned: sig('clinical-director', 'Clinical Director', date)
+        conductedBy: sig('ahmed', 'Ahmed Khattab', date), countersigned: sig('ahmed', 'Ahmed Khattab', date)
       } });
     }
     if (stay >= 7) {
       const date = addDays(patient.admittedAt, 6);
-      add('plan', { patientId: patient.id, by: 'clinical-director', date, values: {
+      add('plan', { patientId: patient.id, by: 'samar', date, values: {
         patient: patient.clinicalName, planDate: date, phaseAtWriting: '1 Stabilization', plannedDischarge: addDays(patient.admittedAt, 60),
         presenting: 'Dependence with disrupted sleep and work.', goals: 'Sleep through the night; repair trust at home; return to work.',
         modalities: ['CBT', 'Relapse prevention', 'Group therapy'], focus: 'Triggers at home; evening cravings.', familyInvolvement: 'Updates only', phase: patient.phase,
-        patientView: 'Agrees; wants more gym time.', patientSignature: sig('clinical-director', patient.fullName, date), directorSignature: sig('clinical-director', 'Clinical Director', date),
+        patientView: 'Agrees; wants more gym time.', patientSignature: sig('samar', patient.fullName, date), directorSignature: sig('ahmed', 'Ahmed Khattab', date),
         seenByAhmed: stay > 20 ? sig('ahmed', 'Ahmed', addDays(date, 1)) : undefined,
         reviews: stay > 35 ? [{ date: addDays(patient.admittedAt, 34), moved: 'Sleep improved; cravings less frequent.', changes: 'Moved to consolidation phase.', initials: 'CD' }] : []
       } });
     }
     if (patient.status === 'Admitted') {
-      add('discharge', { patientId: patient.id, by: 'clinical-director', date: patient.admittedAt, status: 'Draft', values: { patient: patient.clinicalName, admissionDate: patient.admittedAt } });
+      add('discharge', { patientId: patient.id, by: 'samar', date: patient.admittedAt, status: 'Draft', values: { patient: patient.clinicalName, admissionDate: patient.admittedAt } });
     } else {
-      add('discharge', { patientId: patient.id, by: 'clinical-director', date: patient.dischargedAt, values: {
+      add('discharge', { patientId: patient.id, by: 'samar', date: patient.dischargedAt, values: {
         patient: patient.clinicalName, admissionDate: patient.admittedAt, dischargeDate: patient.dischargedAt, dischargeType: 'Planned',
         living: 'Returning to family home.', structure: 'Back to work part-time from week two.', triggers: 'Friday evenings; old contacts. Plan agreed.', support: 'Sibling, sponsor.',
         continuing: 'Weekly outpatient group.', psychiatric: 'Monthly review arranged with Fadia.', contactFirst: 'Agreed & explained', whoToCall: 'Melyssa, Cedar reception', readmission: 'Yes',
         followupDates: FOLLOWUP_OFFSETS.map(([, days]) => addDays(patient.dischargedAt, days)).join(' / '),
-        directorSignature: sig('clinical-director', 'Clinical Director', patient.dischargedAt), ahmedSignature: sig('ahmed', 'Ahmed', patient.dischargedAt), patientCopy: sig('clinical-director', patient.fullName, patient.dischargedAt)
+        directorSignature: sig('ahmed', 'Ahmed Khattab', patient.dischargedAt), ahmedSignature: sig('ahmed', 'Ahmed', patient.dischargedAt), patientCopy: sig('samar', patient.fullName, patient.dischargedAt)
       } });
       const outcome = { 'P-0011': ['Well', 'Well'], 'P-0012': ['Struggling'], 'P-0013': [] }[patient.id] || [];
       const rows = FOLLOWUP_OFFSETS.map(([contact, days], index) => {
@@ -85,10 +85,10 @@ export function seedForms(state, today) {
   for (const item of state.appointments.filter(entry => entry.status === 'Completed' && entry.patientIds)) {
     const roster = item.patientIds.map(id => patients.find(entry => entry.id === id));
     if (item.service === 'Group') {
-      item.noteFormId = add('group', { by: 'clinical-director', date: item.date, appointmentId: item.id, patientIds: item.patientIds, values: {
+      item.noteFormId = add('group', { by: 'samar', date: item.date, appointmentId: item.id, patientIds: item.patientIds, values: {
         date: item.date, group: item.title, facilitator: 'Clinical Director', coFacilitator: 'Nabila', groupType: item.title, theme: 'Handling weekends',
         attendance: roster.map((patient, index) => ({ patientId: patient.id, patient: patient.clinicalName, present: index !== 3, observation: index === 3 ? 'Refused; stayed in room.' : 'Engaged.' })),
-        dynamics: 'Supportive; two members led.', observations: 'Follow up refusal in case review.', escalations: ['None'], facilitatorSignature: sig('clinical-director', 'Clinical Director', item.date)
+        dynamics: 'Supportive; two members led.', observations: 'Follow up refusal in case review.', escalations: ['None'], facilitatorSignature: sig('ahmed', 'Ahmed Khattab', item.date)
       } }).id;
     } else {
       item.noteFormId = add('attendance', { by: 'john', date: item.date, appointmentId: item.id, patientIds: item.patientIds, values: {

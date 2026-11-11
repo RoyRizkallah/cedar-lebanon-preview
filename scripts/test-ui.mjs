@@ -12,7 +12,7 @@ const EXPECT = {
   reports: ['Reports', 'CSV'],
   insights: ['Insights', 'Cedar Intelligence'],
   home: ['Hello, Karim', 'Available in your wallet', 'Send request'],
-  dashboard: ['Money', 'Safety', 'Potential revenue'],
+  dashboard: ['Collected this month', 'Owed to Cedar', 'Safety', 'Potential revenue in play'],
   requests: ['Resident support', 'Daily check-ins'],
   followups: ['Follow-ups', 'Maya Sleiman', 'Schedule assessment', 'Rima Sleiman (parent)'],
   programs: ['Programs', 'Foundations: first 28 days', 'The week', 'Patients on this program']

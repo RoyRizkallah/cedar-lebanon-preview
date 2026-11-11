@@ -3,7 +3,7 @@
   import InquiryDrawer from '../components/InquiryDrawer.svelte';
   import InquiryFields from '../components/InquiryFields.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { STAGES, PROGRAMS, createInquiry, moveInquiry, reviewDue, timeInStageHours, noPhone, money, isOpen, potentialTotals, startFollowUp, FOLLOW_UP_DAYS, assessmentFor } from '../lib/pipeline.js';
+  import { STAGES, PROGRAMS, createInquiry, moveInquiry, reviewDue, timeInStageHours, noPhone, money, isOpen, potentialTotals, startFollowUp, FOLLOW_UP_DAYS, assessmentFor, markNoShow, drugLabel, assessorName } from '../lib/pipeline.js';
   import AssessmentDialog from '../components/AssessmentDialog.svelte';
   import { dashboard } from '../lib/kpis.js';
   import { staffName, staffById, canDo, hasRole } from '../lib/people.js';
@@ -27,7 +27,7 @@
   const editable = canDo(me, 'editInquiry');
 
   const filtered = $derived(db.inquiries.filter(item =>
-    (!query.trim() || `${item.name} ${item.phone} ${item.id} ${item.drugOfChoice}`.toLowerCase().includes(query.trim().toLowerCase())) &&
+    (!query.trim() || `${item.name} ${item.phone} ${item.id} ${drugLabel(item)}`.toLowerCase().includes(query.trim().toLowerCase())) &&
     (!contact || item.contactPerson === contact) && (!program || item.program === program) && (!urgentOnly || item.urgency === 'Urgent')));
   const open = $derived(filtered.filter(isOpen));
   const declined = $derived(filtered.filter(item => item.outcome === 'Declined').sort((a, b) => String(b.closedAt).localeCompare(String(a.closedAt))));
@@ -118,7 +118,7 @@
               <article class="card" class:urgent={item.urgency === 'Urgent'} class:dragging={dragging === item.id} draggable={editable} ondragstart={event => { dragging = item.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); }} ondragend={() => { dragging = null; over = ''; }}>
                 <a class="card-link" href={`#/pipeline/${item.id}`}>
                   <div class="row between" style="align-items: flex-start"><strong>{item.name}</strong>{#if noPhone(item)}<span title="Not comfortable talking on the phone" style="color: var(--warn); display: flex"><Icon name="phone-off" size={16} /></span>{/if}</div>
-                  <span class="faint">{item.program}{item.drugOfChoice ? `, ${item.drugOfChoice}` : ''}</span>
+                  <span class="faint">{item.program}{drugLabel(item) ? `, ${drugLabel(item)}` : ''}</span>
                   {#if item.relationship && item.relationship !== 'Self'}<span class="via">Via {item.callerName || 'family'}, {item.relationship.toLowerCase()}</span>{/if}
                   {#if item.urgency === 'Urgent' || reviewDue(item, session.now)}
                     <span class="row" style="gap: 6px; margin-top: 2px">{#if item.urgency === 'Urgent'}<span class="pill urgent">Urgent</span>{/if}{#if reviewDue(item, session.now)}<span class="pill warn">Review due</span>{/if}</span>
@@ -126,12 +126,15 @@
                 </a>
                 {#if item.stage === 'Assessment'}
                   {@const booked = assessmentFor(db, item.id)}
-                  {#if booked}<span class="booked"><Icon name="calendar" size={13} />{fmtDay(booked.date)}, {booked.start}, {staffName(booked.provider)}{booked.mode && booked.mode !== 'In person' ? ` (${booked.mode.toLowerCase()})` : ''}</span>
+                  {#if item.noShows}<span class="pill warn">No-show{item.noShows > 1 ? ` ×${item.noShows}` : ''}</span>{/if}
+                  {#if booked && editable && booked.status === 'Booked'}<button class="book-next" onclick={() => { error = ''; try { commit(state => markNoShow(state, item.id, me)); say(`${item.name} marked as no-show. Rebook when you reach them.`); } catch (e) { error = e.message; } }}>Mark no-show</button>{/if}
+                  {#if booked}<span class="booked"><Icon name="calendar" size={13} />{fmtDay(booked.date)}, {booked.start}, {assessorName(booked)}{booked.mode && booked.mode !== 'In person' ? ` (${booked.mode.toLowerCase()})` : ''}</span>
                   {:else if editable}<button class="pill warn as-button" onclick={() => { assessing = item.id; }}>Not booked: book it</button>{:else}<span class="pill warn">Not booked</span>{/if}
                 {/if}
                 {#if item.stage === 'New Inquiry'}
                   {@const hours = timeInStageHours(item, session.now)}
                   <div class="clock" title={`${Math.floor(hours)} of 48 hours used before review`}><i style:width={`${Math.min(100, (hours / 48) * 100)}%`} class:late={hours >= 48} class:soon={hours >= 36 && hours < 48}></i></div>
+                  {#if editable}<button class="book-next" onclick={() => { assessing = item.id; }}><Icon name="calendar" size={13} />Book assessment</button>{/if}
                 {/if}
                 <footer class="row between">
                   <span class="row" style="gap: 6px"><span class="avatar sm" title={`Contact: ${staffName(item.contactPerson)}`}>{staffById(item.contactPerson)?.initials}</span><span class="faint row" style="gap: 3px" title="Time in this stage"><Icon name="clock" size={13} />{fmtDuration(timeInStageHours(item, session.now))}</span></span>
@@ -192,27 +195,32 @@
   .split { display: flex; height: 6px; border-radius: 6px; overflow: hidden; margin-top: 10px; background: #2c3b29; }
   .split i:first-child { background: var(--lime); }
   .split i:last-child { flex: 1; background: #c5f59a; }
-  .board { display: grid; grid-template-columns: repeat(3, minmax(270px, 1fr)); gap: 12px; align-items: start; overflow-x: auto; padding-bottom: 8px; }
+  /* Columns stand full height, so a card can be dropped anywhere in them */
+  .board { display: grid; grid-template-columns: repeat(3, minmax(250px, 1fr)); gap: 10px; align-items: stretch; overflow-x: auto; padding-bottom: 8px; }
   .column { background: var(--sunk); border-radius: 18px; padding: 8px; min-height: 300px; transition: box-shadow 0.15s, background 0.15s; }
-  .column.over { background: var(--leaf); box-shadow: inset 0 0 0 2px #8fd14f; }
+  .column.over { background: var(--leaf); box-shadow: inset 0 0 0 2px var(--lime); }
+  /* While a card is held over a column, the column opens a slot for it */
+  .column.over .cards::after { content: "Drop here"; display: flex; align-items: center; justify-content: center; height: 72px; border: 2px dashed var(--lime); border-radius: 12px; color: var(--moss); font-size: 12.5px; font-weight: 700; }
   .column-head { padding: 6px 8px 9px; }
   .column-head h2 { font-size: 15px; font-weight: 800; }
   .column-head .count { min-width: 26px; padding: 0 9px; border-radius: 12px; background: var(--paper); font-size: 12px; font-weight: 800; text-align: center; line-height: 24px; }
-  .cards { display: flex; flex-direction: column; gap: 7px; }
-  .card { background: var(--paper); border-radius: 13px; padding: 10px 12px 9px; display: flex; flex-direction: column; gap: 6px; cursor: grab; box-shadow: var(--shadow-1); transition: box-shadow 0.15s, transform 0.15s; }
+  .cards { display: flex; flex-direction: column; gap: 6px; }
+  .card { background: var(--paper); border-radius: 12px; padding: 8px 10px 7px; display: flex; flex-direction: column; gap: 4px; cursor: grab; box-shadow: var(--shadow-1); transition: box-shadow 0.15s, transform 0.15s; }
   .card:hover { box-shadow: var(--shadow-2); transform: translateY(-1px); }
   .card.urgent { box-shadow: inset 4px 0 0 #ef5a24, var(--shadow-1); }
   .card.dragging { opacity: 0.45; }
   .card-link { display: flex; flex-direction: column; gap: 3px; color: inherit; text-decoration: none; }
   .card-link:hover { text-decoration: none; }
-  .card-link strong { font-size: 14px; font-weight: 800; }
-  .card-link .faint { font-size: 12.5px; color: var(--text-2); }
+  .card-link strong { font-size: 13.5px; font-weight: 800; }
+  .card-link .faint { font-size: 12px; color: var(--text-2); }
+  .book-next { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border: 0; border-radius: 10px; background: var(--leaf); color: var(--moss); font: inherit; font-size: 11.5px; font-weight: 750; cursor: pointer; }
+  .book-next:hover { background: var(--lime-line); }
   .via { font-size: 12px; font-weight: 700; color: var(--moss); }
-  .clock { height: 5px; border-radius: 5px; background: var(--sunk); overflow: hidden; }
+  .clock { height: 4px; border-radius: 5px; background: var(--sunk); overflow: hidden; }
   .clock i { display: block; height: 100%; background: var(--lime); border-radius: inherit; }
   .clock i.soon { background: #f2a33a; }
   .clock i.late { background: #ef5a24; }
-  .move select { height: 30px; border: 0; border-radius: 15px; background: var(--sunk); font: 650 12px var(--font); color: var(--text-2); padding: 0 10px; max-width: 98px; }
+  .move select { height: 26px; border: 0; border-radius: 13px; background: var(--sunk); font: 650 12px var(--font); color: var(--text-2); padding: 0 10px; max-width: 98px; }
   .booked { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--moss); }
   .as-button { border: 0; cursor: pointer; align-self: flex-start; font: inherit; font-size: var(--t-xs); font-weight: 750; }
   .drop-hint { text-align: center; padding: 18px 8px; font-size: 13px; border: 2px dashed var(--line-strong); border-radius: 20px; }

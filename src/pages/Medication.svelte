@@ -1,6 +1,8 @@
 <script>
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
+  import FormView from '../components/FormView.svelte';
+  import { FORMS } from '../lib/forms/engine.js';
   import { db, session, commit } from '../lib/store.svelte.js';
   import { ROUTES, SUBSTANCES, roundFor, recordDose, correctDose, addOrder, stopOrder, recordTest } from '../lib/medication.js';
   import { staffName, canDo } from '../lib/people.js';
@@ -11,8 +13,13 @@
   let { args = [] } = $props();
   const me = session.staffId;
   const records = canDo(me, 'recordMedication');
+  const gives = canDo(me, 'giveMedication');
+  // Ward logs (SOP 2.3): about the medication store, not one patient.
+  const WARD = FORMS.filter(form => form.ward);
+  let wardForm = $state(null);
+  const logEntries = id => db.forms.filter(entry => entry.formId === id).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
   const today = todayISO(session.now);
-  const tab = $derived(['orders', 'tests'].includes(args[0]) ? args[0] : 'round');
+  const tab = $derived(['orders', 'tests', 'logs'].includes(args[0]) ? args[0] : 'round');
   let date = $state(today);
   let noting = $state(null);
   let dialog = $state(null);
@@ -35,7 +42,7 @@
 
 <main class="content wide">
   <div class="page-head">
-    <div><h1>Medication</h1><p>Rounds from active prescriptions, and urine drug screens. Recorded by Fadia.</p></div>
+    <div><h1>Medication</h1><p>The RSA running each meds window records every dose as it is taken. Fadia starts and stops medication and keeps the logs.</p></div>
     {#if records}
       <div class="actions">
         <button class="btn" onclick={() => { dialog = { kind: 'test', patientId: inCare[0]?.id, date: today, result: 'Negative', substances: [], note: '' }; }}><Icon name="flag" size={16} />Record drug screen</button>
@@ -48,6 +55,7 @@
     <a href="#/medication" aria-current={tab === 'round' ? 'page' : undefined}>Round</a>
     <a href="#/medication/orders" aria-current={tab === 'orders' ? 'page' : undefined}>Medications</a>
     <a href="#/medication/tests" aria-current={tab === 'tests' ? 'page' : undefined}>Drug screens</a>
+    <a href="#/medication/logs" aria-current={tab === 'logs' ? 'page' : undefined}>Logs</a>
   </nav>
   {#if error && !dialog}<p class="error" role="alert" style="margin-bottom: 12px">{error}</p>{/if}
 
@@ -91,7 +99,7 @@
                     {#if item.record}<div class="sub">{item.status} by {staffName(item.record.by)}{item.record.note ? `: ${item.record.note}` : ''}</div>{/if}
                   </div>
                   {#if item.status === 'Due'}
-                    {#if records && date <= todayISO(session.now)}
+                    {#if gives && date <= todayISO(session.now)}
                       <div class="dose-actions">
                         <button class="btn sm give" onclick={() => mark(item, 'Given')}><Icon name="check" size={14} stroke={2.4} />Given</button>
                         <button class="btn sm" onclick={() => { noting = { item, status: 'Refused', note: '' }; }}>Not given</button>
@@ -130,6 +138,35 @@
       </table>
     </div>
 
+  {:else if tab === 'logs'}
+    <ul class="list panel form-list">
+      {#each WARD as form (form.id)}
+        {@const entries = logEntries(form.id)}
+        {@const owner = form.owners.includes(me)}
+        <li style="align-items: flex-start">
+          <span class="num-badge">{form.number}</span>
+          <div class="grow">
+            <div class="title">{form.title}</div>
+            <p class="faint" style="font-size: 12.5px; margin: 2px 0 0">{form.purpose}</p>
+            {#if !form.living && entries.length}
+              <ul class="entries">
+                {#each entries.slice(0, 4) as entry (entry.id)}
+                  <li><button class="linkish" onclick={() => { wardForm = { formId: form.id, entryId: entry.id }; }}>Week of {fmtDate(entry.values.weekBeginning || entry.values.weekEnding || entry.createdAt)}{entry.status === 'Draft' ? ' (draft)' : ''}</button><span class="faint" style="margin-left: 6px">{staffName(entry.filedBy || entry.createdBy)}</span></li>
+                {/each}
+              </ul>
+            {:else if form.living && entries[0]}
+              <p class="faint" style="font-size: 12.5px; margin: 4px 0 0">{(entries[0].values.entries || []).length} entries, last saved {fmtDate(entries[0].updatedAt)} by {staffName(entries[0].updatedBy)}</p>
+            {/if}
+          </div>
+          {#if form.living && entries[0]}
+            <button class="btn sm" onclick={() => { wardForm = { formId: form.id, entryId: entries[0].id }; }}>{owner ? 'Add entry' : 'Open'}</button>
+          {:else if owner}
+            <button class="btn sm" onclick={() => { wardForm = { formId: form.id, entryId: null }; }}><Icon name="plus" size={14} />{form.living ? 'Start log' : 'New'}</button>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+
   {:else}
     <div class="screens">
       {#each tests as test (test.id)}
@@ -144,10 +181,12 @@
   {/if}
 </main>
 
+{#if wardForm}{#key wardForm}<FormView {...wardForm} onclose={() => { wardForm = null; }} />{/key}{/if}
+
 {#if noting}
   <div class="scrim" onclick={() => { noting = null; }} aria-hidden="true"></div>
   <form class="dialog" use:dialogFocus={{ onClose: () => { noting = null; } }} onsubmit={event => { event.preventDefault(); const ok = noting.correcting ? run(state => correctDose(state, noting.item.record.id, { status: noting.status, note: noting.note, reason: noting.reason }, me), 'Dose corrected') : mark(noting.item, noting.status, noting.note); if (ok) noting = null; }}>
-    <header class="drawer-head"><div class="grow"><h2>{noting.correcting ? 'Correct the dose record' : 'Dose not given'}</h2><p class="muted" style="margin-top: 4px">{patient(noting.item.patientId).clinicalName}, {noting.item.drug} {noting.item.dose} at {noting.item.time}. The Clinical Director is told about refused and missed doses.</p></div></header>
+    <header class="drawer-head"><div class="grow"><h2>{noting.correcting ? 'Correct the dose record' : 'Dose not given'}</h2><p class="muted" style="margin-top: 4px">{patient(noting.item.patientId).clinicalName}, {noting.item.drug} {noting.item.dose} at {noting.item.time}. Fadia and Ahmed are told about refused and missed doses.</p></div></header>
     <div class="drawer-body stack">
       <div class="choices">{#each noting.correcting ? ['Given', 'Refused', 'Missed', 'Held'] : ['Refused', 'Missed', 'Held'] as option}<label class="choice"><input type="radio" name="dose" value={option} bind:group={noting.status} /><span>{option}</span></label>{/each}</div>
       {#if noting.status !== 'Given'}<label class="field"><span>Why it was not given</span><input class="input" bind:value={noting.note} data-autofocus /></label>{/if}
@@ -190,7 +229,7 @@
   /* Round: the day's progress on a dark card, the rounds as a timeline beside it */
   .round-layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 15px; align-items: start; }
   .round-card { position: sticky; top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 15px; border-radius: 20px; background: var(--hero); color: var(--on-ink); box-shadow: var(--shadow-2); overflow: hidden; }
-  .round-card::before { content: ""; position: absolute; inset: auto -80px -80px auto; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgb(124 252 0 / 0.2), transparent 70%); pointer-events: none; }
+  .round-card::before { content: ""; position: absolute; inset: auto -80px -80px auto; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--lime-rgb) / 0.2), transparent 70%); pointer-events: none; }
   .day-nav { display: flex; gap: 6px; width: 100%; }
   .day-nav .btn { background: rgb(255 255 255 / 0.08); color: var(--on-ink); box-shadow: none; border-color: transparent; }
   .day-nav .btn:hover { background: rgb(255 255 255 / 0.16); }
@@ -217,7 +256,7 @@
   .slot-time .faint { font-size: 12px; font-weight: 700; flex-basis: 100%; padding-left: 28px; margin-top: -6px; }
   .node { width: 29px; height: 29px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--paper); box-shadow: inset 0 0 0 3px var(--line-strong); flex: none; z-index: 1; }
   .slot.complete .node { background: var(--lime); color: var(--on-lime); box-shadow: 0 0 0 4px var(--leaf); }
-  .slot.next .node { background: var(--paper); box-shadow: inset 0 0 0 3px var(--strong), 0 0 0 5px rgb(124 252 0 / 0.35); }
+  .slot.next .node { background: var(--paper); box-shadow: inset 0 0 0 3px var(--strong), 0 0 0 5px rgb(var(--lime-rgb) / 0.35); }
   .doses { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
   .dose { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 15px; background: var(--paper); box-shadow: var(--shadow-1); min-width: 0; }
   .dose.due { box-shadow: inset 0 0 0 1.5px var(--line-strong), var(--shadow-1); }
@@ -232,6 +271,8 @@
   .dose-actions { display: flex; gap: 6px; flex: none; }
   .give { background: var(--lime); color: var(--on-lime); border-color: transparent; }
   .give:hover { background: var(--lime-press); }
+
+  .entries { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
 
   /* Drug screens as cards, positives stand out */
   .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }

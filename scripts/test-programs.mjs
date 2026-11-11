@@ -5,18 +5,18 @@ import { loadState } from '../src/lib/persist.js';
 import { seed } from '../src/lib/seed.js';
 import { withSsr } from './lib/ssr.mjs';
 
-// Therapists build programs and give them to patients; Ahmed and the rest of the team only read them.
-for (const id of ['clinical-director', 'nabila', 'nazha']) assert.equal(canDo(id, 'managePrograms'), true, id);
-for (const id of ['ahmed', 'amer', 'melyssa', 'fadia', 'john', 'omar']) assert.equal(canDo(id, 'managePrograms'), false, id);
-for (const id of ['clinical-director', 'nazha', 'ahmed', 'fadia', 'john']) assert.equal(canSee(id, 'programs'), true, id);
+// The clinical team (Ahmed, Nabila, Samar, Nazha) builds programs and gives them to patients; the rest of the care team reads them.
+for (const id of ['ahmed', 'nabila', 'samar', 'nazha']) assert.equal(canDo(id, 'managePrograms'), true, id);
+for (const id of ['amer', 'melyssa', 'fadia', 'john', 'omar']) assert.equal(canDo(id, 'managePrograms'), false, id);
+for (const id of ['ahmed', 'nazha', 'ahmed', 'fadia', 'john']) assert.equal(canSee(id, 'programs'), true, id);
 for (const id of ['melyssa', 'rabih', 'georgio']) assert.equal(canSee(id, 'programs'), false, id);
 
 const now = new Date('2026-11-02T10:00:00');
 const state = seed();
 const patient = state.patients.find(item => item.status === 'Admitted' && item.program !== 'Outpatient');
-const blank = { name: 'Relapse prevention', focus: 'Triggers and coping plans', weeks: 4, goals: ['Name three triggers'], sessions: [{ day: 'Mon', time: '10:00', minutes: 60, kind: 'Group', title: 'Triggers group', leader: 'clinical-director' }] };
+const blank = { name: 'Relapse prevention', focus: 'Triggers and coping plans', weeks: 4, goals: ['Name three triggers'], sessions: [{ day: 'Mon', time: '10:00', minutes: 60, kind: 'Group', title: 'Triggers group', leader: 'ahmed' }] };
 
-assert.throws(() => createProgram(state, blank, 'ahmed', now), /Programs are created by the therapists/);
+assert.throws(() => createProgram(state, blank, 'fadia', now), /Programs are created by the clinical team/);
 assert.throws(() => createProgram(state, { ...blank, name: 'x' }, 'nazha', now), /Name the program/);
 assert.throws(() => createProgram(state, { ...blank, weeks: 0 }, 'nazha', now), /1 to 26 weeks/);
 assert.throws(() => createProgram(state, { ...blank, sessions: [{ day: 'Sun', time: '10:00', kind: 'Group', title: 'x y' }] }, 'nazha', now), /Monday to Saturday/);
@@ -35,7 +35,7 @@ assert.throws(() => updateProgram(state, program.id, { name: '' }, 'nazha', now)
 assert.equal(program.name, 'Relapse prevention');
 updateProgram(state, program.id, { sessions: [...program.sessions, { day: 'Wed', time: '15:00', minutes: 60, kind: 'Drama therapy', title: 'Role play', leader: 'nazha' }] }, 'nazha', now);
 assert.equal(program.sessions.length, 2);
-assert.throws(() => updateProgram(state, program.id, { weeks: 6 }, 'fadia', now), /Programs are created by the therapists/);
+assert.throws(() => updateProgram(state, program.id, { weeks: 6 }, 'fadia', now), /Programs are created by the clinical team/);
 
 // The week view groups sessions by day, in time order.
 updateProgram(state, program.id, { sessions: [...program.sessions, { day: 'Mon', time: '08:30', minutes: 30, kind: 'Fitness', title: 'Morning walk', leader: 'john' }] }, 'nabila', now);
@@ -45,20 +45,20 @@ assert.deepEqual(week[0].sessions.map(item => item.time), ['08:30', '10:00']);
 
 // Assigning: one active program per patient, dated, and the care team hears about it.
 const before = state.notifications.length;
-assert.throws(() => assignProgram(state, program.id, patient.id, { start: '2026-11-03' }, 'melyssa', now), /Programs are created by the therapists/);
-const first = assignProgram(state, program.id, patient.id, { start: '2026-11-03' }, 'clinical-director', now);
+assert.throws(() => assignProgram(state, program.id, patient.id, { start: '2026-11-03' }, 'melyssa', now), /Programs are created by the clinical team/);
+const first = assignProgram(state, program.id, patient.id, { start: '2026-11-03' }, 'ahmed', now);
 assert.equal(first.end, '2026-12-01', '4 weeks from the start');
 assert.ok(state.notifications.length > before, 'the team is told');
 assert.equal(programFor(state, patient.id, '2026-11-10').program.id, program.id);
-assert.throws(() => assignProgram(state, program.id, patient.id, { start: '2026-11-03' }, 'clinical-director', now), /already on this program/);
+assert.throws(() => assignProgram(state, program.id, patient.id, { start: '2026-11-03' }, 'ahmed', now), /already on this program/);
 
-const other = createProgram(state, { ...blank, name: 'Family repair' }, 'clinical-director', now);
-assignProgram(state, other.id, patient.id, { start: '2026-11-10' }, 'clinical-director', now);
+const other = createProgram(state, { ...blank, name: 'Family repair' }, 'ahmed', now);
+assignProgram(state, other.id, patient.id, { start: '2026-11-10' }, 'ahmed', now);
 assert.equal(first.status, 'Ended', 'the earlier program ends when a new one starts');
 assert.equal(programFor(state, patient.id, '2026-11-12').program.id, other.id);
 
 const discharged = state.patients.find(item => item.status === 'Discharged');
-assert.throws(() => assignProgram(state, other.id, discharged.id, { start: '2026-11-03' }, 'clinical-director', now), /admitted patient/);
+assert.throws(() => assignProgram(state, other.id, discharged.id, { start: '2026-11-03' }, 'ahmed', now), /admitted patient/);
 
 // Archiving keeps the record but stops new assignments.
 archiveProgram(state, program.id, 'nazha', now);
@@ -79,11 +79,11 @@ assert.ok(Array.isArray(loadState(JSON.stringify(old)).programs));
 // Assigning books the program onto the Schedule: shared sessions are one booking the patients join,
 // one-to-one sessions are booked per patient, moved later the same day if the leader is busy.
 {
-  const team = { psychologist: 'nabila', therapist: 'clinical-director', nurse: 'fadia', fitness: 'john', rsa: 'alaa' };
+  const team = { psychologist: 'nabila', therapist: 'ahmed', nurse: 'fadia', fitness: 'john', rsa: 'alaa' };
   const s = { programs: [], programAssignments: [], appointments: [], notifications: [], activity: [], tasks: [],
     patients: ['P-1', 'P-2', 'P-3'].map(id => ({ id, clinicalName: id, fullName: id, status: 'Admitted', program: 'Inpatient', admittedAt: '2026-10-20', assigned: team })) };
   const plan = createProgram(s, { name: 'Booking check', weeks: 2, sessions: [
-    { day: 'Mon', time: '10:00', minutes: 60, kind: 'Group', title: 'Process group', leader: 'clinical-director' },
+    { day: 'Mon', time: '10:00', minutes: 60, kind: 'Group', title: 'Process group', leader: 'ahmed' },
     { day: 'Wed', time: '15:00', minutes: 50, kind: 'Individual', title: 'Individual therapy', leader: 'nabila' }
   ] }, 'nazha', now);
   const a = assignProgram(s, plan.id, 'P-1', { start: '2026-11-03' }, 'nazha', now);
@@ -92,7 +92,7 @@ assert.ok(Array.isArray(loadState(JSON.stringify(old)).programs));
   assert.deepEqual(a.conflicts, []);
   const group = s.appointments.find(item => item.date === '2026-11-09' && item.start === '10:00');
   assert.equal(group.service, 'Group');
-  assert.equal(group.provider, 'clinical-director');
+  assert.equal(group.provider, 'ahmed');
   assert.equal(group.title, 'Process group');
   assert.deepEqual(group.patientIds, ['P-1']);
 
@@ -132,7 +132,7 @@ assert.ok(Array.isArray(loadState(JSON.stringify(old)).programs));
   const s2 = { programs: [], programAssignments: [], appointments: [], notifications: [], activity: [], tasks: [], patients: [{ id: 'P-9', clinicalName: 'P-9', status: 'Admitted', assigned: team }] };
   const late = createProgram(s2, { name: 'Edges check', weeks: 1, sessions: [
     { day: 'Thu', time: '09:00', minutes: 45, kind: 'Fitness', title: 'Walk', leader: 'john' },
-    { day: 'Thu', time: '17:30', minutes: 60, kind: 'Individual', title: 'Late talk', leader: 'clinical-director' }
+    { day: 'Thu', time: '17:30', minutes: 60, kind: 'Individual', title: 'Late talk', leader: 'ahmed' }
   ] }, 'nazha', now);
   const edge = assignProgram(s2, late.id, 'P-9', { start: '2026-11-03' }, 'nazha', now);
   assert.equal(s2.appointments.find(item => item.title === 'Walk').service, 'Fitness session');
@@ -144,10 +144,10 @@ await withSsr(async ({ load, html }) => {
   session.staffId = 'nazha';
   const page = await html('/src/pages/Programs.svelte', { args: [] });
   for (const text of ['Programs', 'New program', 'Assign']) assert.ok(page.includes(text), `therapist sees ${text}`);
-  session.staffId = 'ahmed';
+  session.staffId = 'fadia';
   const view = await html('/src/pages/Programs.svelte', { args: [] });
-  assert.ok(view.includes('Programs') && !view.includes('New program'), 'Ahmed reads, does not build');
-  assert.ok(view.includes('Programs are built by Wael, Nabila and Nazha'), 'and is told who builds them');
+  assert.ok(view.includes('Programs') && !view.includes('New program'), 'the nurse reads, does not build');
+  assert.ok(view.includes('Programs are built by Ahmed, Nabila, Samar and Nazha'), 'and is told who builds them');
 });
 
 console.log('Program checks passed.');

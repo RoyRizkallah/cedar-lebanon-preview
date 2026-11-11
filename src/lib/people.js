@@ -3,9 +3,9 @@
 // records doses under Fadia; Georgio is an RSA who holds petty cash).
 export const STAFF = [
   { id: 'amer', name: 'Amer Khattab', title: 'General Manager', team: 'Partners', initials: 'AM', roles: ['gm'] },
-  { id: 'ahmed', name: 'Ahmed Khattab', title: 'Clinical & Program Director', team: 'Partners', initials: 'AH', roles: ['director'] },
-  { id: 'clinical-director', name: 'Wael', title: 'Clinical Director', team: 'Clinical & Program', initials: 'W', roles: ['clinical-director'] },
-  { id: 'nabila', name: 'Nabila', title: 'Junior Psychologist', team: 'Clinical & Program', initials: 'N', roles: ['psychologist'] },
+  { id: 'ahmed', name: 'Ahmed Khattab', title: 'Clinical Director', team: 'Partners', initials: 'AH', roles: ['director', 'clinical-director'] },
+  { id: 'nabila', name: 'Nabila', title: 'Psychologist', team: 'Clinical & Program', initials: 'N', roles: ['psychologist'] },
+  { id: 'samar', name: 'Samar', title: 'Psychologist', team: 'Clinical & Program', initials: 'S', roles: ['psychologist'] },
   { id: 'nazha', name: 'Nazha', title: 'Drama Therapist', team: 'Clinical & Program', initials: 'NZ', roles: ['drama'] },
   { id: 'fadia', name: 'Fadia', title: 'Head Nurse', team: 'Nursing & Medical', initials: 'F', roles: ['nurse'] },
   { id: 'melyssa', name: 'Melyssa', title: 'Admin & Admissions Manager', team: 'Admin & Admissions', initials: 'M', roles: ['admin'] },
@@ -49,12 +49,12 @@ export const PAGES = [
   { id: 'leads', label: 'Leads', icon: 'inbox', group: 'Intake', staff: INTAKE },
   { id: 'pipeline', label: 'Pipeline', icon: 'columns', group: 'Intake', staff: INTAKE },
   { id: 'followups', label: 'Follow-ups', icon: 'clock', group: 'Intake', staff: INTAKE },
-  { id: 'admissions', label: 'Admissions', icon: 'door', group: 'Intake', staff: [...INTAKE, 'clinical-director', 'psychologist', 'nurse'] },
+  { id: 'admissions', label: 'Admissions', icon: 'door', group: 'Intake', staff: [...INTAKE, 'clinical-director', 'psychologist', 'nurse', 'pt'] },
   { id: 'insights', label: 'Insights', icon: 'sparkle', group: 'Intake', staff: INTAKE },
   { id: 'patients', label: 'Admitted patients', icon: 'users', group: 'Care', staff: STAFF_ROLES },
   { id: 'programs', label: 'Programs', icon: 'heart', group: 'Care', staff: CARE },
   { id: 'sessions', label: 'Sessions', icon: 'stethoscope', group: 'Care', staff: CARE },
-  { id: 'medication', label: 'Medication', icon: 'pill', group: 'Care', staff: ['nurse', 'nurse-aide', 'director', 'clinical-director'] },
+  { id: 'medication', label: 'Medication', icon: 'pill', group: 'Care', staff: ['nurse', 'nurse-aide', 'director', 'clinical-director', 'rsa'] },
   { id: 'rooms', label: 'Rooms & beds', icon: 'bed', group: 'Care', staff: [...INTAKE, 'clinical-director', 'nurse', 'ops', 'rsa'] },
   { id: 'schedule', label: 'Schedule', icon: 'calendar', group: 'Operations', staff: [...INTAKE, ...CARE.filter(role => role !== 'director')] },
   { id: 'safety', label: 'Visits & incidents', icon: 'shield', group: 'Operations', staff: STAFF_ROLES.filter(role => role !== 'finance') },
@@ -67,7 +67,7 @@ export const PAGES = [
 export const TABS = [
   { id: 'overview', label: 'Overview', staff: STAFF_ROLES },
   { id: 'clinical', label: 'Clinical', staff: CLINICIANS },
-  { id: 'medical', label: 'Medical', staff: ['director', 'clinical-director', 'nurse', 'nurse-aide', 'pt'] },
+  { id: 'medical', label: 'Medical', staff: ['director', 'clinical-director', 'nurse', 'nurse-aide', 'pt', 'rsa'] },
   { id: 'fitness', label: 'Fitness', staff: ['director', 'nurse', 'pt', 'trainer'] },
   { id: 'followup', label: 'Follow-up log', staff: ['director', 'clinical-director', 'admin'] },
   { id: 'documents', label: 'Documents', staff: [...INTAKE, 'nurse'] },
@@ -82,6 +82,8 @@ const ACTIONS = {
   seeAllBookings: INTAKE,
   recordPsychiatrist: ['director', 'nurse'],
   recordMedication: ['nurse', 'nurse-aide', 'director'],
+  // SOP 2.1: the RSA running the meds window records each dose as it is taken.
+  giveMedication: ['nurse', 'nurse-aide', 'rsa'],
   topUpWallet: [...INTAKE, 'finance'],
   pettyCash: [...MANAGEMENT, 'petty-cash'],
   createRequest: [...INTAKE, 'ops', 'rsa'],
@@ -125,6 +127,12 @@ export function reachableLink(staffId, link, fallback = '') {
   return link;
 }
 export const homePage = staffId => (isResident(staffId) ? 'home' : canSee(staffId, 'dashboard') ? 'dashboard' : 'today');
+
+export const PSYCHOLOGISTS = () => STAFF.filter(person => person.roles.includes('psychologist')).map(person => person.id);
+export function nextPsychologist(state) {
+  const load = id => state.patients.filter(patient => patient.status === 'Admitted' && patient.assigned?.psychologist === id).length;
+  return PSYCHOLOGISTS().reduce((best, id) => (load(id) < load(best) ? id : best));
+}
 
 // The RSA with the fewest residents in the house takes the next one.
 export function nextRsa(state) {
