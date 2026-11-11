@@ -43,7 +43,7 @@
   const close = () => { dialog = null; error = ''; };
   function invoiceAll() {
     let count = 0;
-    run(() => { count = act('invoiceMonths', uninvoiced.map(patient => patient.id), month); });
+    if (!run(() => { count = act('invoiceMonths', uninvoiced.map(patient => patient.id), month); })) return;
     say(`${count} invoice${count === 1 ? '' : 's'} issued for this month`);
   }
   const exportInvoices = () => downloadCsv('cedar-invoices', [
@@ -318,6 +318,6 @@
   tr.total td { background: var(--subtle); }
   tr.first td { border-top: 1px solid var(--line-strong); }
   @media (max-width: 1200px) { .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } .owed { grid-row: auto; } }
-  @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 600px) { .bento { grid-template-columns: 1fr 1fr; } .owed { flex-direction: column; align-items: stretch; padding: 15px; } .owed-ring { align-self: center; } .tile { padding: 11px; } .tile .value { font-size: 17px; } }
 </style>

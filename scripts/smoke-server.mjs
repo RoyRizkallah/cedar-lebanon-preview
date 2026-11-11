@@ -73,6 +73,10 @@ try {
   await click('Sign out');
   await sleep(600);
   check(await bodyHas('Sign in'), 'signing out returns to sign-in');
+  // A shift change on a shared computer: the next person signs in without reloading.
+  await signIn('melyssa', PASSWORD);
+  check(await bodyHas('Nour Zein') || await bodyHas('Melyssa'), 'signing in again after signing out works');
+  check(!(await run('return document.body.innerText.includes("Sign in") && !!document.querySelector("input[type=password]");')), 'the workspace shows, not the sign-in page');
   console.log('Server smoke passed.');
 } catch (error) {
   console.error(error.message);

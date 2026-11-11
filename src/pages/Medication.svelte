@@ -284,12 +284,13 @@
   .screen .sub { margin: 0; font-size: 13px; color: var(--text-2); }
   .screen footer { margin-top: auto; font-size: 12px; }
   @media (max-width: 1000px) {
-    .round-layout { grid-template-columns: 1fr; }
-    .round-card { position: static; }
-    .slot { grid-template-columns: 1fr; gap: 8px; }
+    .round-layout { grid-template-columns: minmax(0, 1fr); }
+    /* Stays positioned, so it still clips its own glow on a phone. */
+    .round-card { position: relative; top: auto; }
+    .slot { grid-template-columns: minmax(0, 1fr); gap: 8px; }
     .slot-time { position: static; }
     .slot:not(:last-child)::before { display: none; }
-    .doses { grid-template-columns: 1fr; }
+    .doses { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 520px) { .dose { flex-wrap: wrap; } .dose-actions { width: 100%; } .dose-actions .btn { flex: 1; } }
 </style>

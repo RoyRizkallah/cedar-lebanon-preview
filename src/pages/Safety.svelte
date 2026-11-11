@@ -235,6 +235,6 @@
   .leave-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .leave.s-overdue { box-shadow: inset 4px 0 0 var(--urgent), var(--shadow-1); }
   .leave.s-out { box-shadow: inset 4px 0 0 var(--info), var(--shadow-1); }
-  @media (max-width: 1000px) { .watchboard, .lanes { grid-template-columns: 1fr; } }
-  @media (max-width: 600px) { .vday { grid-template-columns: 1fr; } .vdate { flex-direction: row; gap: 6px; width: auto; height: 36px; padding: 0 10px; justify-self: start; } .vdate strong { font-size: 18px; } .visits { grid-template-columns: 1fr; } .incident { flex-wrap: wrap; } }
+  @media (max-width: 1000px) { .watchboard, .lanes { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 600px) { .vday { grid-template-columns: minmax(0, 1fr); } .vdate { flex-direction: row; gap: 6px; width: auto; height: 36px; padding: 0 10px; justify-self: start; } .vdate strong { font-size: 18px; } .visits { grid-template-columns: minmax(0, 1fr); } .incident { flex-wrap: wrap; } }
 </style>

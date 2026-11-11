@@ -85,10 +85,13 @@ export function createApi(dir) {
     if (!String(request.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Send JSON.');
     try { return JSON.parse(String(await readBody(request, MAX_JSON)) || '{}'); } catch (error) { if (error.status) throw error; throw new HttpError(400, 'Unreadable request.'); }
   }
-  function locked(staffId) {
+  // Wrong passwords lock that name on the computer that guessed, so nobody can lock a colleague out from elsewhere.
+  function locked(key) {
     const since = Date.now() - LOCK_MINUTES * 60 * 1000;
-    const recent = (failures.get(staffId) || []).filter(at => at > since);
-    failures.set(staffId, recent);
+    // Old entries are dropped as the map grows, so it never holds more than recent guesses.
+    if (failures.size > 1000) for (const [entry, times] of failures) if (!times.some(at => at > since)) failures.delete(entry);
+    const recent = (failures.get(key) || []).filter(at => at > since);
+    failures.set(key, recent);
     return recent.length >= LOCK_AFTER;
   }
 
@@ -104,9 +107,10 @@ export function createApi(dir) {
     if (path === '/api/login' && request.method === 'POST') {
       const { staffId, password } = await readJson(request);
       const id = String(staffId || '');
-      if (locked(id)) throw new HttpError(429, `Too many wrong passwords. Try again in ${LOCK_MINUTES} minutes.`);
-      if (!store.checkPassword(id, password)) { failures.get(id).push(Date.now()); throw new HttpError(401, 'Wrong name or password.'); }
-      failures.delete(id);
+      const key = `${request.socket.remoteAddress}|${id}`;
+      if (locked(key)) throw new HttpError(429, `Too many wrong passwords. Try again in ${LOCK_MINUTES} minutes.`);
+      if (!store.checkPassword(id, password)) { failures.get(key).push(Date.now()); throw new HttpError(401, 'Wrong name or password.'); }
+      failures.delete(key);
       return send(response, 200, { staffId: id }, { 'set-cookie': cookie(store.createSession(id), 12 * 3600) });
     }
 

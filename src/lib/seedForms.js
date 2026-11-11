@@ -125,4 +125,17 @@ export function seedForms(state, today) {
   });
   const hurt = inpatients[2];
   add('injury', { patientId: hurt.id, by: 'john', date: addDays(today, -5), values: { patient: hurt.fullName, date: addDays(today, -5), time: '08:40', location: 'Gym', instructor: 'John', activity: 'Gym', bodyPart: 'Left knee', description: 'Felt a twinge on the third set of squats.', severity: 'Minor', sessionStopped: 'Yes', immediateAction: 'Ice, rest, stopped lower-body work.', johnAssessment: 'Mild strain; no swelling.', rehabPlan: 'Two physio sessions, then reassess.', escalatedFadia: 'No', emergency: 'No', hospital: 'No', familyInformed: 'No', planAdjusted: 'Yes', reclearance: 'No', recordedBy: sig('john', 'John', addDays(today, -5)) } });
+  // Fadia's admission medical assessment (Nursing SOP 2.4), filed on arrival for everyone admitted before yesterday.
+  const RISK = ['Low', 'Medium', 'Low', 'High', 'Low'];
+  admitted.filter(patient => patient.program !== 'Outpatient' && patient.admittedAt && patient.admittedAt < addDays(today, -1)).forEach((patient, index) => {
+    const risk = RISK[index % RISK.length];
+    add('admission-medical', { patientId: patient.id, by: 'fadia', date: patient.admittedAt, values: {
+      patient: patient.clinicalName, admissionAt: patient.admittedAt, assessedOn: patient.admittedAt, assessedBy: 'Fadia',
+      substances: ['Alcohol'], lastUse: 'The evening before admission', withdrawalComplications: 'None known', allergies: 'None known',
+      bloodPressure: '128/84', pulse: 88, temperature: 36.9, spo2: 98, weight: 76, withdrawalRisk: risk,
+      monitoring: ['Day 1 (0–24 h)', 'Day 2 (24–48 h)', 'Day 3 (48–72 h)'].map(period => ({ period, checks: risk === 'High' ? 'Vitals every 4 hours' : 'Vitals morning and evening', watch: 'Tremor, sweating, agitation, confusion', initials: 'F' })),
+      rsaBriefed: 'Yes, attached / posted', psychiatricConsult: 'Routine (monthly)', activityClearance: 'Cleared, clearance form issued', informed: 'Yes',
+      signedBy: sig('fadia', 'Fadia', patient.admittedAt)
+    } });
+  });
 }

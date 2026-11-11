@@ -1,7 +1,8 @@
 // What the server sends each person: the workspace reduced to what their role may see.
 // The screens already hide these things; this makes sure the data never reaches the browser at all.
 import { canSee, canSeeTab, canDo, isResident, RESIDENTS } from './people.js';
-import { formById } from './forms/engine.js';
+import { formById, onWatch, riskLevel } from './forms/engine.js';
+import { dashboard } from './kpis.js';
 import { incidentsFor } from './safety.js';
 
 // The patient-file tab a form lives on (the follow-up log holds the aftercare form).
@@ -32,7 +33,11 @@ function residentView(state, staffId) {
 const MONEY = ['monthlyAmount', 'payer', 'paymentTerms', 'guarantor'];
 const without = (object, keys) => Object.fromEntries(Object.entries(object).filter(([key]) => !keys.includes(key)));
 
-export function viewFor(state, staffId) {
+// Clinical forms whose operational part the rest of the care team needs: the discharge day, type and sign-off; the plan's phase and planned discharge.
+const OPERATIONAL = { discharge: ['patient', 'dischargeDate', 'dischargeType', 'directorSignature', 'ahmedSignature'], plan: ['patient', 'phase', 'plannedDischarge'] };
+const pick = (values = {}, keys) => Object.fromEntries(keys.filter(key => values[key] !== undefined).map(key => [key, values[key]]));
+
+export function viewFor(state, staffId, now = new Date()) {
   const full = structuredClone(state);
   if (isResident(staffId)) return residentView(full, staffId);
   const intake = canSee(staffId, 'pipeline') || canSee(staffId, 'admissions') || canSee(staffId, 'followups');
@@ -41,7 +46,9 @@ export function viewFor(state, staffId) {
   // Patients: the care team sees the file; anyone else (kitchen, housekeeping) only who is in which bed.
   const patients = full.patients.map(patient => {
     if (!careTeam) return { id: patient.id, clinicalName: patient.clinicalName, fullName: patient.clinicalName, status: patient.status, program: patient.program, roomId: patient.roomId, bed: patient.bed, roomType: patient.roomType, admittedAt: patient.admittedAt, dischargedAt: patient.dischargedAt, assigned: {} };
-    return without(patient, [...(canDo(staffId, 'viewRisk') ? [] : ['riskReviews']), ...(money ? [] : MONEY)]);
+    // Worked out here from records this person may not receive: the on-watch flag for the whole care team, the rating for those who may see it.
+    const derived = { watch: onWatch(full, patient.id), ...(canDo(staffId, 'viewRisk') ? { risk: riskLevel(full, patient.id) } : {}) };
+    return { ...without(patient, [...(canDo(staffId, 'viewRisk') ? [] : ['riskReviews']), ...(money ? [] : MONEY)]), ...derived };
   });
   const onboardings = !intake ? [] : full.onboardings.map(item => (money ? item : { ...item, steps: { ...item.steps, financial: without(item.steps.financial || {}, ['monthlyAmount', 'guarantor', 'terms', 'payer']), payment: without(item.steps.payment || {}, ['amount', 'method', 'reference', 'sponsorReference']) } }));
   return {
@@ -52,7 +59,10 @@ export function viewFor(state, staffId) {
     onboardings,
     notifications: full.notifications.filter(item => item.to === staffId),
     activity: canSee(staffId, 'dashboard') ? full.activity : full.activity.filter(item => item.by === staffId),
-    forms: full.forms.filter(entry => canSeeTab(staffId, tabOf(entry))),
+    forms: full.forms.flatMap(entry => (canSeeTab(staffId, tabOf(entry)) ? [entry] : careTeam && OPERATIONAL[entry.formId] ? [{ ...entry, values: pick(entry.values, OPERATIONAL[entry.formId]) }] : [])),
+    tasks: canDo(staffId, 'editInquiry') ? full.tasks : full.tasks.filter(task => task.owner === staffId),
+    // The partners' figures, worked out from the full records; the screen shows these instead of counting what it receives.
+    ...(canSee(staffId, 'dashboard') ? { derived: { dashboard: dashboard(state, now) } } : {}),
     documents: full.documents.filter(doc => (doc.type === 'Prescription' ? canDo(staffId, 'viewPrescriptions') : canSeeTab(staffId, 'documents') || intake)),
     medication: canSee(staffId, 'medication') || canSeeTab(staffId, 'medical') ? full.medication : EMPTY_MEDICATION,
     finance: canSee(staffId, 'finance') ? full.finance : EMPTY_FINANCE,

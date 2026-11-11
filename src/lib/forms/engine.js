@@ -92,6 +92,9 @@ const maxRisk = values => ['riskSelfHarm', 'riskAbscond', 'riskAggression'].map(
 
 // The intake rating carries until a later reviewed-down (or up) entry replaces it.
 export function riskLevel(state, patientId) {
+  // With the local server, the rating arrives already worked out for those who may see it (view.js).
+  const known = patientOf(state, patientId);
+  if (known && Object.hasOwn(known, 'risk')) return known.risk;
   const intake = state.forms.filter(entry => entry.formId === 'intake' && entry.patientId === patientId && entry.status === 'Filed').sort((a, b) => String(b.filedAt).localeCompare(String(a.filedAt)))[0];
   const review = (patientOf(state, patientId)?.riskReviews || []).at(-1);
   if (review && (!intake || review.at > intake.filedAt)) return review.level;
@@ -99,7 +102,12 @@ export function riskLevel(state, patientId) {
 }
 
 // On watch: a resident rated Medium or High. The floor sees this flag; only the clinical team sees the rating.
-export const onWatch = (state, patientId) => ['Medium', 'High'].includes(riskLevel(state, patientId));
+export function onWatch(state, patientId) {
+  // The floor receives only this flag from the server, never the rating behind it.
+  const known = patientOf(state, patientId);
+  if (known && Object.hasOwn(known, 'watch')) return known.watch;
+  return ['Medium', 'High'].includes(riskLevel(state, patientId));
+}
 
 export function reviewRisk(state, patientId, level, note, staffId) {
   if (!RISK_ORDER.includes(level)) throw new Error('Choose Low, Medium or High.');
@@ -252,6 +260,7 @@ export function signLater(state, entryId, fieldId, signature, staffId) {
   const entry = state.forms.find(item => item.id === entryId);
   const field = entry && fieldOf(formById(entry.formId), fieldId);
   if (field?.type !== 'signature') throw new Error('This signature line was not found.');
+  if (entry.values[fieldId]?.at) throw new Error('This line is already signed.');
   if (field.signer && !field.signer.includes(staffId)) throw new Error(`Only ${nameList(field.signer)} can sign this.`);
   // A line with no named signer is signed by someone who completes this form or works on its tab.
   const form = formById(entry.formId);

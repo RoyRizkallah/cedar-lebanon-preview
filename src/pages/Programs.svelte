@@ -306,13 +306,13 @@
 
   /* Below very wide screens the shelf sits above, so the whole week fits across */
   @media (max-width: 1500px) {
-    .prog-layout { grid-template-columns: 1fr; }
+    .prog-layout { grid-template-columns: minmax(0, 1fr); }
     .prog-list { position: static; flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
     .prog-card { flex: 0 0 min(270px, 78vw); scroll-snap-align: start; }
     .archived { flex: 0 0 auto; }
   }
   @media (max-width: 1000px) {
-    .prog-hero { grid-template-columns: 1fr; padding: 15px; }
+    .prog-hero { grid-template-columns: minmax(0, 1fr); padding: 15px; }
   }
   @media (max-width: 720px) {
     .week { grid-template-columns: repeat(6, 78vw); scroll-snap-type: x mandatory; margin: 0; }

@@ -40,7 +40,8 @@ export async function startBackend() {
     backend.on = true;
     // Real data never goes into this browser's storage.
     storage.off = true;
-    if (response.ok) { signedIn((await response.json()).staffId); await load(); listen(); }
+    // The person's data loads before any screen is shown for them.
+    if (response.ok) { const { staffId } = await response.json(); session.staffId = staffId; await load(); signedIn(staffId); listen(); }
   } catch { /* no server: the preview */ }
   backend.checked = true;
 }
@@ -49,8 +50,9 @@ export async function signIn(staffId, password) {
   const response = await json('/api/login', { staffId, password });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || 'Could not sign in.');
-  signedIn(body.staffId);
+  session.staffId = body.staffId;
   await load();
+  signedIn(body.staffId);
   listen();
   location.hash = `#/${homePage(body.staffId)}`;
 }

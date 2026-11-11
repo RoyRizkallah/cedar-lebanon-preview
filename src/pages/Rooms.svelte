@@ -186,9 +186,9 @@
   .status-select.s-maintenance { background: var(--urgent-soft); color: var(--urgent); border-color: transparent; }
   @media (max-width: 1200px) { .house { grid-template-columns: repeat(3, minmax(0, 1fr)); } .occ-hero { grid-column: 1 / -1; } }
   @media (max-width: 900px) {
-    .floor { grid-template-columns: 1fr; padding: 10px; }
+    .floor { grid-template-columns: minmax(0, 1fr); padding: 10px; }
     .floor-label { flex-direction: row; align-items: center; }
-    .corridor { grid-template-columns: 1fr; }
+    .corridor { grid-template-columns: minmax(0, 1fr); }
   }
-  @media (max-width: 600px) { .house { grid-template-columns: 1fr; } .big { font-size: 33px; } }
+  @media (max-width: 600px) { .house { grid-template-columns: minmax(0, 1fr); } .big { font-size: 33px; } }
 </style>

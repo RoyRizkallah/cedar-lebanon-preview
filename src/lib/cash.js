@@ -50,6 +50,7 @@ export function reconcileCashCount(state, id, note, staffId, now = new Date()) {
   if (!canDo(staffId, 'reconcileCash')) throw new Error('Counts are reconciled by Kteish.');
   const count = find(state, id);
   if (count.reconciledAt) throw new Error('This count is already reconciled.');
+  if (!count.witnessedAt) throw new Error(`The witness (${staffName(count.witness)}) signs the count before it is reconciled.`);
   Object.assign(count, { reconciledBy: staffId, reconciledAt: now.toISOString(), reconcileNote: String(note || '').trim() });
   log(state, staffId, `Petty cash count ${count.id} reconciled`, '#/finance');
   return count;

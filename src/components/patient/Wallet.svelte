@@ -62,7 +62,7 @@
   {#if signing}<SignaturePad title="Received from petty cash" signerName={patient.fullName} onclose={() => { signing = false; }} onsign={signature => { signing = false; save(signature); }} />{/if}
 
   <section class="panel" style="margin-top: 16px">
-    <div class="panel-head"><h3>Family statements</h3>
+    <div class="panel-head" style="flex-wrap: wrap; gap: 8px"><h3>Family statements</h3>
       {#if canDo(me, 'issueStatement')}<div class="row" style="gap: 6px"><input class="input" type="month" aria-label="Statement month" bind:value={month} style="width: 160px" /><button class="btn sm dark" onclick={issue}>Issue statement</button></div>{/if}
     </div>
     {#if statementError}<p class="error" role="alert" style="margin: 0 16px 10px">{statementError}</p>{/if}
@@ -110,5 +110,5 @@
   .wallet-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 22px; flex-wrap: wrap; }
   .balance { font: 600 34px/1.1 var(--font-display); letter-spacing: -0.02em; margin-top: 4px; }
   .wallet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-  @media (max-width: 800px) { .wallet-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 800px) { .wallet-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

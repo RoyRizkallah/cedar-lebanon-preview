@@ -47,13 +47,23 @@ try {
   for (let i = 0; i < 5; i++) assert.equal((await login('amer', 'guessing wrong')).status, 401);
   assert.equal((await login('amer', 'guessing wrong')).status, 429);
   assert.equal((await login('amer')).status, 429, 'even the right password waits out the lock');
+  // The lock is on the computer that guessed, so nobody can lock a colleague out from elsewhere.
+  const fromElsewhere = await new Promise(resolve => {
+    const body = JSON.stringify({ staffId: 'amer', password: PASSWORD });
+    const request = http.request({ host: '127.0.0.1', port, path: '/api/login', method: 'POST', localAddress: '127.0.0.2', headers: { host: `127.0.0.1:${port}`, 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) } }, response => { response.resume(); resolve(response.statusCode); });
+    request.on('error', error => resolve(`error: ${error.message}`));
+    request.end(body);
+  });
+  assert.equal(fromElsewhere, 200, 'Amer still signs in from his own computer');
 
   const melyssa = (await login('melyssa')).cookie;
   assert.match(melyssa, /^cedar_session=/);
   assert.equal((await call('/api/me', { cookie: melyssa })).json.staffId, 'melyssa');
   const first = await call('/api/state', { cookie: melyssa });
   assert.equal(first.status, 200);
-  assert.ok(!first.json.state.forms.some(entry => ['intake', 'plan', 'session'].includes(entry.formId)), 'her view has no clinical records');
+  assert.ok(!first.json.state.forms.some(entry => ['intake', 'session'].includes(entry.formId)), 'her view has no clinical records');
+  // Plans reach her only as the phase and planned discharge.
+  assert.ok(first.json.state.forms.filter(entry => entry.formId === 'plan').every(entry => Object.keys(entry.values).every(key => ['patient', 'phase', 'plannedDischarge'].includes(key))));
 
   // A change runs on the server as her.
   const made = await call('/api/act', { cookie: melyssa, body: { name: 'createInquiry', args: [{ name: 'Test Person', program: 'Inpatient' }] } });

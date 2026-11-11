@@ -52,7 +52,7 @@
 
 <main class="content">
   <div class="page-head">
-    <div><h1>Admissions</h1><p>Six steps for each person in Agreement. When all are done, admitting creates the patient file and their wallet.</p></div>
+    <div><h1>Admissions</h1><p>The steps for each person in Agreement, each by the person who owns it. When all are done, admitting creates the patient file and their wallet.</p></div>
   </div>
   {#if error && !openStep}<p class="error" role="alert" style="margin-bottom: 12px">{error}</p>{/if}
 
@@ -65,7 +65,7 @@
           <span class="person-avatar">{inquiry.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span>
           <div class="grow">
             <div class="row wrap" style="gap: 8px"><h2>{inquiry.name}</h2><span class="pill">{inquiry.program}</span>{#if inquiry.urgency === 'Urgent'}<span class="pill urgent">Urgent</span>{/if}</div>
-            <p class="muted" style="font-size: 13px; margin-top: 2px">Started {fmtDate(onboarding.openedAt)}. Offer {money(inquiry.potentialRevenue)} a month. <a href={`#/pipeline/${inquiry.id}`}>Inquiry</a></p>
+            <p class="muted" style="font-size: 13px; margin-top: 2px">Started {fmtDate(onboarding.openedAt)}.{#if inquiry.potentialRevenue !== undefined} Offer {money(inquiry.potentialRevenue)} a month.{/if} <a href={`#/pipeline/${inquiry.id}`}>Inquiry</a></p>
           </div>
           <div class="progress" aria-label={`${count} of ${STEPS.length} steps done`}><Ring value={Math.round((count / STEPS.length) * 100)} size={64} stroke={7} tone={count === STEPS.length ? 'lime' : 'ink'} /><span><strong class="num">{count}/{STEPS.length}</strong>steps done</span></div>
           {#if canDo(me, 'confirmAdmission')}

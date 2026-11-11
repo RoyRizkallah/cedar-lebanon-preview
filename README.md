@@ -30,19 +30,20 @@ Add `?as=<id>` to the address to open the workspace as that person, for example 
 
 ```sh
 npm run build
-node server/admin.mjs init --demo        # sample data; leave out --demo for an empty house (rooms only, no patients)
-node server/admin.mjs passwd melyssa     # type the password (10+ characters); repeat for each person
+npm run admin -- init --demo             # sample data; leave out --demo for an empty house (rooms only, no patients)
+npm run admin -- passwd melyssa          # type the password (10+ characters); repeat for each person
 npm start                                # http://localhost:4173, now asking for a sign-in
 ```
 
 - **Where data lives:** `data/` next to the app, or the folder in `CEDAR_DATA`. It holds `cedar.db` (the workspace, accounts, sessions, audit log), `files/` (uploads) and `backups/` (a copy of the database on the first change of each day; the newest 30 are kept). `data/` is never committed.
-- **Accounts:** `node server/admin.mjs users` lists them; `disable <id>` closes one and ends its sessions. Passwords are stored only as scrypt hashes. Five wrong passwords lock a name for 15 minutes; a session lasts 12 hours.
+- **Accounts:** `npm run admin -- users` lists them; `npm run admin -- disable <id>` closes one and ends its sessions. Passwords are stored only as scrypt hashes. Five wrong passwords lock that name for 15 minutes on the computer that guessed (nobody can lock a colleague out from elsewhere); a session lasts 12 hours. Node 22.13 or newer is needed (built-in SQLite).
 - **How a change works:** the screen runs it at once for a quick answer, then the server runs the same rules ([src/lib/commands.js](src/lib/commands.js)) as the signed-in person on its own clock, saves it, writes it to the audit log, and sends each open browser its fresh view ([src/lib/view.js](src/lib/view.js)). A change the server refuses is undone on screen, with the reason.
 - **What each person receives:** no clinical records outside the clinical team, no prescriptions outside nursing and the clinical lead, no books outside Finance and Amer, only your own notifications, and residents only their own space. Uploaded files open only for someone whose view refers to them.
-- **Checks:** `npm test` covers the store, the API, the permissions and the views. After `npm run build`, three browser checks run against a scratch server:
+- **Checks:** `npm test` covers the store, the API, the permissions, the views and petty cash. After `npm run build`, three browser checks run against a scratch server:
   - `node scripts/smoke-server.mjs`: sign in, make a change, reload, sign out.
   - `node scripts/walk-server.mjs`: the whole walkthrough (a WhatsApp lead becomes an admitted patient), each step signed in as the person who does it.
   - `node scripts/roles-server.mjs`: every person opens every page and patient tab their role allows; any error fails it.
+  - `node scripts/screens.mjs <url> <folder> staff:page:390,...` takes screenshots (under 600 px it emulates a phone) and warns about any page wider than the screen.
 - After adding or changing a command, run `node scripts/gen-command-slots.mjs` (the tests say so if it is stale).
 
 ## Who sees what

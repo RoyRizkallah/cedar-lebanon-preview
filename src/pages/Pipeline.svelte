@@ -197,7 +197,8 @@
   .split i:first-child { background: var(--lime); }
   .split i:last-child { flex: 1; background: #c5f59a; }
   /* Columns stand full height, so a card can be dropped anywhere in them */
-  .board { display: grid; grid-template-columns: repeat(3, minmax(250px, 1fr)); gap: 10px; align-items: stretch; overflow-x: auto; padding-bottom: 8px; }
+  /* Positioned, so the hidden labels inside the cards scroll with the board instead of widening the page. */
+  .board { position: relative; display: grid; grid-template-columns: repeat(3, minmax(250px, 1fr)); gap: 10px; align-items: stretch; overflow-x: auto; padding-bottom: 8px; }
   .column { background: var(--sunk); border-radius: 18px; padding: 8px; min-height: 300px; transition: box-shadow 0.15s, background 0.15s; }
   .column.over { background: var(--leaf); box-shadow: inset 0 0 0 2px var(--lime); }
   /* While a card is held over a column, the column opens a slot for it */
@@ -228,7 +229,7 @@
   @media (max-width: 1200px) { .money { grid-template-columns: repeat(3, minmax(0, 1fr)); } .money .hero { grid-column: span 3; } }
   @media (max-width: 900px) {
     .money { grid-template-columns: repeat(2, minmax(0, 1fr)); } .money .hero { grid-column: span 2; }
-    .board { grid-template-columns: repeat(3, 84vw); scroll-snap-type: x mandatory; margin: 0 -16px; padding: 0 16px 8px; }
+    .board { grid-template-columns: repeat(3, 84vw); scroll-snap-type: x mandatory; margin: 0 -14px; padding: 0 14px 8px; }
     .column { scroll-snap-align: start; }
   }
 </style>

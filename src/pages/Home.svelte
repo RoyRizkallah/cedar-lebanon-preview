@@ -123,5 +123,5 @@
   .wallet-card .label { color: var(--on-ink-2); font-weight: 600; }
   .wallet-card strong { font: 800 52px/1 var(--font); color: var(--lime); letter-spacing: -0.04em; }
   .wallet-card .hint { color: var(--on-ink-2); font-size: 13px; margin-top: auto; }
-  @media (max-width: 900px) { .home-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .home-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

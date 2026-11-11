@@ -116,6 +116,8 @@ export function completeAppointment(state, id, staffId, now = new Date()) {
   if (!appointment) throw new Error('This appointment was not found.');
   if (appointment.status === 'Completed') throw new Error('This appointment is already completed.');
   if (appointment.status === 'Cancelled') throw new Error('This appointment was cancelled.');
+  // Only the person who gave the session marks it done (it can unlock an admission step).
+  if (appointment.provider !== 'external' && appointment.provider !== staffId) throw new Error(`${staffName(appointment.provider)} marks this session completed.`);
   Object.assign(appointment, { status: 'Completed', completedAt: now.toISOString(), completedBy: staffId });
   log(state, staffId, `Completed ${appointment.service}`, '#/schedule');
   return appointment;

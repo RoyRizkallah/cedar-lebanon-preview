@@ -223,6 +223,6 @@
   .m-program { background: var(--info-soft); color: var(--info); }
   .m-discharge { background: var(--warn-soft); color: var(--warn); }
   .m-arrival { background: var(--strong); color: var(--on-strong); }
-  @media (max-width: 1100px) { .around { grid-template-columns: 1fr; } .lanes { grid-template-columns: 1fr; } .tally { grid-template-columns: repeat(2, auto); } }
+  @media (max-width: 1100px) { .around { grid-template-columns: minmax(0, 1fr); } .lanes { grid-template-columns: minmax(0, 1fr); } .tally { grid-template-columns: repeat(2, auto); } }
   @media (max-width: 700px) { .greeting { padding: 18px 15px; } .greeting h1 { font-size: 25px; } .tally { width: 100%; grid-template-columns: repeat(2, 1fr); } .ribbon { overflow-x: auto; } .track { min-width: 720px; } }
 </style>

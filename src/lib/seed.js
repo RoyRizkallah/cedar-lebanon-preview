@@ -7,7 +7,7 @@ import { seedPrograms } from './seedPrograms.js';
 import { book, earliestSlot } from './scheduling.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 8;
+export const SEED_VERSION = 9;
 
 // The centre's layout: Upper floor rooms 1–4 (beds a, b); Ground floor Bungalow 1 (one bed); Lower floor room 5 (a, b, c) and rooms 6, 7 (a, b).
 const ROOMS = [

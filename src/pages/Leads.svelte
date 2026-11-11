@@ -262,7 +262,7 @@
     .lt-hero { grid-column: span 2; }
     .lt-stat:last-child { grid-column: span 2; }
     .inbox-page { height: auto; }
-    .messenger, .messenger.has-selection { grid-template-columns: 1fr; height: auto; min-height: 0; flex: none; }
+    .messenger, .messenger.has-selection { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; flex: none; }
     .messenger.has-selection .convos { display: none; }
     .messenger:not(.has-selection) .conversation { display: none; }
     .conversation { min-height: 70vh; }
