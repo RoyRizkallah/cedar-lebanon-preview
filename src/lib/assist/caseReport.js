@@ -46,7 +46,7 @@ export function caseReport(state, patientId, now = new Date()) {
       ...orders.map(order => ({ text: `${order.drug} ${order.dose}, ${order.times.join(' and ')}.`, source: 'Medication rounds' })),
       ...tests.map(test => ({ text: `Drug screen ${test.result.toLowerCase()}${test.substances.length ? ` (${test.substances.join(', ')})` : ''}.`, source: `Drug screen, ${fmtDate(test.date)}` }))
     ] },
-    { title: 'Incidents', lines: incidents.map(item => ({ text: `${item.severity} ${item.type.toLowerCase()}: ${item.description}${item.outcome ? ` Outcome: ${item.outcome}` : ''}`, source: `Incident, ${fmtDate(item.date)}` })) },
+    { title: 'Incidents', lines: incidents.map(item => ({ text: `Level ${item.level} ${item.type.toLowerCase()}: ${item.description}${item.outcome ? ` Outcome: ${item.outcome}` : ''}`, source: `Incident, ${fmtDate(item.date)}` })) },
     { title: 'This week', lines: [{ text: weekSummary(state, patientId, now).brief, source: 'Last 7 days' }] },
     { title: 'Discharge', lines: [{ text: discharge?.status === 'Filed' ? `Discharge plan filed: ${discharge.values.dischargeType}. Follow-up calls at one week, one month and three months.` : 'Discharge plan started at admission, not yet completed.', source: 'Form 7' }] }
   ].filter(section => section.lines.length);

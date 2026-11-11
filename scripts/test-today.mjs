@@ -38,9 +38,9 @@ for (const item of amer) assert.ok(item.label && item.link?.startsWith('#/'), it
   assignment.end = addDays(today, 4);
   const finishing = milestonesFor(s, 'ahmed', now).find(item => item.kind === 'program' && item.patientId === assignment.patientId);
   assert.equal(finishing.date, addDays(today, 3), 'the last day on the program');
-  // An RSA only hears about their own residents.
-  const mine = new Set(s.patients.filter(item => item.assigned?.rsa === 'alaa').map(item => item.id));
-  assert.ok(milestonesFor(s, 'alaa', now).every(item => mine.has(item.patientId)));
+  // An RSA hears about the live-in residents of the house, never the outpatients.
+  const house = new Set(s.patients.filter(item => item.program !== 'Outpatient').map(item => item.id));
+  assert.ok(milestonesFor(s, 'alaa', now).every(item => !item.patientId || house.has(item.patientId)));
 }
 
 // From the floor: check-ins that flag something, and recent team comments.

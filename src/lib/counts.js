@@ -3,6 +3,7 @@ import { roundFor } from './medication.js';
 import { invoiceStatus } from './finance.js';
 import { todayISO } from './dates.js';
 import { canDo } from './people.js';
+import { canReview } from './safety.js';
 
 // Live numbers beside each sidebar entry: only work waiting on this person.
 export function navCounts(state, staffId, now = new Date()) {
@@ -25,9 +26,13 @@ export function navCounts(state, staffId, now = new Date()) {
     const due = roundFor(state, today).filter(item => item.status === 'Due').length;
     if (due) counts.medication = { value: due, title: `${due} doses still to record today` };
   }
-  if (canDo(staffId, 'reviewIncident')) {
-    const open = state.incidents.filter(item => item.status === 'Open').length;
+  if (canDo(staffId, 'reviewIncident') || staffId === 'omar') {
+    const open = state.incidents.filter(item => item.status === 'Open' && canReview(item, staffId)).length;
     if (open) counts.safety = { value: open, hot: true, title: `${open} incidents to review` };
+  }
+  if (canDo(staffId, 'approveOrder')) {
+    const waiting = (state.orders || []).filter(item => item.status === 'Awaiting approval').length;
+    if (waiting) counts.orders = { value: waiting, hot: true, title: `${waiting} orders to approve` };
   }
   if (canDo(staffId, 'recordFinance')) {
     const overdue = state.finance.invoices.filter(item => invoiceStatus(item, today) === 'Overdue').length;

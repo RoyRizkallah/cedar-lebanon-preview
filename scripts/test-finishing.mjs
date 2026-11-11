@@ -83,7 +83,7 @@ const balanced = state => trialBalance(buildJournal(state)).reduce((sum, row) =>
   const state = seed();
   const patient = state.patients.find(item => item.status === 'Admitted' && item.program !== 'Outpatient' && walletBalanceCents(state, item.id) > 2000 && !state.requests.some(request => request.patientId === item.id && ['Open', 'Awaiting approval'].includes(request.status)));
   const spend = walletBalanceCents(state, patient.id) - 500;
-  addWalletPurchase(state, { patientId: patient.id, amount: (spend / 100).toFixed(2), description: 'Gym shoes', recordedBy: 'georgio' });
+  addWalletPurchase(state, { patientId: patient.id, amount: (spend / 100).toFixed(2), description: 'Gym shoes', recordedBy: 'georgio', signature: { at: '2026-11-02T10:00:00Z', name: 'Patient' } });
   assert.ok(!tasksFor(state, 'melyssa', now).today.some(item => item.id === `topup-${patient.id}`), 'nothing waiting yet');
   createRequest(state, { patientId: patient.id, item: 'Notebook', quantity: 1 }, patient.assigned.rsa);
   assert.ok(tasksFor(state, 'melyssa', now).today.some(item => item.id === `topup-${patient.id}`));

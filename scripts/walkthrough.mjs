@@ -103,7 +103,9 @@ try {
 
   await open('admissions', 'melyssa');
   await click('Financial arrangement', article('Nour Zein'));
-  await run(`const input = document.querySelector('.step-panel input[type=number]'); input.value = '6000'; input.dispatchEvent(new Event('input', { bubbles: true })); return true;`);
+  await run(`const input = document.querySelector('.step-panel input[type=number]'); input.value = '6000'; input.dispatchEvent(new Event('input', { bubbles: true }));
+    const set = (selector, value) => { const field = document.querySelector(selector); field.value = value; field.dispatchEvent(new Event('input', { bubbles: true })); };
+    set('.step-panel input[placeholder^="Family member"]', 'Samir Zein'); set('.step-panel input[type=tel]', '+961 3 555 010'); return true;`);
   await click('Save financial arrangement');
   await click('Admission agreement signed', article('Nour Zein'));
   await click('Sign on screen');
@@ -111,9 +113,18 @@ try {
     const fire = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, clientX: r.left + x, clientY: r.top + y }));
     fire('pointerdown', 20, 40); for (let x = 30; x < 220; x += 20) fire('pointermove', x, 40 + (x % 40)); fire('pointerup', 220, 60); return true;`);
   await click('Sign', `document.querySelector('.dialog .drawer-foot')`);
+  await open('admissions', 'kteish');
+  await click('Payment received', article('Nour Zein'));
+  await click('Record payment received');
+  check(await run(`return ${article('Nour Zein')}.innerText.includes('Kteish,');`), 'Kteish recorded the payment');
+  await open('admissions', 'melyssa');
   await click('Room assigned', article('Nour Zein'));
   await click('Assign bed');
-  check(await run(`return ${article('Nour Zein')}.innerText.includes('6/6');`), 'all six steps done');
+  await open('admissions', 'mazen');
+  await click('Room ready', article('Nour Zein'));
+  await click('Sign room ready');
+  await open('admissions', 'melyssa');
+  check(await run(`return ${article('Nour Zein')}.innerText.includes('8/8');`), 'all eight steps done');
   await click('Admit patient', article('Nour Zein'));
   await sleep(600);
   check(await run(`return location.hash.startsWith('#/patients/P-');`), 'admitting opens the new patient file');
@@ -218,7 +229,12 @@ try {
   const { nodeId } = await send('DOM.querySelector', { nodeId: root.nodeId, selector: '.buy input[type=file]' });
   await send('DOM.setFileInputFiles', { nodeId, files: [join(process.cwd(), 'public', 'logo-mark.png')] });
   await sleep(200);
-  await click('Save purchase');
+  // The resident signs for what was bought from petty cash.
+  await click('Resident signs');
+  await run(`const c = document.querySelector('.dialog canvas'); const r = c.getBoundingClientRect();
+    const fire = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, clientX: r.left + x, clientY: r.top + y }));
+    fire('pointerdown', 20, 40); for (let x = 30; x < 220; x += 20) fire('pointermove', x, 40 + (x % 40)); fire('pointerup', 220, 60); return true;`);
+  await click('Sign', `document.querySelector('.dialog .drawer-foot')`);
   await sleep(500);
   check(!(await bodyHas('Phone charger')), 'request closed and charged to the wallet');
 

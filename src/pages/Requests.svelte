@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import Icon from '../components/Icon.svelte';
+  import SignaturePad from '../components/SignaturePad.svelte';
   import { MOODS, addCheckin } from '../lib/support.js';
   import { db, session, commit } from '../lib/store.svelte.js';
   import { createRequest, completeRequest, cancelRequest, uploadInvoice, approveRequest, declineRequest } from '../lib/requests.js';
@@ -45,10 +46,12 @@
     try { const result = commit(action); say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
   function closeCreate() { creating = null; if (args[0] === 'new') go('requests'); }
-  async function buy() {
+  // The resident signs on receiving the item: cash leaves petty cash only against a signature.
+  let signingFor = $state(null);
+  async function buy(signature) {
     let stored = { id: '', name: '' };
     if (buying.file) stored = await putFile(buying.file);
-    if (run(state => completeRequest(state, buying.id, { amount: buying.amount, fileId: stored.id, fileName: stored.name }, me), 'Purchase recorded and invoice attached')) buying = null;
+    if (run(state => completeRequest(state, buying.id, { amount: buying.amount, fileId: stored.id, fileName: stored.name, signature }, me), 'Purchase recorded and invoice attached')) buying = null;
   }
   async function saveInvoice() {
     let stored = { id: '', name: '' };
@@ -124,10 +127,10 @@
           </form>
         {/if}
         {#if buying?.id === request.id}
-          <form class="buy" onsubmit={event => { event.preventDefault(); buy(); }}>
+          <form class="buy" onsubmit={event => { event.preventDefault(); error = ''; signingFor = request; }}>
             <label class="field"><span>Actual cost <span class="hint">USD</span></span><input class="input" inputmode="decimal" placeholder="0.00" bind:value={buying.amount} /></label>
             <label class="btn"><Icon name="camera" size={15} />{buying.file ? buying.file.name : 'Scan invoice (fatoura)'}<input class="sr-only" type="file" accept="image/*,application/pdf" capture="environment" onchange={event => { buying.file = event.currentTarget.files?.[0] || null; }} /></label>
-            <button class="btn primary" type="submit">Save purchase</button>
+            <button class="btn primary" type="submit">Resident signs</button>
             {#if error}<span class="error">{error}</span>{/if}
           </form>
         {/if}
@@ -169,6 +172,8 @@
     <footer class="drawer-foot"><button class="btn" onclick={() => { invoice = null; }}>Cancel</button><button class="btn primary" onclick={saveInvoice}>Save invoice</button></footer>
   </section>
 {/if}
+
+{#if signingFor}<SignaturePad title="Received from petty cash" signerName={db.patients.find(p => p.id === signingFor.patientId)?.fullName || ''} onclose={() => { signingFor = null; }} onsign={signature => { signingFor = null; buy(signature); }} />{/if}
 
 <style>
   .buy { flex-basis: 100%; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 10px; margin-top: 6px; border-radius: var(--r-md); background: #fafbf9; border: 1px solid var(--line); }

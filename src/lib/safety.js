@@ -3,12 +3,24 @@ import { nextId } from './ids.js';
 import { todayISO, fmtDateTime } from './dates.js';
 import { notify } from './notifications.js';
 import { log } from './activity.js';
-import { canDo, whoCan, visiblePatients } from './people.js';
+import { canDo, visiblePatients } from './people.js';
 import { onWatch } from './forms/engine.js';
 
 export const INCIDENT_TYPES = ['Aggression', 'Self-harm', 'Absconding', 'Substance found', 'Rule breach', 'Medical', 'Property damage', 'Other'];
-export const SEVERITIES = ['Low', 'Medium', 'High'];
-const REVIEWERS = () => whoCan('reviewIncident');
+// RSA & Floor SOP 3.4: three levels, each with its response and who is called.
+export const LEVELS = [
+  { level: 1, name: 'Behavioural', response: 'De-escalate; behaviour log and nightly update. Omar reviews.' },
+  { level: 2, name: 'Serious', response: 'Senior on shift takes over. Omar and Ahmed called the same day; report within the hour.' },
+  { level: 3, name: 'Emergency', response: 'Act first. Calls now: Fadia for anything health, Ahmed, and Amer. Report after the response.' }
+];
+export const levelName = level => { const item = LEVELS.find(entry => entry.level === Number(level)); return item ? `Level ${item.level}, ${item.name.toLowerCase()}` : ''; };
+const HEALTH = ['Self-harm', 'Medical'];
+// Omar sees every report; Ahmed from Level 2; Amer, and Fadia for health, at Level 3.
+export function incidentCalls(level, type) {
+  if (level === 1) return ['omar'];
+  if (level === 2) return ['omar', 'ahmed'];
+  return ['omar', 'ahmed', 'amer', ...(HEALTH.includes(type) ? ['fadia'] : [])];
+}
 const patientOf = (state, id) => { const patient = state.patients.find(item => item.id === id && item.status === 'Admitted'); if (!patient) throw new Error('Choose a patient in care.'); return patient; };
 
 export function logVisit(state, { patientId, visitor, relation = '', date, start = '', end = '', note = '' }, staffId) {
@@ -48,21 +60,24 @@ export function returnLeave(state, leaveId, staffId, now = new Date()) {
   return leave;
 }
 
-export function reportIncident(state, { patientId = '', date, time = '', type, severity, description, actionTaken = '' }, staffId) {
+export function reportIncident(state, { patientId = '', date, time = '', type, level, description, actionTaken = '' }, staffId) {
   if (!INCIDENT_TYPES.includes(type)) throw new Error('Choose the type of incident.');
-  if (!SEVERITIES.includes(severity)) throw new Error('Choose the severity.');
+  level = Number(level);
+  if (!LEVELS.some(item => item.level === level)) throw new Error('Choose the level: 1, 2 or 3.');
   if (!String(description || '').trim()) throw new Error('Describe what happened.');
   const patient = patientId ? patientOf(state, patientId) : null;
-  const incident = { id: nextId('INC', state.incidents), patientId, date: date || todayISO(), time, type, severity, description: description.trim(), actionTaken: String(actionTaken).trim(), reportedBy: staffId, at: new Date().toISOString(), status: 'Open' };
+  const incident = { id: nextId('INC', state.incidents), patientId, date: date || todayISO(), time, type, level, description: description.trim(), actionTaken: String(actionTaken).trim(), reportedBy: staffId, at: new Date().toISOString(), status: 'Open' };
   state.incidents.push(incident);
-  notify(state, { to: [...REVIEWERS(), 'omar'], title: `${severity} incident: ${type}${patient ? `, ${patient.clinicalName}` : ''}`, body: incident.description, link: '#/safety/incidents', urgent: severity === 'High' });
+  notify(state, { to: incidentCalls(level, type), title: `Level ${level} incident (${incident.id}): ${type}${patient ? `, ${patient.clinicalName}` : ''}`, body: incident.description, link: '#/safety/incidents', urgent: level > 1 });
   log(state, staffId, `Incident reported: ${type}`, '#/safety/incidents');
   return incident;
 }
 
+// Omar reviews Level 1; Ahmed reviews from Level 2.
+export const canReview = (incident, staffId) => canDo(staffId, 'reviewIncident') || (incident?.level === 1 && staffId === 'omar');
 export function reviewIncident(state, incidentId, { outcome }, staffId) {
-  if (!canDo(staffId, 'reviewIncident')) throw new Error('Incidents are reviewed by Ahmed.');
   const incident = state.incidents.find(item => item.id === incidentId);
+  if (!canReview(incident, staffId)) throw new Error(incident?.level === 1 ? 'Level 1 incidents are reviewed by Omar or Ahmed.' : 'Level 2 and 3 incidents are reviewed by Ahmed.');
   if (!incident || incident.status === 'Reviewed') throw new Error('This incident is already reviewed.');
   if (!String(outcome || '').trim()) throw new Error('Record the outcome of the review.');
   Object.assign(incident, { status: 'Reviewed', outcome: outcome.trim(), reviewedBy: staffId, reviewedAt: new Date().toISOString() });

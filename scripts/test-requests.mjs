@@ -16,13 +16,14 @@ assert.equal(request.createdBy, 'georgio');
 
 const balance = walletBalanceCents(state, patient.id);
 const tooMuch = ((balance + 100) / 100).toFixed(2);
-assert.throws(() => completeRequest(state, request.id, { amount: tooMuch, fileId: 'file-1', fileName: 'fatoura.jpg' }, 'georgio'), /higher than the available wallet balance/);
+assert.throws(() => completeRequest(state, request.id, { amount: tooMuch, fileId: 'file-1', fileName: 'fatoura.jpg', signature: { at: '2026-11-02T10:00:00Z', name: 'Patient' } }, 'georgio'), /higher than the available wallet balance/);
 assert.equal(request.status, 'Open');
 const invoicesBefore = state.documents.filter(doc => doc.type === 'Invoice (fatoura)').length;
 assert.throws(() => completeRequest(state, request.id, { amount: '10.00' }, 'georgio'), /Scan or attach the invoice/);
 
-assert.throws(() => completeRequest(state, request.id, { amount: '12.50', fileId: 'file-1', fileName: 'fatoura.jpg' }, 'alaa'), /petty cash, held by Georgio/);
-completeRequest(state, request.id, { amount: '12.50', fileId: 'file-1', fileName: 'fatoura.jpg' }, 'georgio');
+assert.throws(() => completeRequest(state, request.id, { amount: '12.50', fileId: 'file-1', fileName: 'fatoura.jpg', signature: { at: '2026-11-02T10:00:00Z', name: 'Patient' } }, 'alaa'), /petty cash, held by Georgio/);
+assert.throws(() => completeRequest(state, request.id, { amount: '12.50', fileId: 'file-1', fileName: 'fatoura.jpg' }, 'georgio'), /patient signs/);
+completeRequest(state, request.id, { amount: '12.50', fileId: 'file-1', fileName: 'fatoura.jpg', signature: { at: '2026-11-02T10:00:00Z', name: 'Patient' } }, 'georgio');
 assert.equal(request.status, 'Done');
 assert.equal(request.amountCents, 1250);
 assert.equal(walletBalanceCents(state, patient.id), balance - 1250);

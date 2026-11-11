@@ -77,7 +77,7 @@ for (const step of STEPS) for (const id of STEP_OWNERS[step]) assert.ok(canSee(i
 }
 
 // Admissions gains a physiotherapy step, owned by John.
-assert.deepEqual(STEPS, ['nursing', 'physio', 'psychologist', 'financial', 'agreement', 'room']);
+assert.deepEqual(STEPS.slice(0, 3), ['nursing', 'physio', 'psychologist']);
 assert.ok(STEP_OWNERS.physio.includes('john'));
 assert.equal(STEP_LABELS.physio, 'Physiotherapy assessment');
 

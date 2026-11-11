@@ -33,7 +33,9 @@ const state = seed();
   assert.equal(incidentsFor(state, 'ahmed').find(item => item.id === incident.id).description, incident.description);
   const owner = state.patients.find(item => item.id === incident.patientId).assigned.rsa;
   const stranger = ['georgio', 'alaa', 'dania', 'imad'].find(id => id !== owner);
-  assert.ok(!incidentsFor(state, stranger).some(item => item.id === incident.id), 'another RSA does not see residents who are not theirs');
+  // One RSA can cover the whole house alone (RSA & Floor SOP), so any RSA sees it; what happened stays with the care team.
+  const covering = incidentsFor(state, stranger).find(item => item.id === incident.id);
+  assert.ok(covering && (covering.reportedBy === stranger || covering.redacted), 'the RSA covering the house sees it happened');
   const mine = state.incidents.find(item => item.reportedBy === 'omar');
   if (mine) assert.ok(!incidentsFor(state, 'omar').find(item => item.id === mine.id).redacted, 'a reporter reads their own report');
 }

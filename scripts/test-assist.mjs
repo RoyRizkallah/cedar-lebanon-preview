@@ -68,7 +68,7 @@ assert.equal(prep.rows[0].phase, '2 Core treatment');
 {
   const s = {
     patients: [patient('P-9', 'Marc Aoun', '2 Core treatment')], forms: [], documents: [], appointments: [], tasks: [], requests: [],
-    incidents: [{ id: 'I1', patientId: 'P-9', date: '2026-11-07', type: 'Substance found', severity: 'High' }, { id: 'I0', patientId: 'P-9', date: '2026-10-01', type: 'Aggression', severity: 'Low' }],
+    incidents: [{ id: 'I1', patientId: 'P-9', date: '2026-11-07', type: 'Substance found', level: 2 }, { id: 'I0', patientId: 'P-9', date: '2026-10-01', type: 'Aggression', severity: 'Low' }],
     medication: {
       orders: [{ id: 'M1', patientId: 'P-9', drug: 'Naltrexone' }],
       doses: [{ orderId: 'M1', date: '2026-11-08', time: '08:00', status: 'Refused' }, { orderId: 'M1', date: '2026-11-09', time: '08:00', status: 'Missed' }],
@@ -79,7 +79,7 @@ assert.equal(prep.rows[0].phase, '2 Core treatment');
   const week = weekSummary(s, 'P-9', now);
   const keys = week.flags.map(flag => flag.key);
   assert.deepEqual(keys, ['incident', 'relapse', 'refusal', 'concern']);
-  assert.match(week.flags[0].detail, /substance found \(high\)/);
+  assert.match(week.flags[0].detail, /substance found \(level 2\)/);
   assert.ok(!week.flags[0].detail.includes('aggression'), 'last month is outside the week');
   assert.match(week.flags[1].detail, /positive drug screen \(cannabis\)/);
   assert.match(week.flags[2].detail, /2 doses refused or missed/);

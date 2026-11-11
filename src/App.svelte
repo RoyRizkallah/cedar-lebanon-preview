@@ -15,6 +15,7 @@
   import Admissions from './pages/Admissions.svelte';
   import Patients from './pages/Patients.svelte';
   import Requests from './pages/Requests.svelte';
+  import Orders from './pages/Orders.svelte';
   import Today from './pages/Today.svelte';
   import Dashboard from './pages/Dashboard.svelte';
   import Finance from './pages/Finance.svelte';
@@ -50,7 +51,7 @@
   const page = $derived(route.page && canSee(session.staffId, route.page) ? route.page : homePage(session.staffId));
   const counts = $derived(navCounts(db, session.staffId, session.now));
   const unread = $derived(db.notifications.filter(item => item.to === session.staffId && !item.read).length);
-  const pages = { leads: Leads, pipeline: Pipeline, schedule: Schedule, admissions: Admissions, patients: Patients, requests: Requests, today: Today, dashboard: Dashboard, finance: Finance, sessions: Sessions, medication: Medication, rooms: Rooms, safety: Safety, reports: Reports, insights: Insights, home: Home, followups: FollowUps, programs: Programs };
+  const pages = { leads: Leads, pipeline: Pipeline, schedule: Schedule, admissions: Admissions, patients: Patients, requests: Requests, orders: Orders, today: Today, dashboard: Dashboard, finance: Finance, sessions: Sessions, medication: Medication, rooms: Rooms, safety: Safety, reports: Reports, insights: Insights, home: Home, followups: FollowUps, programs: Programs };
 </script>
 
 <svelte:window onhashchange={sync} />

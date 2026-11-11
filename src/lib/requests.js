@@ -64,7 +64,7 @@ export function declineRequest(state, id, reason, staffId) {
   return request;
 }
 
-export function completeRequest(state, id, { amount, fileId, fileName }, staffId) {
+export function completeRequest(state, id, { amount, fileId, fileName, signature }, staffId) {
   const request = find(state, id);
   if (request.status === 'Awaiting approval') throw new Error('This request has not been approved yet.');
   if (request.status !== 'Open') throw new Error('This request is already closed.');
@@ -72,8 +72,9 @@ export function completeRequest(state, id, { amount, fileId, fileName }, staffId
   const cents = amountToCents(amount);
   if (cents > walletBalanceCents(state, request.patientId)) throw new Error('This purchase is higher than the available wallet balance.');
   if (!fileId) throw new Error('Scan or attach the invoice (fatoura).');
+  if (!signature?.at) throw new Error('The patient signs for every disbursement.');
   const document = invoiceDocument(state, { patientId: request.patientId, fileId, fileName, note: request.item }, staffId);
-  addWalletPurchase(state, { patientId: request.patientId, amount, description: `${request.quantity} × ${request.item}`, recordedBy: staffId, requestId: request.id });
+  addWalletPurchase(state, { patientId: request.patientId, amount, description: `${request.quantity} × ${request.item}`, recordedBy: staffId, requestId: request.id, signature });
   Object.assign(request, { status: 'Done', amountCents: cents, invoiceDocId: document.id, completedAt: new Date().toISOString(), completedBy: staffId });
   log(state, staffId, `Bought ${request.quantity} × ${request.item}`, '#/requests');
   return request;

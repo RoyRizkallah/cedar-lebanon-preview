@@ -1,4 +1,5 @@
 // Each admitted patient's wallet: deposits received outside the site, purchases made for them.
+import { canDo } from './people.js';
 import { nextId } from './ids.js';
 import { todayISO } from './dates.js';
 
@@ -41,7 +42,11 @@ function record(state, payload, type) {
   if (!description) throw new Error(type === 'credit' ? 'Describe where the money came from.' : 'Describe what was bought.');
   const amountCents = amountToCents(payload?.amount);
   if (type === 'purchase' && amountCents > walletBalanceCents(state, patientId)) throw new Error('This purchase is higher than the available wallet balance.');
+  // Cash leaves the box only through Georgio, and only against the patient's signature.
+  if (type === 'purchase' && !canDo(payload?.recordedBy, 'pettyCash')) throw new Error('Cash is handed out by Georgio, the petty-cash custodian.');
+  if (type === 'purchase' && !payload?.signature?.at) throw new Error('The patient signs for every disbursement.');
   const entry = { id: nextId('W', list(state)), patientId, type, amountCents, description, date: payload?.date || todayISO(), recordedBy: payload?.recordedBy || 'Cedar staff', note: String(payload?.note || '').trim() };
+  if (type === 'purchase') Object.assign(entry, { signedBy: payload.signature.name || '', signedAt: payload.signature.at, signature: payload.signature.image || '' });
   if (payload?.requestId) entry.requestId = payload.requestId;
   list(state).push(entry);
   return entry;

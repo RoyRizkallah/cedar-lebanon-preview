@@ -15,7 +15,7 @@ assert.equal(canSeeTab('john', 'fitness'), true);
 assert.equal(canSeeTab('melyssa', 'followup'), true);
 assert.equal(canDo('melyssa', 'bookPsychologist'), false);
 // The owner's org chart (docs/org-chart.md): every named person, with their real role.
-assert.deepEqual(STAFF.map(person => person.name), ['Amer Khattab', 'Ahmed Khattab', 'Nabila', 'Samar', 'Nazha', 'Fadia', 'Melyssa', 'Rabih', 'Kteish', 'Mazen', 'John', 'Zeina', 'Tony J.', 'Tony AM', 'Raymond', 'Omar', 'Georgio', 'Alaa', 'Dania', 'Imad']);
+assert.deepEqual(STAFF.map(person => person.name), ['Amer Khattab', 'Ahmed Khattab', 'Nabila', 'Samar', 'Nazha', 'Fadia', 'Melyssa', 'Rabih', 'Kteish', 'Mazen', 'Shady', 'Wissam', 'Ezdihar', 'Khadija', 'Hasna (Em Alaa)', 'Ghassan', 'John', 'Zeina', 'Tony J.', 'Tony AM', 'Raymond', 'Omar', 'Georgio', 'Alaa', 'Dania', 'Imad']);
 assert.equal(staffById('amer').title, 'General Manager');
 assert.equal(staffById('ahmed').title, 'Clinical Director');
 assert.equal(staffById('melyssa').title, 'Admin & Admissions Manager');
@@ -42,13 +42,15 @@ assert.equal(canDo('alaa', 'pettyCash'), false);
   assert.equal(visiblePatients(state, 'omar').length, inpatients.length);
   const rsas = ['georgio', 'alaa', 'dania', 'imad'];
   for (const id of rsas) assert.ok(visiblePatients(state, id).length > 0, `${id} has residents`);
-  assert.equal(rsas.reduce((sum, id) => sum + visiblePatients(state, id).length, 0), inpatients.length, 'each resident has one RSA');
+  // Each resident has one assigned RSA; any RSA covering the house sees them all (RSA & Floor SOP).
+  assert.ok(inpatients.every(patient => rsas.includes(patient.assigned?.rsa)), 'each resident has one RSA');
+  for (const id of rsas) assert.equal(visiblePatients(state, id).length, inpatients.length, id);
 }
 
 // Old preview data or a corrupt copy must never crash the new workspace.
 for (const raw of ['{"inquiries":[1]}', 'not json', null]) {
   const state = loadState(raw);
-  assert.equal(state.version, 7);
+  assert.equal(state.version, 8);
   assert.equal(state.leads.length, 14);
 }
 const fresh = seed();

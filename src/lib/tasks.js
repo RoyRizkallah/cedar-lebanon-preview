@@ -4,7 +4,7 @@ import { staffName, hasRole } from './people.js';
 import { addDays, todayISO, daysBetween, fmtDay, localDay } from './dates.js';
 import { reviewDue, REVIEW_AFTER_HOURS, assessmentFor } from './pipeline.js';
 import { notesOverdue } from './scheduling.js';
-import { STEPS, STEP_LABELS, STEP_OWNERS, placeLabel } from './admission.js';
+import { STEPS, STEP_LABELS, STEP_OWNERS, placeLabel, isWaiting } from './admission.js';
 import { allFields, formById } from './forms/engine.js';
 import { dischargeDay } from './discharge.js';
 import { walletBalanceCents, formatCents } from './wallet.js';
@@ -63,7 +63,7 @@ export function tasksFor(state, staffId, now = new Date()) {
       const inquiry = state.inquiries.find(item => item.id === onboarding.inquiryId);
       if (onboarding.admittedPatientId || inquiry?.stage !== 'Agreement' || inquiry.outcome) continue;
       for (const step of STEPS) {
-        if (onboarding.steps[step].done || !STEP_OWNERS[step].includes(staffId)) continue;
+        if (onboarding.steps[step]?.done || !STEP_OWNERS[step].includes(staffId) || isWaiting(onboarding, step)) continue;
         if (step === 'psychologist') {
           const session = state.appointments.find(item => item.id === onboarding.psychologistAppointmentId);
           if (session?.status !== 'Completed') continue;

@@ -27,20 +27,21 @@ People and roles follow the owner's org chart ([docs/org-chart.md](docs/org-char
 
 | Person | Pages |
 | --- | --- |
-| Amer Khattab · General Manager | Dashboard, Today, Reports, Leads, Pipeline, Follow-ups, Admissions, Insights, patients (overview, documents, wallet), Rooms, Schedule, Visits & incidents, Resident support, Accounts. Approves bills. |
-| Ahmed Khattab · Clinical & Program Director | Dashboard, Today, Reports, the whole intake side, every patient tab, Sessions, Medication, Rooms, Schedule, Visits & incidents, Resident support. No Accounts. |
-| Wael · Clinical Director | Today, Reports (care), Admissions, clinical forms 1–7, Sessions, Medication, Rooms, Schedule. Reviews incidents and countersigns. |
-| Nabila · Junior Psychologist | Today, Admissions (her step), her assigned patients, Sessions, Schedule |
+| Amer Khattab · General Manager | Dashboard, Today, Reports, Leads, Pipeline, Follow-ups, Admissions, Insights, patients (overview, documents, wallet), Rooms, Schedule, Visits & incidents, Resident support, Orders, Accounts. Approves bills and any order over $200, and sets the weekly kitchen ceiling. |
+| Ahmed Khattab · Clinical Director | Dashboard, Today, Reports, the whole intake side, every patient tab and all psychology records, Sessions, Programs, Medication, Rooms, Schedule, Visits & incidents, Resident support. Reviews Level 2 and 3 incidents, countersigns, and signs off every discharge plan. No Accounts. |
+| Nabila, Samar · Psychologists | Today, Admissions (the psychologist step), their assigned patients, Sessions, Programs, Schedule |
 | Nazha · Drama Therapist | Today, patients (clinical), group notes, drama therapy sessions, Schedule |
-| Fadia · Head Nurse | Today, Admissions (nursing step), patients (medical, fitness clearance, prescriptions), Medication, Rooms, Schedule |
+| Fadia · Head Nurse | Today, Admissions (nursing step), patients (medical, nursing forms, fitness clearance, prescriptions), Medication (medications, logs), Rooms, Schedule |
 | Melyssa · Admin & Admissions Manager | Today, Reports, Leads, Pipeline, Follow-ups, Admissions, Insights, patients (overview, follow-up log, documents, wallet), Rooms, Schedule, Resident support. No Accounts. |
-| Rabih · Head of Finance | Accounts, Reports (finance), wallets. Approves bills. |
-| Kteish · Accountant | Accounts, Reports (finance), wallets |
-| Mazen · Head of Operations | Rooms (manages them), Reports (operations), Resident support (purchasing), Visits & incidents |
-| John · Head of PT & Fitness | Today, patients (fitness forms 1–6, medical), Sessions, Schedule |
+| Rabih · Head of Finance | Accounts, Reports (finance), wallets, Orders, Admissions (payment step). Approves bills. |
+| Kteish · Accountant | Accounts, Reports (finance), wallets, Orders, Admissions (payment step). Owns the patient ledger, so the final bill is his. |
+| Mazen · Head of Operations | Rooms (manages them), Admissions (signs the room ready), Orders (raises maintenance, cleaning and supply orders), Reports (operations), Resident support, Visits & incidents |
+| Shady · Head Chef | Today, Orders (raises kitchen orders) |
+| Wissam, Ezdihar, Khadija, Hasna (Em Alaa), Ghassan · kitchen and housekeeping | Today. Housekeeping also sees Rooms. |
+| John · Head of PT & Fitness | Today, Admissions (physiotherapy step), patients (fitness forms 1–6, medical), Sessions, Schedule |
 | Zeina, Tony J., Tony AM, Raymond · trainers | Today, patients (fitness), session attendance logs, their own sessions on the Schedule |
-| Omar · Senior RSA | Every resident (overview, wallet), Rooms, Visits & incidents, Resident support. Alerted to incidents and late returns. |
-| Georgio, Alaa, Dania, Imad · RSAs | Their own residents. Georgio holds petty cash, so purchases are his. Imad, a certified nurse, can record doses under Fadia. |
+| Omar · Senior RSA | Every resident (overview, medical, wallet), Rooms, Medication (meds window), Visits & incidents, Resident support. Told of every incident; reviews Level 1. Reviews escort logs. |
+| Georgio, Alaa, Dania, Imad · RSAs | Every live-in resident, because one RSA can cover the house alone. They record each dose at the meds window and keep the escort log. Georgio alone hands out petty cash, against the resident's signature. Imad, a certified nurse, works under Fadia. |
 | Resident (Karim H., Lara K.) | Their own space: wallet, purchases and item requests |
 
 Clinical forms are never shown to Melyssa, Finance, Operations or the RSA team, including through direct links.
@@ -52,13 +53,18 @@ Clinical forms are never shown to Melyssa, Finance, Operations or the RSA team, 
    - Each inquiry records the contact person, called-by, drug of choice, years of use, previous detox, communication preference (including "Not comfortable talking on the phone"), urgency and potential revenue (0 when no offer has been made).
    - Each card shows how long it has been in its stage. After 48 hours in New Inquiry it shows "Review due".
    - Follow-up calls are booked at 1 week and 1 month. They stop on admission or decline.
-   - Marking an inquiry urgent alerts Amer, Ahmed, Wael and the contact person in the app, with the email and WhatsApp copies queued.
-3. **Admissions.** Reaching Agreement opens five steps:
+   - A New Inquiry still there after 72 hours moves to the follow-up log, due one week after the first contact. A follow-up made with no assessment booked moves it to the inactive log.
+   - Assessments are done by Amer, Ahmed or someone named; a missed one is marked as a no-show.
+   - Marking an inquiry urgent alerts Amer, Ahmed and the contact person in the app, with the email and WhatsApp copies queued.
+3. **Admissions.** Reaching Agreement opens eight steps:
    - Nursing (Fadia).
-   - Psychologist session (Nabila). This is booked automatically at the earliest free slot.
-   - Financial arrangement.
+   - Physiotherapy (John).
+   - Psychologist session (Nabila or Samar). This is booked automatically at the earliest free slot.
+   - Financial arrangement: the monthly rate (Standard $7,500, Private $12,000, Bungalow $15,000) and the guarantor, who receives Finance's statements. A sponsor stands in for the guarantor.
    - Signed agreement, signed on screen or uploaded as a scan.
-   - Room and bed.
+   - Payment received (Kteish, Rabih or Amer), or the sponsor's confirmation.
+   - Room and bed: rooms 1 to 7 and the Bungalow, beds lettered a, b, c.
+   - Room ready, signed by Mazen. Changing the bed undoes it.
 
    Admitting the person creates the patient file and their wallet, and starts the discharge plan.
 4. **Patients.** Each patient file has tabs: overview, the 8 clinical forms (Form 8 is under "Follow-up log"), medical (clearance, nursing, external psychiatrist, prescriptions), the 6 fitness forms, documents and signatures, and wallet and requests.
@@ -77,24 +83,28 @@ Clinical forms are never shown to Melyssa, Finance, Operations or the RSA team, 
 - **Finance (Amer, Rabih, Kteish):**
   - **Invoices and payments:** an invoice comes from each patient's agreed monthly amount, with one click for the whole month. Payments are recorded against invoices, and an unpaid invoice can be voided with a reversing entry.
   - **Bills:** supplier bills are approved by Amer or Rabih, then paid.
+- **Orders (Shady, Mazen, Amer):** every purchase in one register. Up to $200 the sub-lead goes ahead; above that Amer approves before anything is bought. Kitchen orders inside Amer's weekly ceiling need no separate approval. Each order closes with its receipt.
   - **Books:** a balanced journal with manual entries, a trial balance, bank reconciliation and payer balances.
   - **Export:** CSV on every list.
-- **Programs (Wael, Nabila, Nazha):**
+- **Programs (Ahmed, Nabila, Samar, Nazha):**
   - A therapist builds a program: a name, a focus, its length in weeks, goals, and a Monday-to-Saturday week of sessions, each with a kind, time and leader. A new program can start as a copy of another.
   - Giving a program to a patient books its sessions on the Schedule for the whole length. Group-type sessions are one booking that each patient joins. Individual and family sessions are booked per patient, moving to the leader's next free time that day.
   - Anything that can't be booked is listed under the patient as "need a time". Editing the week rebooks what is still ahead, and ending a program takes the patient out of its future sessions.
   - Everyone else on the care team can read programs, and each patient's file shows their program and today's sessions.
 - **Sessions:** the week's individual sessions, groups and fitness sessions, with attendance and whether each note is filed, due or overdue. Note content stays in the patient file.
-- **Medication (Fadia, and Imad under her supervision):**
-  - Daily rounds from active medications: given, refused, missed or held. A refused or missed dose alerts Wael.
-  - Urine drug screens. A positive screen alerts Ahmed and Wael.
+- **Medication:**
+  - Fadia (and Imad under her) starts and stops medications.
+  - The RSA running each meds window records every dose as it is taken: given, refused, missed or held. A refused or missed dose alerts Fadia and Ahmed.
+  - Urine drug screens. A positive screen alerts Ahmed.
+  - Logs: medication access, weekly box preparation, weekly count and disposal (Nursing SOP 2.3).
+- **Nursing forms** on each patient's Medical tab: the admission medical assessment, psychiatric consultations and off-site escorts.
 - **Rooms & beds:**
   - A board of every bed: occupied, held for an admission, or free, with planned discharge dates.
   - Mazen, Melyssa and the partners add, edit and remove rooms, and set them to ready, cleaning or maintenance. A room with patients in it can't be removed or put under maintenance.
 - **Visits & incidents:**
   - Family visits and day leave, with overdue returns flagged.
-  - Anyone can report an incident; Ahmed and Wael review it, and Omar is told.
-- **Resident support:** RSA requests, daily check-ins, and purchases from petty cash (Georgio) with the invoice scan.
+  - Anyone can report an incident at its level. Level 1 (behavioural) tells Omar, who reviews it. Level 2 (serious) calls Omar and Ahmed. Level 3 (emergency) calls Omar, Ahmed and Amer, and Fadia for anything health-related.
+- **Resident support:** RSA requests, daily check-ins, and purchases from petty cash (Georgio) with the invoice scan and the resident's signature.
 - **A resident's own space:** wallet balance, purchase history and item requests, with live status.
 - **Reports:** operations, admissions, care delivery and finance, each printable and exportable.
 - **Insights:** Cedar Intelligence picks out what stands out in leads and the pipeline. Like Cedar Assist, it is calculated in the browser.

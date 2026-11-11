@@ -1,24 +1,32 @@
-// Admission is separate from the pipeline: five steps, then the patient and their wallet exist.
+// Admission is separate from the pipeline: the steps below, then the patient and their wallet exist.
 import { nextId } from './ids.js';
 import { todayISO } from './dates.js';
 import { STAFF, staffName, canDo, hasRole, nextRsa, nextPsychologist } from './people.js';
 import { notify } from './notifications.js';
-import { PAYERS } from './finance.js';
+import { PAYERS, PAYMENT_METHODS } from './finance.js';
 import { log } from './activity.js';
 import { autoBookPsychologist } from './scheduling.js';
 import { openWallet } from './wallet.js';
 import { clinicalNameOf } from './seed.js';
 
-export const STEPS = ['nursing', 'physio', 'psychologist', 'financial', 'agreement', 'room'];
-export const STEP_LABELS = { nursing: 'Nursing assessment', physio: 'Physiotherapy assessment', psychologist: 'Psychologist session', financial: 'Financial arrangement', agreement: 'Admission agreement signed', room: 'Room assigned' };
+export const STEPS = ['nursing', 'physio', 'psychologist', 'financial', 'agreement', 'payment', 'room', 'ready'];
+export const STEP_LABELS = { nursing: 'Nursing assessment', physio: 'Physiotherapy assessment', psychologist: 'Psychologist session', financial: 'Financial arrangement', agreement: 'Admission agreement signed', payment: 'Payment received', room: 'Room assigned', ready: 'Room ready' };
 export const STEP_OWNERS = {
   nursing: ['fadia', 'ahmed'],
   physio: ['john', 'ahmed'],
   psychologist: ['nabila', 'samar', 'ahmed'],
   financial: ['melyssa', 'amer', 'ahmed'],
   agreement: ['melyssa', 'amer', 'ahmed'],
-  room: ['melyssa', 'amer', 'ahmed']
+  // Admissions SOP: payment per policy is received before admission; Finance records it.
+  payment: ['kteish', 'rabih', 'amer'],
+  room: ['melyssa', 'amer', 'ahmed'],
+  // Never admit into a room whose readiness checklist Mazen has not signed.
+  ready: ['mazen']
 };
+// A step that waits on another: there is nothing to pay before the terms, nothing to prepare before the bed.
+export const STEP_NEEDS = { payment: 'financial', ready: 'room' };
+const NEED_MESSAGE = { financial: 'Agree the financial arrangement first.', room: 'Assign the bed first.' };
+export const isWaiting = (onboarding, step) => !!STEP_NEEDS[step] && !onboarding.steps[STEP_NEEDS[step]]?.done;
 export const PAYMENT_TERMS = ['Monthly in advance', 'Full stay in advance', 'Installments', 'Sponsor or insurer'];
 
 const find = (state, id) => {
@@ -61,7 +69,7 @@ export function releaseOnboarding(state, inquiryId, now = new Date()) {
   if (!onboarding) return null;
   const appointment = linkedPsychologist(state, onboarding);
   if (appointment?.status === 'Booked') Object.assign(appointment, { status: 'Cancelled', cancelledBy: 'system', cancelledAt: now.toISOString() });
-  if (onboarding.steps.room.done) onboarding.steps.room = { done: false };
+  if (onboarding.steps.room.done) { onboarding.steps.room = { done: false }; onboarding.steps.ready = { done: false }; }
   return onboarding;
 }
 
@@ -108,6 +116,7 @@ export function completeStep(state, onboardingId, step, payload = {}, staffId, n
   if (onboarding.admittedPatientId) throw new Error('This patient is already admitted.');
   if (!STEPS.includes(step)) throw new Error('Unknown admission step.');
   if (!STEP_OWNERS[step].includes(staffId)) throw new Error(`This step belongs to ${STEP_OWNERS[step].map(staffName).join(', ')}.`);
+  if (isWaiting(onboarding, step)) throw new Error(NEED_MESSAGE[STEP_NEEDS[step]]);
   const inquiry = inquiryOf(state, onboarding);
   const done = { done: true, by: staffId, at: now.toISOString() };
   if (step === 'nursing' || step === 'physio') done.note = String(payload.note || '').trim();
@@ -121,6 +130,27 @@ export function completeStep(state, onboardingId, step, payload = {}, staffId, n
     done.terms = PAYMENT_TERMS.includes(payload.terms) ? payload.terms : PAYMENT_TERMS[0];
     if (payload.payer !== undefined && !PAYERS.includes(payload.payer)) throw new Error('Choose who pays.');
     done.payer = payload.payer || PAYERS[0];
+    // The guarantor is the family member responsible for payment; a sponsor stands in their place.
+    if (done.payer !== 'Sponsor') {
+      const guarantor = { name: String(payload.guarantorName || '').trim(), relation: String(payload.guarantorRelation || '').trim(), phone: String(payload.guarantorPhone || '').trim() };
+      if (!guarantor.name) throw new Error('Add the guarantor: the family member responsible for payment.');
+      if (!guarantor.phone) throw new Error("Add the guarantor's phone: Finance's statements go to them.");
+      done.guarantor = guarantor;
+    }
+  }
+  if (step === 'payment') {
+    if (onboarding.steps.financial.payer === 'Sponsor') {
+      const reference = String(payload.sponsorReference || '').trim();
+      if (!reference) throw new Error("Add the sponsor's confirmation: it stands in place of the family's payment.");
+      done.sponsorReference = reference;
+    } else {
+      const amount = Math.round(Number(payload.amount));
+      if (!(amount > 0)) throw new Error('Add the amount received.');
+      Object.assign(done, { amount, method: PAYMENT_METHODS.includes(payload.method) ? payload.method : PAYMENT_METHODS[0], date: payload.date || todayISO(now), reference: String(payload.reference || '').trim() });
+    }
+  }
+  if (step === 'ready') {
+    Object.assign(done, { roomId: onboarding.steps.room.roomId, bed: onboarding.steps.room.bed, note: String(payload.note || '').trim() });
   }
   if (step === 'agreement') {
     if (!payload.signature?.at && !payload.fileId) throw new Error('Capture the signed agreement or upload the signed scan.');
@@ -143,6 +173,8 @@ export function completeStep(state, onboardingId, step, payload = {}, staffId, n
   }
   if (step === 'room' && payload.arrivalDate) done.arrivalDate = payload.arrivalDate;
   onboarding.steps[step] = done;
+  // An outpatient has no room to prepare.
+  if (step === 'room' && !done.roomId) onboarding.steps.ready = { done: true, by: staffId, at: done.at, note: 'Outpatient, no room to prepare.' };
   log(state, staffId, `${STEP_LABELS[step]} done for ${inquiry.name}`, '#/admissions');
   return onboarding;
 }
@@ -152,6 +184,8 @@ export function undoStep(state, onboardingId, step, staffId) {
   if (onboarding.admittedPatientId) throw new Error('This patient is already admitted.');
   if (!STEP_OWNERS[step].includes(staffId)) throw new Error(`This step belongs to ${STEP_OWNERS[step].map(staffName).join(', ')}.`);
   onboarding.steps[step] = { done: false };
+  // Whatever waited on this step is undone with it: readiness was signed for that bed.
+  for (const [later, need] of Object.entries(STEP_NEEDS)) if (need === step) onboarding.steps[later] = { done: false };
   return onboarding;
 }
 
@@ -170,7 +204,7 @@ export function admit(state, onboardingId, staffId, now = new Date()) {
     assigned: { psychologist: nextPsychologist(state), therapist: 'ahmed', nurse: 'fadia', fitness: 'john', rsa: isOutpatient(inquiry) ? '' : nextRsa(state) },
     commPreference: inquiry.commPreference, phone: inquiry.phone, status: 'Admitted', monthlyAmount: onboarding.steps.financial.monthlyAmount,
     // What was agreed and observed during the admission steps travels with the patient.
-    roomType: onboarding.steps.room.roomType || '', payer: onboarding.steps.financial.payer || PAYERS[0], paymentTerms: onboarding.steps.financial.terms, nursingNote: onboarding.steps.nursing.note || '',
+    roomType: onboarding.steps.room.roomType || '', payer: onboarding.steps.financial.payer || PAYERS[0], paymentTerms: onboarding.steps.financial.terms, guarantor: onboarding.steps.financial.guarantor || null, nursingNote: onboarding.steps.nursing.note || '',
     // The family member who made the inquiry becomes the first contact.
     contacts: inquiry.relationship && inquiry.relationship !== 'Self' && inquiry.callerName
       ? [{ id: `CT-${inquiry.id}`, name: inquiry.callerName, relation: inquiry.relationship, phone: inquiry.phone || '', emergency: true, canDiscuss: true, canVisit: true }]
@@ -186,7 +220,7 @@ export function admit(state, onboardingId, staffId, now = new Date()) {
   onboarding.admittedPatientId = patient.id;
   onboarding.admittedAt = now.toISOString();
   // The care team meets a new resident; Operations has a bed taken; Finance has a new monthly amount.
-  const team = [...Object.values(patient.assigned), ...STAFF.filter(person => hasRole(person.id, 'ops', 'finance-head')).map(person => person.id)].filter(id => id && id !== staffId);
+  const team = [...Object.values(patient.assigned), ...STAFF.filter(person => hasRole(person.id, 'ops', 'finance-head', 'ledger')).map(person => person.id)].filter(id => id && id !== staffId);
   notify(state, { to: team, title: `New admission: ${patient.clinicalName}`, body: `${patient.program}${patient.roomId ? `, ${placeLabel(state, patient.roomId, patient.bed)}` : ''}. $${patient.monthlyAmount.toLocaleString('en-US')} a month, ${patient.payer.toLowerCase()}.`, link: `#/patients/${patient.id}` });
   log(state, staffId, `Admitted ${patient.fullName}. Wallet created.`, `#/patients/${patient.id}`);
   return patient;

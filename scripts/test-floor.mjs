@@ -60,14 +60,14 @@ const now = new Date();
   assert.ok(providers.has('nabila') && providers.has('nazha'), 'Wael sees his team');
 }
 
-// RSAs see the open requests of their own residents and their history, not everyone's.
+// The RSA covering the house sees every resident's requests (RSA & Floor SOP).
 await withSsr(async ({ load, html }) => {
   const { session, db } = await load('/src/lib/store.svelte.js');
-  const done = db.requests.find(item => item.status === 'Done');
+  const done = db.requests.find(item => item.status === 'Open');
   const owner = db.patients.find(item => item.id === done.patientId).assigned.rsa;
   const stranger = ['alaa', 'dania', 'imad'].find(id => id !== owner);
   session.staffId = stranger;
-  assert.ok(!(await html('/src/pages/Requests.svelte', { args: [] })).includes(done.item), 'another RSA does not see it');
+  assert.ok((await html('/src/pages/Requests.svelte', { args: [] })).includes(done.item), 'another RSA sees it when covering');
   // On watch shows for RSAs, without the rating.
   const watched = db.patients.find(item => item.status === 'Admitted' && onWatch(db, item.id) && item.assigned?.rsa);
   session.staffId = watched.assigned.rsa;

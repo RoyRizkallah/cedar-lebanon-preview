@@ -14,10 +14,11 @@ const EXPECT = {
   home: ['Hello, Karim', 'Available in your wallet', 'Send request'],
   dashboard: ['Collected this month', 'Owed to Cedar', 'Safety', 'Potential revenue in play'],
   requests: ['Resident support', 'Daily check-ins'],
+  orders: ['Orders', 'Waiting for Amer', 'Replace the ground-floor water heater'],
   followups: ['Follow-ups', 'Maya Sleiman', 'Schedule assessment', 'Rima Sleiman (parent)'],
   programs: ['Programs', 'Foundations: first 28 days', 'The week', 'Patients on this program']
 };
-const PAGE_FILES = { finance: 'Finance', sessions: 'Sessions', medication: 'Medication', rooms: 'Rooms', safety: 'Safety', reports: 'Reports', insights: 'Insights', home: 'Home', dashboard: 'Dashboard', requests: 'Requests', today: 'Today', leads: 'Leads', pipeline: 'Pipeline', admissions: 'Admissions', patients: 'Patients', schedule: 'Schedule', followups: 'FollowUps', programs: 'Programs' };
+const PAGE_FILES = { finance: 'Finance', sessions: 'Sessions', medication: 'Medication', rooms: 'Rooms', safety: 'Safety', reports: 'Reports', insights: 'Insights', home: 'Home', dashboard: 'Dashboard', requests: 'Requests', orders: 'Orders', today: 'Today', leads: 'Leads', pipeline: 'Pipeline', admissions: 'Admissions', patients: 'Patients', schedule: 'Schedule', followups: 'FollowUps', programs: 'Programs' };
 
 await withSsr(async ({ load, html }) => {
   const { session } = await load('/src/lib/store.svelte.js');

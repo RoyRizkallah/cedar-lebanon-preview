@@ -10,8 +10,15 @@ export const STAFF = [
   { id: 'fadia', name: 'Fadia', title: 'Head Nurse', team: 'Nursing & Medical', initials: 'F', roles: ['nurse'] },
   { id: 'melyssa', name: 'Melyssa', title: 'Admin & Admissions Manager', team: 'Admin & Admissions', initials: 'M', roles: ['admin'] },
   { id: 'rabih', name: 'Rabih', title: 'Head of Finance', team: 'Finance', initials: 'R', roles: ['finance', 'finance-head'] },
-  { id: 'kteish', name: 'Kteish', title: 'Accountant', team: 'Finance', initials: 'K', roles: ['finance'] },
-  { id: 'mazen', name: 'Mazen', title: 'Head of Operations', team: 'Operations', initials: 'MZ', roles: ['ops'] },
+  { id: 'kteish', name: 'Kteish', title: 'Accountant', team: 'Finance', initials: 'K', roles: ['finance', 'ledger'] },
+  { id: 'mazen', name: 'Mazen', title: 'Head of Operations', team: 'Operations', initials: 'MZ', roles: ['ops', 'sub-lead'] },
+  // Kitchen and housekeeping sit under Mazen (Structure & Delegation, Part 1).
+  { id: 'shady', name: 'Shady', title: 'Head Chef', team: 'Operations', initials: 'SH', roles: ['kitchen', 'sub-lead'] },
+  { id: 'wissam', name: 'Wissam', title: 'Kitchen purchasing', team: 'Operations', initials: 'W', roles: ['kitchen'] },
+  { id: 'ezdihar', name: 'Ezdihar', title: 'Kitchen & housekeeping help', team: 'Operations', initials: 'E', roles: ['house'] },
+  { id: 'khadija', name: 'Khadija', title: 'Kitchen & housekeeping help', team: 'Operations', initials: 'KH', roles: ['house'] },
+  { id: 'hasna', name: 'Hasna (Em Alaa)', title: 'Housekeeping', team: 'Operations', initials: 'HA', roles: ['house'] },
+  { id: 'ghassan', name: 'Ghassan', title: 'Housekeeping', team: 'Operations', initials: 'GH', roles: ['house'] },
   { id: 'john', name: 'John', title: 'Physiotherapist, Head of PT & Fitness', team: 'PT & Fitness', initials: 'J', roles: ['pt', 'trainer'] },
   { id: 'zeina', name: 'Zeina', title: 'Movement & Yoga', team: 'PT & Fitness', initials: 'Z', roles: ['trainer'] },
   { id: 'tony-j', name: 'Tony J.', title: 'Tennis', team: 'PT & Fitness', initials: 'TJ', roles: ['trainer'] },
@@ -44,21 +51,22 @@ export const GROUPS = ['My work', 'Intake', 'Care', 'Operations', 'Finance'];
 export const GROUP_ICONS = { 'My work': 'home', Intake: 'funnel', Care: 'leaf', Operations: 'building', Finance: 'wallet' };
 export const PAGES = [
   { id: 'dashboard', label: 'Dashboard', icon: 'chart', group: 'My work', staff: MANAGEMENT },
-  { id: 'today', label: 'Today', icon: 'check-circle', group: 'My work', staff: STAFF_ROLES },
+  { id: 'today', label: 'Today', icon: 'check-circle', group: 'My work', staff: [...STAFF_ROLES, 'kitchen', 'house'] },
   { id: 'reports', label: 'Reports', icon: 'document', group: 'My work', staff: [...INTAKE, 'clinical-director', 'finance', 'ops'] },
   { id: 'leads', label: 'Leads', icon: 'inbox', group: 'Intake', staff: INTAKE },
   { id: 'pipeline', label: 'Pipeline', icon: 'columns', group: 'Intake', staff: INTAKE },
   { id: 'followups', label: 'Follow-ups', icon: 'clock', group: 'Intake', staff: INTAKE },
-  { id: 'admissions', label: 'Admissions', icon: 'door', group: 'Intake', staff: [...INTAKE, 'clinical-director', 'psychologist', 'nurse', 'pt'] },
+  { id: 'admissions', label: 'Admissions', icon: 'door', group: 'Intake', staff: [...INTAKE, 'clinical-director', 'psychologist', 'nurse', 'pt', 'finance', 'ops'] },
   { id: 'insights', label: 'Insights', icon: 'sparkle', group: 'Intake', staff: INTAKE },
   { id: 'patients', label: 'Admitted patients', icon: 'users', group: 'Care', staff: STAFF_ROLES },
   { id: 'programs', label: 'Programs', icon: 'heart', group: 'Care', staff: CARE },
   { id: 'sessions', label: 'Sessions', icon: 'stethoscope', group: 'Care', staff: CARE },
   { id: 'medication', label: 'Medication', icon: 'pill', group: 'Care', staff: ['nurse', 'nurse-aide', 'director', 'clinical-director', 'rsa'] },
-  { id: 'rooms', label: 'Rooms & beds', icon: 'bed', group: 'Care', staff: [...INTAKE, 'clinical-director', 'nurse', 'ops', 'rsa'] },
+  { id: 'rooms', label: 'Rooms & beds', icon: 'bed', group: 'Care', staff: [...INTAKE, 'clinical-director', 'nurse', 'ops', 'rsa', 'house'] },
   { id: 'schedule', label: 'Schedule', icon: 'calendar', group: 'Operations', staff: [...INTAKE, ...CARE.filter(role => role !== 'director')] },
   { id: 'safety', label: 'Visits & incidents', icon: 'shield', group: 'Operations', staff: STAFF_ROLES.filter(role => role !== 'finance') },
   { id: 'requests', label: 'Resident support', icon: 'bag', group: 'Operations', staff: [...INTAKE, 'ops', 'rsa'] },
+  { id: 'orders', label: 'Orders', icon: 'receipt', group: 'Operations', staff: ['gm', 'admin', 'ops', 'kitchen', 'finance'] },
   { id: 'finance', label: 'Accounts', icon: 'receipt', group: 'Finance', staff: ['gm', 'finance'] },
   // The resident's own space: their wallet and requests.
   { id: 'home', label: 'My space', icon: 'home', group: 'My work', staff: ['resident'] }
@@ -85,12 +93,16 @@ const ACTIONS = {
   // SOP 2.1: the RSA running the meds window records each dose as it is taken.
   giveMedication: ['nurse', 'nurse-aide', 'rsa'],
   topUpWallet: [...INTAKE, 'finance'],
-  pettyCash: [...MANAGEMENT, 'petty-cash'],
+  // Finance SOP Part 4: the custodian holds and hands out the cash; nobody else does.
+  pettyCash: ['petty-cash'],
   createRequest: [...INTAKE, 'ops', 'rsa'],
   manageDocuments: [...INTAKE, 'nurse'],
   manageRooms: [...INTAKE, 'ops'],
   recordFinance: ['gm', 'finance'],
   approveExpense: ['gm', 'finance-head'],
+  // Structure & Delegation, Part 3: Shady or Mazen raises; Amer approves anything over $200.
+  raiseOrder: ['sub-lead'],
+  approveOrder: ['gm'],
   logVisit: STAFF_ROLES.filter(role => !['psychologist', 'pt', 'trainer', 'finance'].includes(role)),
   reviewIncident: ['director', 'clinical-director'],
   managePrograms: ['clinical-director', 'psychologist', 'drama'],
@@ -144,6 +156,7 @@ export function visiblePatients(state, staffId, { includeDischarged = false } = 
   const list = state.patients.filter(patient => includeDischarged || patient.status === 'Admitted');
   if (hasRole(staffId, 'psychologist')) return list.filter(patient => patient.assigned?.psychologist === staffId);
   if (isResident(staffId)) return list.filter(patient => patient.id === RESIDENTS.find(person => person.id === staffId)?.patientId);
-  if (hasRole(staffId, 'rsa')) return list.filter(patient => patient.program !== 'Outpatient' && (hasRole(staffId, 'rsa-lead') || patient.assigned?.rsa === staffId));
+  // One RSA can cover the whole house alone (RSA & Floor SOP), so every RSA sees every live-in resident.
+  if (hasRole(staffId, 'rsa')) return list.filter(patient => patient.program !== 'Outpatient');
   return list;
 }

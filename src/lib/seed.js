@@ -7,7 +7,7 @@ import { seedPrograms } from './seedPrograms.js';
 import { book, earliestSlot } from './scheduling.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 7;
+export const SEED_VERSION = 8;
 
 // The centre's layout: Upper floor rooms 1–4 (beds a, b); Ground floor Bungalow 1 (one bed); Lower floor room 5 (a, b, c) and rooms 6, 7 (a, b).
 const ROOMS = [
@@ -68,7 +68,8 @@ export function seed(now = new Date()) {
   const state = {
     version: SEED_VERSION, leads: [], inquiries: [], onboardings: [], patients: [], rooms: ROOMS.map(room => ({ ...room })),
     appointments: [], forms: [], documents: [], wallet: { transactions: [] }, requests: [], tasks: [], notifications: [], activity: [],
-    finance: { invoices: [], expenses: [], manualEntries: [], bankEntries: [] }, medication: { orders: [], doses: [], tests: [] }, visits: [], leaves: [], incidents: [], checkins: [], comments: [], programs: [], programAssignments: []
+    finance: { invoices: [], expenses: [], manualEntries: [], bankEntries: [] }, medication: { orders: [], doses: [], tests: [] }, visits: [], leaves: [], incidents: [], checkins: [], comments: [], programs: [], programAssignments: [],
+    orders: [], kitchenCeiling: null
   };
   let taskSeq = 0, docSeq = 0, apptSeq = 0, walletSeq = 0;
   const task = fields => state.tasks.push({ id: `T-${String(++taskSeq).padStart(4, '0')}`, status: 'open', ...fields });
@@ -207,8 +208,8 @@ export function seed(now = new Date()) {
     state.onboardings.push({
       id: `ON-${String(index + 1).padStart(4, '0')}`, inquiryId: inquiry.id, openedAt: inquiry.stageHistory.at(-1).at, psychologistAppointmentId: psych.id,
       steps: index
-        ? { nursing: by('fadia', -2), physio: by('john', -2), psychologist: by('nabila', -1), financial: { ...by('ahmed', -1), monthlyAmount: inquiry.potentialRevenue, terms: 'Monthly in advance' }, agreement: { ...by('melyssa', -1) }, room: notDone }
-        : { nursing: by('fadia', -1), physio: notDone, psychologist: notDone, financial: notDone, agreement: notDone, room: notDone }
+        ? { nursing: by('fadia', -2), physio: by('john', -2), psychologist: by('nabila', -1), financial: { ...by('ahmed', -1), monthlyAmount: inquiry.potentialRevenue, terms: 'Monthly in advance', payer: 'Family', guarantor: { name: inquiry.callerName || `${inquiry.name.split(' ').at(-1)} family`, relation: inquiry.relationship && inquiry.relationship !== 'Self' ? inquiry.relationship : 'Parent', phone: inquiry.phone || '+961 3 200 418' } }, agreement: { ...by('melyssa', -1) }, payment: { ...by('kteish', -1), amount: inquiry.potentialRevenue, method: 'Bank transfer', date: day(-1), reference: 'Transfer received' }, room: notDone, ready: notDone }
+        : { nursing: by('fadia', -1), physio: notDone, psychologist: notDone, financial: notDone, agreement: notDone, payment: notDone, room: notDone, ready: notDone }
     });
     if (index) state.onboardings.at(-1).steps.agreement.documentId = doc({ inquiryId: inquiry.id, type: 'Admission agreement', title: 'Admission agreement', status: 'Signed scan uploaded', createdAt: moment(-1, '10:00'), createdBy: 'melyssa', signedBy: inquiry.name, signedAt: moment(-1, '10:00') }).id;
   });
@@ -255,6 +256,14 @@ export function seed(now = new Date()) {
   seedForms(state, today);
   seedCare(state, today);
   seedPrograms(state, today);
+  // The order register: a standing kitchen ceiling, a week's orders, and one over $200 waiting for Amer.
+  state.kitchenCeiling = { amount: 900, setBy: 'amer', at: moment(-20) };
+  state.orders = [
+    { id: 'ORD-0001', date: day(-6), item: 'Weekly groceries and meat', supplier: 'Beirut run (Wissam)', kind: 'Kitchen', amount: 620, requestedBy: 'shady', at: moment(-6, '09:00'), status: 'Received', approval: 'Within the $900 weekly kitchen ceiling', withinCeiling: true, paid: 604.5, receiptFileId: '', receivedBy: 'shady', receivedAt: moment(-5, '17:00') },
+    { id: 'ORD-0002', date: day(-3), item: 'Cleaning supplies (bleach, gloves, mops)', supplier: 'Local shop', kind: 'Cleaning', amount: 85, requestedBy: 'mazen', at: moment(-3, '11:00'), status: 'Received', approval: 'Within the $200 sub-lead limit', paid: 79, receiptFileId: '', receivedBy: 'mazen', receivedAt: moment(-3, '15:00') },
+    { id: 'ORD-0003', date: day(-1), item: 'Replace the ground-floor water heater', supplier: 'Khoury Plumbing', kind: 'Maintenance', amount: 640, requestedBy: 'mazen', at: moment(-1, '10:30'), status: 'Awaiting approval' },
+    { id: 'ORD-0004', date: day(0), item: 'Fruit, vegetables and bread', supplier: 'Local market', kind: 'Kitchen', amount: 140, requestedBy: 'shady', at: moment(0, '08:15'), status: 'Approved', approval: 'Within the $200 sub-lead limit' }
+  ];
   wallet({ patientId: residents[1].id, type: 'purchase', amountCents: 2400, description: '1 × Toiletries pack', date: day(-1), recordedBy: 'georgio', requestId: 'R-0003' });
   state.activity.push({ id: 'AC-1', at: ago(3), by: 'melyssa', text: 'Created inquiry for Georges Abi Nader from WhatsApp', link: '#/pipeline' });
 

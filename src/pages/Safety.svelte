@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import Icon from '../components/Icon.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { INCIDENT_TYPES, SEVERITIES, logVisit, startLeave, returnLeave, leaveStatus, reportIncident, reviewIncident } from '../lib/safety.js';
+  import { INCIDENT_TYPES, LEVELS, levelName, incidentCalls, canReview, logVisit, startLeave, returnLeave, leaveStatus, reportIncident, reviewIncident } from '../lib/safety.js';
   import { staffName, visiblePatients, canDo } from '../lib/people.js';
   import { incidentsFor } from '../lib/safety.js';
   import { onWatch } from '../lib/forms/engine.js';
@@ -15,7 +15,6 @@
   const me = session.staffId;
   const today = todayISO(session.now);
   const logsVisits = canDo(me, 'logVisit');
-  const reviews = canDo(me, 'reviewIncident');
   const TABS = logsVisits ? [['incidents', 'Incidents'], ['visits', 'Visits'], ['leave', 'Leave']] : [['incidents', 'Incidents']];
   const tab = $derived(TABS.some(([id]) => id === args[0]) ? args[0] : 'incidents');
   let dialog = $state(null);
@@ -33,7 +32,7 @@
   const open = kind => {
     error = '';
     const patientId = inCare[0]?.id;
-    dialog = kind === 'incident' ? { kind, patientId: '', type: 'Aggression', severity: 'Medium', description: '', actionTaken: '', date: today }
+    dialog = kind === 'incident' ? { kind, patientId: '', type: 'Aggression', level: 1, description: '', actionTaken: '', date: today }
       : kind === 'visit' ? { kind, patientId, visitor: '', relation: '', date: today, start: '', end: '' }
       : kind === 'leave' ? { kind, patientId, out: `${today}T${new Date().toTimeString().slice(0, 5)}`, dueBack: `${today}T18:00`, escort: '', reason: '' }
       : { kind, id: kind.id, outcome: '' };
@@ -47,19 +46,20 @@
   function submit() {
     const d = $state.snapshot(dialog);
     const ok = {
-      incident: () => run(state => reportIncident(state, d, me), 'Incident reported to Ahmed and the Clinical Director'),
+      incident: () => run(state => reportIncident(state, d, me), `Incident reported to ${incidentCalls(Number(d.level), d.type).map(staffName).join(', ')}`),
       visit: () => run(state => logVisit(state, d, me), 'Visit logged'),
       leave: () => run(state => startLeave(state, d, me), 'Leave started'),
       review: () => run(state => reviewIncident(state, d.id, d, me), 'Incident reviewed')
     }[d.kind]();
     if (ok) dialog = null;
   }
-  const SEV = { Low: 'ok', Medium: 'warn', High: 'urgent' };
+  const TONE = { 1: 'ok', 2: 'warn', 3: 'urgent' };
+  const SEV_CLASS = { 1: 'low', 2: 'medium', 3: 'high' };
 </script>
 
 <main class="content wide">
   <div class="page-head">
-    <div><h1>Visits & incidents</h1><p>Anyone can report an incident; Ahmed and the Clinical Director review it. Visits and day leave are logged here.</p></div>
+    <div><h1>Visits & incidents</h1><p>Anyone can report an incident at its level (SOP 3.4). Omar reviews Level 1; Ahmed reviews Level 2 and 3. Visits and day leave are logged here.</p></div>
     <div class="actions">
       {#if logsVisits}<button class="btn" onclick={() => open('visit')}><Icon name="users" size={16} />Log visit</button><button class="btn" onclick={() => open('leave')}><Icon name="door" size={16} />Start leave</button>{/if}
       <button class="btn primary" onclick={() => open('incident')}><Icon name="alert" size={16} />Report incident</button>
@@ -70,7 +70,7 @@
     <div class="watch" class:calm={!openIncidents.length}>
       <span class="eyebrow">Incidents to review</span>
       <div class="big num">{openIncidents.length}</div>
-      <p>{openIncidents.length ? `${openIncidents.filter(item => item.severity === 'High').length} high severity. ${incidents.length} on record.` : `Nothing waiting. ${incidents.length} on record.`}</p>
+      <p>{openIncidents.length ? `${openIncidents.filter(item => item.level === 3).length} at Level 3. ${incidents.length} on record.` : `Nothing waiting. ${incidents.length} on record.`}</p>
     </div>
     {#if out.length}
       <div class="out-strip">
@@ -81,7 +81,7 @@
             <strong>{name(leave.patientId)}</strong>
             <span class="out-sub">{leave.state === 'Overdue' ? 'Overdue, was due' : 'Out, due back'} {fmtDateTime(leave.dueBack)}{leave.escort ? `. With ${leave.escort}` : ''}</span>
             {#if logsVisits}<button class="btn sm back" onclick={() => run(state => returnLeave(state, leave.id, me), `${name(leave.patientId)} is back`)}><Icon name="enter" size={14} />Back now</button>{/if}
-            {#if leave.state === 'Overdue'}<button class="btn sm ghost danger" onclick={() => { error = ''; dialog = { kind: 'incident', patientId: leave.patientId, type: 'Absconding', severity: 'High', description: `Did not return from leave; was due back ${fmtDateTime(leave.dueBack)}${leave.escort ? `, out with ${leave.escort}` : ''}.`, actionTaken: '', date: today }; }}><Icon name="alert" size={14} />Report absconding</button>{/if}
+            {#if leave.state === 'Overdue'}<button class="btn sm ghost danger" onclick={() => { error = ''; dialog = { kind: 'incident', patientId: leave.patientId, type: 'Absconding', level: 3, description: `Did not return from leave; was due back ${fmtDateTime(leave.dueBack)}${leave.escort ? `, out with ${leave.escort}` : ''}.`, actionTaken: '', date: today }; }}><Icon name="alert" size={14} />Report absconding</button>{/if}
           </div>
         {/each}
       </div>
@@ -96,23 +96,23 @@
   {#if error && !dialog}<p class="error" role="alert" style="margin-bottom: 12px">{error}</p>{/if}
 
   {#if tab === 'incidents'}
-    <div class="toolbar"><button class="btn" style="margin-left: auto" onclick={() => downloadCsv('cedar-incidents', [{ label: 'Date', value: 'date' }, { label: 'Type', value: 'type' }, { label: 'Severity', value: 'severity' }, { label: 'Patient', value: row => name(row.patientId) }, { label: 'What happened', value: 'description' }, { label: 'Action taken', value: 'actionTaken' }, { label: 'Status', value: 'status' }, { label: 'Outcome', value: 'outcome' }], incidents)}><Icon name="download" size={16} />Export CSV</button></div>
+    <div class="toolbar"><button class="btn" style="margin-left: auto" onclick={() => downloadCsv('cedar-incidents', [{ label: 'Date', value: 'date' }, { label: 'Type', value: 'type' }, { label: 'Level', value: row => levelName(row.level) }, { label: 'Patient', value: row => name(row.patientId) }, { label: 'What happened', value: 'description' }, { label: 'Action taken', value: 'actionTaken' }, { label: 'Status', value: 'status' }, { label: 'Outcome', value: 'outcome' }], incidents)}><Icon name="download" size={16} />Export CSV</button></div>
     <div class="lanes">
       {#each [['Needs review', openIncidents], ['Reviewed', incidents.filter(item => item.status !== 'Open')]] as [title, items] (title)}
         <section class="lane" class:review-lane={title === 'Needs review'}>
           <header class="lane-head"><h2>{title}</h2><span class="count num">{items.length}</span></header>
           <ul class="feed">
             {#each items as item (item.id)}
-              <li class="incident sev-{item.severity.toLowerCase()}">
-                <span class="sev-mark"><Icon name={item.severity === 'Low' ? 'flag' : 'alert'} size={16} /></span>
+              <li class="incident sev-{SEV_CLASS[item.level]}">
+                <span class="sev-mark"><Icon name={item.level === 1 ? 'flag' : 'alert'} size={16} /></span>
                 <div class="grow">
-                  <div class="inc-top"><span class="pill {SEV[item.severity]}">{item.severity}</span><span class="faint num">{fmtDate(item.date)}{item.time ? ` at ${item.time}` : ''}</span></div>
+                  <div class="inc-top"><span class="pill {TONE[item.level]}">{levelName(item.level)}</span><span class="faint num">{fmtDate(item.date)}{item.time ? ` at ${item.time}` : ''}</span></div>
                   <div class="title">{item.type}{item.patientId ? `, ${name(item.patientId)}` : ''}</div>
                   <div class="sub">{item.description}{item.actionTaken ? ` Action: ${item.actionTaken}` : ''}</div>
                   <div class="faint meta">Reported by {staffName(item.reportedBy)}{item.outcome ? `. Reviewed by ${staffName(item.reviewedBy)}: ${item.outcome}` : ''}</div>
                 </div>
                 {#if item.status === 'Open'}
-                  {#if reviews}<button class="btn sm dark" onclick={() => { error = ''; dialog = { kind: 'review', id: item.id, outcome: '' }; }}>Review</button>{:else}<span class="pill warn">Open</span>{/if}
+                  {#if canReview(item, me)}<button class="btn sm dark" onclick={() => { error = ''; dialog = { kind: 'review', id: item.id, outcome: '' }; }}>Review</button>{:else}<span class="pill warn">Open</span>{/if}
                 {:else}<span class="pill ok">Reviewed</span>{/if}
               </li>
             {:else}<li class="empty"><strong>{title === 'Needs review' ? 'No incidents waiting' : 'No incidents'}</strong></li>{/each}
@@ -156,10 +156,10 @@
       {#if dialog.kind === 'incident'}
         <label class="field"><span>Patient involved</span><select class="select" bind:value={dialog.patientId}><option value="">No patient involved</option>{#each db.patients.filter(p => p.status === 'Admitted') as p}<option value={p.id}>{p.fullName}</option>{/each}</select></label>
         <div class="grid-2"><label class="field"><span>Type</span><select class="select" bind:value={dialog.type}>{#each INCIDENT_TYPES as type}<option>{type}</option>{/each}</select></label><label class="field"><span>Date</span><input class="input" type="date" bind:value={dialog.date} /></label></div>
-        <fieldset class="field"><legend>Severity</legend><div class="choices" style="margin-top: 6px">{#each SEVERITIES as option}<label class="choice risk-{option}"><input type="radio" name="sev" value={option} bind:group={dialog.severity} /><span>{option}</span></label>{/each}</div></fieldset>
+        <fieldset class="field"><legend>Level</legend><div class="choices" style="margin-top: 6px">{#each LEVELS as item}<label class="choice risk-{['Low', 'Medium', 'High'][item.level - 1]}"><input type="radio" name="level" value={item.level} bind:group={dialog.level} /><span>{item.level}, {item.name}</span></label>{/each}</div><p class="faint" style="margin: 6px 0 0; font-size: 12.5px">{LEVELS.find(item => item.level === Number(dialog.level))?.response}</p></fieldset>
         <label class="field"><span>What happened</span><textarea class="textarea" rows="3" bind:value={dialog.description}></textarea></label>
         <label class="field"><span>Action taken</span><input class="input" bind:value={dialog.actionTaken} /></label>
-        {#if dialog.severity === 'High'}<p class="notice urgent"><Icon name="alert" size={15} />High severity alerts Ahmed and the Clinical Director in the app, by email and on WhatsApp.</p>{/if}
+        <p class="notice {Number(dialog.level) === 3 ? 'urgent' : Number(dialog.level) === 2 ? 'warn' : ''}"><Icon name={Number(dialog.level) === 1 ? 'flag' : 'alert'} size={15} />Reporting tells {incidentCalls(Number(dialog.level), dialog.type).map(staffName).join(', ')}{Number(dialog.level) > 1 ? ' urgently, in the app, by email and on WhatsApp' : ''}.</p>
       {:else if dialog.kind === 'visit'}
         <label class="field"><span>Resident</span><select class="select" bind:value={dialog.patientId}>{#each inCare as p}<option value={p.id}>{p.fullName}</option>{/each}</select></label>
         <div class="grid-2"><label class="field"><span>Visitor</span><input class="input" bind:value={dialog.visitor} /></label><label class="field"><span>Relation</span><input class="input" bind:value={dialog.relation} placeholder="Mother, friend…" /></label></div>

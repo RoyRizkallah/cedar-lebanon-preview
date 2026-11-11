@@ -79,8 +79,8 @@ export function seedCare(state, today) {
     { id: 'LV-0002', patientId: byName('Karim Haddad').id, out: at(0, '09:30'), dueBack: at(0, '17:00'), escort: 'Sister', reason: 'Job interview', by: 'melyssa' }
   );
   state.incidents.push(
-    { id: 'INC-0001', patientId: byName('Elie Mansour').id, date: day(-4), time: '20:15', type: 'Aggression', severity: 'Medium', description: 'Shouted at a peer over the TV remote.', actionTaken: 'Separated; talked down by RSA.', reportedBy: 'omar', status: 'Reviewed', outcome: 'Discussed in individual session.', reviewedBy: 'ahmed' },
-    { id: 'INC-0002', patientId: byName('Marc Aoun').id, date: day(-3), time: '19:40', type: 'Substance found', severity: 'High', description: 'Cannabis found in jacket after leave.', actionTaken: 'Confiscated; drug screen done.', reportedBy: 'fadia', status: 'Open' }
+    { id: 'INC-0001', patientId: byName('Elie Mansour').id, date: day(-4), time: '20:15', type: 'Aggression', level: 1, description: 'Shouted at a peer over the TV remote.', actionTaken: 'Separated; talked down by RSA.', reportedBy: 'omar', status: 'Reviewed', outcome: 'Discussed in individual session.', reviewedBy: 'ahmed' },
+    { id: 'INC-0002', patientId: byName('Marc Aoun').id, date: day(-3), time: '19:40', type: 'Substance found', level: 2, description: 'Cannabis found in jacket after leave.', actionTaken: 'Confiscated; drug screen done.', reportedBy: 'fadia', status: 'Open' }
   );
 
   // RSA check-ins and team comments.

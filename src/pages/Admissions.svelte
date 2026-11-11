@@ -3,8 +3,8 @@
   import Ring from '../components/Ring.svelte';
   import SignaturePad from '../components/SignaturePad.svelte';
   import { db, session, commit } from '../lib/store.svelte.js';
-  import { PAYERS } from '../lib/finance.js';
-  import { STEPS, STEP_LABELS, STEP_OWNERS, PAYMENT_TERMS, completeStep, undoStep, canAdmit, admit, freeBeds, placeLabel, inquiryOf, isOutpatient, isActive, linkedPsychologist, rebookPsychologist } from '../lib/admission.js';
+  import { PAYERS, PAYMENT_METHODS } from '../lib/finance.js';
+  import { STEPS, STEP_LABELS, STEP_OWNERS, PAYMENT_TERMS, STEP_NEEDS, isWaiting, completeStep, undoStep, canAdmit, admit, freeBeds, placeLabel, inquiryOf, isOutpatient, isActive, linkedPsychologist, rebookPsychologist } from '../lib/admission.js';
   import { money, ROOM_RATES } from '../lib/pipeline.js';
   import { staffName, canDo, hasRole } from '../lib/people.js';
   import { fmtDay, fmtDate, fmtDateTime, todayISO } from '../lib/dates.js';
@@ -34,7 +34,9 @@
     const key = `${onboarding.id}:${step}`;
     openStep = openStep === key ? null : key;
     const inquiry = inquiryOf(db, onboarding);
-    inputs = { note: '', monthlyAmount: inquiry?.potentialRevenue || ROOM_RATES[inquiry?.roomPreference] || '', terms: PAYMENT_TERMS[0], payer: PAYERS[0], arrivalDate: '', bed: freeBeds(db, onboarding.id, inquiry?.roomPreference || '')[0]?.join('/') || '' };
+    inputs = { note: '', monthlyAmount: inquiry?.potentialRevenue || ROOM_RATES[inquiry?.roomPreference] || '', terms: PAYMENT_TERMS[0], payer: PAYERS[0], arrivalDate: '',
+      guarantorName: inquiry?.relationship && inquiry.relationship !== 'Self' ? inquiry.callerName || '' : '', guarantorRelation: inquiry?.relationship && inquiry.relationship !== 'Self' ? inquiry.relationship : '', guarantorPhone: inquiry?.relationship && inquiry.relationship !== 'Self' ? inquiry.phone || '' : '',
+      amount: onboarding.steps.financial?.monthlyAmount || '', method: PAYMENT_METHODS[0], date: todayISO(session.now), reference: '', sponsorReference: '', bed: freeBeds(db, onboarding.id, inquiry?.roomPreference || '')[0]?.join('/') || '' };
   }
   function done(onboarding, step, payload) {
     if (run(state => completeStep(state, onboarding.id, step, payload, me), `${STEP_LABELS[step]} done`)) openStep = null;
@@ -86,15 +88,20 @@
                   {#if state.done}
                     <p><strong>{STEP_LABELS[step]}</strong> done by {staffName(state.by)}, {fmtDateTime(state.at)}.
                       {#if state.monthlyAmount} {money(state.monthlyAmount)} a month, {state.terms.toLowerCase()}{state.payer ? `, paid by ${state.payer.toLowerCase()}` : ''}.{/if}
+                      {#if state.guarantor} Guarantor {state.guarantor.name}{state.guarantor.relation ? ` (${state.guarantor.relation.toLowerCase()})` : ''}, {state.guarantor.phone}.{/if}
+                      {#if state.amount} {money(state.amount)} received by {state.method.toLowerCase()} on {fmtDate(state.date)}{state.reference ? `, ref. ${state.reference}` : ''}.{/if}
+                      {#if state.sponsorReference} Sponsor confirmation: {state.sponsorReference}.{/if}
                       {#if state.roomId} {placeLabel(db, state.roomId, state.bed)}{state.roomType ? `, ${state.roomType.toLowerCase()}` : ''}.{/if}
                       {#if state.arrivalDate} Arriving {fmtDay(state.arrivalDate)}.{/if}
                       {#if step === 'room' && !state.roomId} Outpatient, no room needed.{/if}
                       {#if state.note} {state.note}{/if}
                     </p>
                     {#if mine(step)}<button class="btn ghost sm" onclick={() => run(s => undoStep(s, onboarding.id, step, me), 'Step reopened')}>Reopen step</button>{/if}
+                  {:else if isWaiting(onboarding, step)}
+                    <p class="muted">Waits for {STEP_LABELS[STEP_NEEDS[step]].toLowerCase()}. Then {STEP_OWNERS[step].map(staffName).join(' or ')} completes it.</p>
                   {:else if !mine(step)}
                     <p class="muted">This step is completed by {STEP_OWNERS[step].map(staffName).join(' or ')}.</p>
-                    {#if step === 'psychologist' && psychOf(onboarding)}<p class="faint">Session booked {fmtDay(psychOf(onboarding).date)} at {psychOf(onboarding).start} with Nabila ({psychOf(onboarding).status.toLowerCase()}).</p>{/if}
+                    {#if step === 'psychologist' && psychOf(onboarding)}<p class="faint">Session booked {fmtDay(psychOf(onboarding).date)} at {psychOf(onboarding).start} with {staffName(psychOf(onboarding).provider)} ({psychOf(onboarding).status.toLowerCase()}).</p>{/if}
                   {:else if step === 'physio'}
                 <label class="field"><span>Physiotherapy notes</span><textarea class="textarea" rows="2" bind:value={inputs.note} placeholder="Mobility, injuries, limits for activity"></textarea></label>
                 <button class="btn dark" onclick={() => done(onboarding, 'physio', { note: inputs.note })}>Mark physiotherapy assessment done</button>
@@ -107,7 +114,7 @@
                       <p class="muted">No session is booked. The last one may have been cancelled.</p>
                       <button class="btn dark" onclick={() => { const booked = run(state => rebookPsychologist(state, onboarding.id, me)); if (booked) say(`Booked ${fmtDay(booked.date)} at ${booked.start}`); }}>Book earliest session</button>
                     {:else if appointment.status !== 'Completed'}
-                      <p>Session booked automatically for <strong>{fmtDay(appointment.date)} at {appointment.start}</strong> with Nabila. Mark it completed in the schedule, then come back here.</p>
+                      <p>Session booked automatically for <strong>{fmtDay(appointment.date)} at {appointment.start}</strong> with {staffName(appointment.provider)}. Mark it completed in the schedule, then come back here.</p>
                       <a class="btn sm" href="#/schedule">Open schedule</a>
                     {:else}
                       <p>Session completed {fmtDateTime(appointment.completedAt)}.</p>
@@ -119,6 +126,14 @@
                       <label class="field"><span>Payment terms</span><select class="select" bind:value={inputs.terms}>{#each PAYMENT_TERMS as term}<option>{term}</option>{/each}</select></label>
                       <label class="field"><span>Who pays</span><select class="select" bind:value={inputs.payer}>{#each PAYERS as payer}<option>{payer}</option>{/each}</select></label>
                     </div>
+                    {#if inputs.payer !== 'Sponsor'}
+                      <p class="faint" style="margin: 4px 0 0">The guarantor signs the agreement and receives Finance's statements.</p>
+                      <div class="grid-2">
+                        <label class="field"><span>Guarantor</span><input class="input" bind:value={inputs.guarantorName} placeholder="Family member responsible for payment" /></label>
+                        <label class="field"><span>Relation</span><input class="input" bind:value={inputs.guarantorRelation} /></label>
+                        <label class="field"><span>Guarantor's phone</span><input class="input" type="tel" bind:value={inputs.guarantorPhone} /></label>
+                      </div>
+                    {/if}
                     <button class="btn dark" onclick={() => done(onboarding, 'financial', $state.snapshot(inputs))}>Save financial arrangement</button>
                   {:else if step === 'agreement'}
                     <p class="muted">Have {inquiry.name} sign on this screen, or upload the scanned signed copy.</p>
@@ -126,6 +141,22 @@
                       <button class="btn dark" onclick={() => { signing = onboarding; }}><Icon name="pen" size={15} />Sign on screen</button>
                       <label class="btn"><Icon name="upload" size={15} />Upload signed scan<input class="sr-only" type="file" accept="image/*,application/pdf" capture="environment" onchange={event => upload(event, onboarding)} /></label>
                     </div>
+                  {:else if step === 'payment'}
+                    {#if onboarding.steps.financial.payer === 'Sponsor'}
+                      <label class="field" style="max-width: 360px"><span>Sponsor's confirmation <span class="hint">stands in place of payment</span></span><input class="input" bind:value={inputs.sponsorReference} placeholder="For example: UNRWA letter reference" /></label>
+                    {:else}
+                      <div class="grid-2">
+                        <label class="field"><span>Amount received <span class="hint">USD</span></span><input class="input" type="number" min="0" step="100" bind:value={inputs.amount} /></label>
+                        <label class="field"><span>Method</span><select class="select" bind:value={inputs.method}>{#each PAYMENT_METHODS as method}<option>{method}</option>{/each}</select></label>
+                        <label class="field"><span>Received on</span><input class="input" type="date" bind:value={inputs.date} /></label>
+                        <label class="field"><span>Reference</span><input class="input" bind:value={inputs.reference} placeholder="Transfer or receipt number" /></label>
+                      </div>
+                    {/if}
+                    <button class="btn dark" onclick={() => done(onboarding, 'payment', $state.snapshot(inputs))}>Record payment received</button>
+                  {:else if step === 'ready'}
+                    <p>Readiness checklist for <strong>{placeLabel(db, onboarding.steps.room.roomId, onboarding.steps.room.bed)}</strong>{onboarding.steps.room.arrivalDate ? `, arriving ${fmtDay(onboarding.steps.room.arrivalDate)}` : ''}.</p>
+                    <label class="field"><span>Notes</span><textarea class="textarea" rows="2" bind:value={inputs.note} placeholder="Cleaned, linen changed, anything fixed"></textarea></label>
+                    <button class="btn dark" onclick={() => done(onboarding, 'ready', { note: inputs.note })}>Sign room ready</button>
                   {:else if step === 'room'}
                     {#if isOutpatient(inquiry)}
                       <p class="muted">Outpatient program: no bed is needed.</p>

@@ -74,7 +74,8 @@ assert.ok(!roundFor(state, addDays(today, 1)).some(item => item.patientId === pa
 assert.ok(state.medication.orders.filter(item => item.patientId === patient.id).every(item => item.status !== 'Active'), 'orders stopped');
 assert.ok(state.wallet.transactions.some(item => item.patientId === patient.id && item.type === 'refund'));
 const bill = state.tasks.find(item => item.kind === 'final-bill' && item.patientId === patient.id);
-assert.equal(bill.owner, 'rabih');
+// Kteish owns the patient ledger (Finance SOP), so the final bill is his.
+assert.equal(bill.owner, 'kteish');
 const calls = state.tasks.filter(item => item.kind === 'followup-call' && item.patientId === patient.id).map(item => item.due);
 assert.deepEqual(calls, [addDays(today, 7), addDays(today, 30), addDays(today, 90)]);
 assert.ok(state.notifications.length > before, 'the team is told');

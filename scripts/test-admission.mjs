@@ -34,10 +34,11 @@ completeAppointment(state, psych[0].id, 'nabila', now);
 completeStep(state, onboarding.id, 'psychologist', {}, 'nabila');
 assert.throws(() => completeStep(state, onboarding.id, 'financial', { monthlyAmount: '' }, 'melyssa'), /Add the agreed monthly amount/);
 assert.throws(() => completeStep(state, onboarding.id, 'financial', { monthlyAmount: '5500', terms: 'Monthly in advance', payer: 'Lottery' }, 'melyssa'), /who pays/);
-completeStep(state, onboarding.id, 'financial', { monthlyAmount: '5500', terms: 'Monthly in advance', payer: 'Employer' }, 'melyssa');
+completeStep(state, onboarding.id, 'financial', { monthlyAmount: '5500', terms: 'Monthly in advance', payer: 'Employer', guarantorName: 'Nadim Khoury', guarantorRelation: 'Sibling', guarantorPhone: '+961 70 111 222' }, 'melyssa');
 assert.equal(onboarding.steps.financial.monthlyAmount, 5500);
 assert.throws(() => completeStep(state, onboarding.id, 'agreement', {}, 'melyssa'), /signed agreement/);
 completeStep(state, onboarding.id, 'agreement', { signature: { name: 'Rami Khoury', at: now.toISOString() } }, 'melyssa');
+completeStep(state, onboarding.id, 'payment', { amount: 5500, method: 'Bank transfer', date: '2026-11-02' }, 'kteish');
 const agreement = state.documents.find(doc => doc.id === onboarding.steps.agreement.documentId);
 assert.equal(agreement.status, 'Signed electronically');
 // Beds in a room that isn't ready are not offered; a held bed's room can't be shrunk, removed or closed.
@@ -50,6 +51,8 @@ const [room, bed] = ['201', 2];
 assert.ok(freeBeds(state).some(([id, number]) => id === room && number === bed));
 assert.throws(() => completeStep(state, onboarding.id, 'room', { roomId: '1', bed: 1 }, 'melyssa'), /Room 1, bed a is not free/);
 completeStep(state, onboarding.id, 'room', { roomId: room, bed }, 'melyssa');
+assert.equal(canAdmit(onboarding), false, 'Mazen signs the room ready first');
+completeStep(state, onboarding.id, 'ready', {}, 'mazen');
 assert.equal(canAdmit(onboarding), true);
 assert.throws(() => setRoomStatus(state, room, 'Maintenance', 'mazen'), /Room 201, bed b is held for Rami Khoury/);
 assert.throws(() => removeRoom(state, room, 'mazen'), /held for/);
@@ -112,7 +115,7 @@ assert.equal(stuckOnboarding.psychologistAppointmentId, rebooked.id);
 // Wallet rules carried over from the previous preview.
 addWalletDeposit(state, { patientId: patient.id, amount: '50.00', description: 'Family deposit', recordedBy: 'melyssa' });
 assert.equal(walletBalanceCents(state, patient.id), 5000);
-assert.throws(() => addWalletPurchase(state, { patientId: patient.id, amount: '60', description: 'Shoes', recordedBy: 'rsa' }), /This purchase is higher than the available wallet balance\./);
+assert.throws(() => addWalletPurchase(state, { patientId: patient.id, amount: '60', description: 'Shoes', recordedBy: 'georgio', signature: { at: '2026-11-02T10:00:00Z', name: 'Patient' } }), /This purchase is higher than the available wallet balance\./);
 assert.throws(() => addWalletDeposit(state, { patientId: patient.id, amount: '-5', description: 'x' }), /positive amount/);
 
 await withSsr(async ({ load, html }) => {

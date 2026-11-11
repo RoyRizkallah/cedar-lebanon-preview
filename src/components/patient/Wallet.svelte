@@ -1,5 +1,6 @@
 <script>
   import Icon from '../Icon.svelte';
+  import SignaturePad from '../SignaturePad.svelte';
   import { db, session, commit } from '../../lib/store.svelte.js';
   import { walletBalanceCents, walletTransactionsFor, addWalletDeposit, addWalletPurchase, formatCents, hasWallet } from '../../lib/wallet.js';
   import { staffName, canDo } from '../../lib/people.js';
@@ -13,11 +14,13 @@
   const requests = $derived(db.requests.filter(item => item.patientId === patient.id).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))));
   let entry = $state(null);
   let error = $state('');
+  // Cash goes out only against the patient's signature (Finance SOP 4.2).
+  let signing = $state(false);
 
-  function save() {
+  function save(signature) {
     error = '';
     try {
-      const payload = { patientId: patient.id, amount: entry.amount, description: entry.description, recordedBy: me };
+      const payload = { patientId: patient.id, amount: entry.amount, description: entry.description, recordedBy: me, signature };
       commit(state => (entry.kind === 'credit' ? addWalletDeposit : addWalletPurchase)(state, payload));
       say(entry.kind === 'credit' ? 'Top-up recorded' : 'Purchase recorded');
       entry = null;
@@ -38,22 +41,23 @@
   </div>
 
   {#if entry}
-    <form class="panel panel-body stack" style="margin-top: 12px" onsubmit={event => { event.preventDefault(); save(); }}>
+    <form class="panel panel-body stack" style="margin-top: 12px" onsubmit={event => { event.preventDefault(); if (entry.kind === 'purchase') signing = true; else save(); }}>
       <strong>{entry.kind === 'credit' ? 'Money received for this patient' : 'Item bought and handed over'}</strong>
       <div class="grid-2">
         <label class="field"><span>Amount <span class="hint">USD</span></span><input class="input" inputmode="decimal" bind:value={entry.amount} placeholder="0.00" /></label>
         <label class="field"><span>{entry.kind === 'credit' ? 'From' : 'What was bought'}</span><input class="input" bind:value={entry.description} /></label>
       </div>
-      <div class="row">{#if error}<span class="error">{error}</span>{/if}<button class="btn dark" type="submit">Save</button><button class="btn ghost" type="button" onclick={() => { entry = null; }}>Cancel</button></div>
+      <div class="row">{#if error}<span class="error">{error}</span>{/if}<button class="btn dark" type="submit">{entry.kind === 'purchase' ? 'Patient signs' : 'Save'}</button><button class="btn ghost" type="button" onclick={() => { entry = null; }}>Cancel</button></div>
     </form>
   {/if}
+  {#if signing}<SignaturePad title="Received from petty cash" signerName={patient.fullName} onclose={() => { signing = false; }} onsign={signature => { signing = false; save(signature); }} />{/if}
 
   <div class="wallet-grid">
     <section class="panel">
       <div class="panel-head"><h3>History</h3></div>
       <ul class="list">
         {#each history as item (item.id)}
-          <li><div class="grow"><div class="title">{item.description}</div><div class="sub">{fmtDate(item.date)}, {staffName(item.recordedBy)}</div></div>
+          <li><div class="grow"><div class="title">{item.description}</div><div class="sub">{fmtDate(item.date)}, {staffName(item.recordedBy)}{item.signedBy ? `, signed by ${item.signedBy}` : ''}</div></div>
             <strong class="num" style:color={item.type === 'credit' ? 'var(--ok)' : ''}>{item.type === 'opened' ? '—' : `${item.type === 'credit' ? '+' : '−'}${formatCents(item.amountCents)}`}</strong></li>
         {/each}
       </ul>

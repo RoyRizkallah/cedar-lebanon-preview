@@ -68,7 +68,7 @@ export function dischargePatient(state, patientId, { date, type, note = '' }, st
   }
   Object.assign(patient, { status: 'Discharged', dischargedAt: day, dischargeType: type, dischargeNote: String(note).trim(), dischargedBy: staffId, roomId: '', bed: null });
 
-  const finance = STAFF.find(person => hasRole(person.id, 'finance-head'))?.id;
+  const finance = STAFF.find(person => hasRole(person.id, 'ledger'))?.id;
   state.tasks.push({ id: nextId('T', state.tasks), kind: 'final-bill', title: `Final bill: ${patient.fullName}`, owner: finance, due: addDays(day, 2), patientId, link: '#/finance/invoices', status: 'open' });
   for (const [contact, days] of FOLLOWUP_OFFSETS) {
     state.tasks.push({ id: nextId('T', state.tasks), kind: 'followup-call', title: `${contact} follow-up call`, owner: 'melyssa', due: addDays(day, days), patientId, link: `#/patients/${patientId}/followup`, status: 'open' });
