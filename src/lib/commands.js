@@ -12,6 +12,7 @@ import { approveOrder, raiseOrder, receiveOrder, rejectOrder, setKitchenCeiling 
 import { createInquiry, declineInquiry, logCall, markNoShow, moveInquiry, recordFollowUp, reopenInquiry, runFollowUpAlerts, runInquiryAging, scheduleAssessment, sendClarification, startFollowUp, updateInquiry } from './pipeline.js';
 import { archiveProgram, assignProgram, createProgram, endAssignment, restoreProgram, updateProgram } from './programs.js';
 import { addWalletDeposit, addWalletPurchase } from './wallet.js';
+import { recordCashCount, witnessCashCount, reconcileCashCount, issueStatement } from './cash.js';
 import { approveRequest, cancelRequest, completeRequest, createRequest, declineRequest, uploadInvoice } from './requests.js';
 import { addRoom, removeRoom, setRoomStatus, updateRoom } from './rooms.js';
 import { logVisit, reportIncident, returnLeave, reviewIncident, runLeaveAlerts, startLeave } from './safety.js';
@@ -46,6 +47,7 @@ export const FUNCTIONS = {
   archiveProgram, assignProgram, createProgram, endAssignment, restoreProgram, updateProgram, walletDeposit, walletPurchase, invoiceMonths, approveRequest, cancelRequest, completeRequest, createRequest, declineRequest, uploadInvoice,
   addRoom, removeRoom, setRoomStatus, updateRoom, logVisit, reportIncident, returnLeave, reviewIncident, runLeaveAlerts, startLeave,
   book, cancelAppointment, completeAppointment, recordPrescription, recordPsychiatrist, addCheckin, addComment, completeTask, reviewPrescription,
+  recordCashCount, witnessCashCount, reconcileCashCount, issueStatement,
   markRead, markAllRead
 };
 
@@ -92,6 +94,7 @@ const ACCESS = {
   // A task is closed by the person it belongs to, or by intake on an inquiry.
   completeTask: (staffId, [id], state) => state.tasks.find(item => item.id === id)?.owner === staffId || canDo(staffId, 'editInquiry'),
   reviewPrescription: can('viewPrescriptions'),
+  recordCashCount: can('pettyCash'), witnessCashCount: staffId => ['omar', 'melyssa'].includes(staffId), reconcileCashCount: can('reconcileCash'), issueStatement: can('issueStatement'),
   markRead: anyone, markAllRead: anyone
 };
 

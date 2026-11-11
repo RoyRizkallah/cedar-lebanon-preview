@@ -13,7 +13,7 @@ const hashToken = token => createHash('sha256').update(token).digest('hex');
 const derive = (password, salt) => scryptSync(password, salt, 64, SCRYPT);
 
 // Everything about patients and money starts empty for real use; the house itself (rooms, programs) is kept.
-const PATIENT_DATA = ['leads', 'inquiries', 'onboardings', 'patients', 'appointments', 'forms', 'documents', 'requests', 'tasks', 'notifications', 'activity', 'visits', 'leaves', 'incidents', 'checkins', 'comments', 'programAssignments', 'orders'];
+const PATIENT_DATA = ['leads', 'inquiries', 'onboardings', 'patients', 'appointments', 'forms', 'documents', 'requests', 'tasks', 'notifications', 'activity', 'visits', 'leaves', 'incidents', 'checkins', 'comments', 'programAssignments', 'orders', 'cashCounts', 'statements'];
 export function initialState({ demo = false, now = new Date() } = {}) {
   const state = seed(now);
   if (demo) return state;

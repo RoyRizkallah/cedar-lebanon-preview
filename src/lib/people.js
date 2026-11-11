@@ -95,6 +95,9 @@ const ACTIONS = {
   topUpWallet: [...INTAKE, 'finance'],
   // Finance SOP Part 4: the custodian holds and hands out the cash; nobody else does.
   pettyCash: ['petty-cash'],
+  // Finance owns the ledger: Kteish reconciles the weekly count; Finance issues family statements.
+  reconcileCash: ['ledger', 'finance-head'],
+  issueStatement: ['finance'],
   createRequest: [...INTAKE, 'ops', 'rsa'],
   manageDocuments: [...INTAKE, 'nurse'],
   manageRooms: [...INTAKE, 'ops'],

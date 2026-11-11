@@ -1,4 +1,5 @@
 <script>
+  import CashCounts from '../components/CashCounts.svelte';
   import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
@@ -13,7 +14,7 @@
   let { args = [] } = $props();
   const me = session.staffId;
   const today = todayISO(session.now);
-  const TABS = [['overview', 'Overview'], ['invoices', 'Invoices'], ['expenses', 'Bills'], ['ledger', 'Journal'], ['trial', 'Trial balance'], ['bank', 'Bank'], ['payers', 'Payers']];
+  const TABS = [['overview', 'Overview'], ['invoices', 'Invoices'], ['expenses', 'Bills'], ['cash', 'Petty cash'], ['ledger', 'Journal'], ['trial', 'Trial balance'], ['bank', 'Bank'], ['payers', 'Payers']];
   const tab = $derived(TABS.some(([id]) => id === args[0]) ? args[0] : 'overview');
 
   let query = $state('');
@@ -108,6 +109,8 @@
       </section>
     </div>
 
+  {:else if tab === 'cash'}
+    <CashCounts />
   {:else if tab === 'invoices'}
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search invoice, patient or payer" aria-label="Search invoices" bind:value={query} />

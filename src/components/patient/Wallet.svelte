@@ -5,7 +5,7 @@
   import { db, session } from '../../lib/store.svelte.js';
   import { walletBalanceCents, walletTransactionsFor, formatCents, hasWallet } from '../../lib/wallet.js';
   import { staffName, canDo } from '../../lib/people.js';
-  import { fmtDate } from '../../lib/dates.js';
+  import { fmtDate, todayISO } from '../../lib/dates.js';
   import { say } from '../../lib/ui.svelte.js';
 
   let { patient } = $props();
@@ -13,6 +13,14 @@
   const balance = $derived(walletBalanceCents(db, patient.id));
   const history = $derived(walletTransactionsFor(db, patient.id));
   const requests = $derived(db.requests.filter(item => item.patientId === patient.id).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))));
+  // Family statements (Finance SOP 4.3): issued by Finance only, monthly or on request.
+  const statements = $derived((db.statements || []).filter(item => item.patientId === patient.id).sort((a, b) => b.month.localeCompare(a.month) || String(b.issuedAt).localeCompare(String(a.issuedAt))));
+  let month = $state(todayISO(session.now).slice(0, 7));
+  let statementError = $state('');
+  function issue() {
+    statementError = '';
+    try { act('issueStatement', patient.id, month); say('Statement issued'); } catch (e) { statementError = e.message; }
+  }
   let entry = $state(null);
   let error = $state('');
   // Cash goes out only against the patient's signature (Finance SOP 4.2).
@@ -52,6 +60,30 @@
     </form>
   {/if}
   {#if signing}<SignaturePad title="Received from petty cash" signerName={patient.fullName} onclose={() => { signing = false; }} onsign={signature => { signing = false; save(signature); }} />{/if}
+
+  <section class="panel" style="margin-top: 16px">
+    <div class="panel-head"><h3>Family statements</h3>
+      {#if canDo(me, 'issueStatement')}<div class="row" style="gap: 6px"><input class="input" type="month" aria-label="Statement month" bind:value={month} style="width: 160px" /><button class="btn sm dark" onclick={issue}>Issue statement</button></div>{/if}
+    </div>
+    {#if statementError}<p class="error" role="alert" style="margin: 0 16px 10px">{statementError}</p>{/if}
+    <ul class="list">
+      {#each statements as item (item.id)}
+        <li style="display: block">
+          <details>
+            <summary><strong>{item.month}</strong><span class="faint"> issued {fmtDate(item.issuedAt)} by {staffName(item.issuedBy)}. Closing balance {formatCents(item.closingCents)}</span></summary>
+            <table class="table" style="margin-top: 8px">
+              <tbody>
+                <tr><td>Opening balance</td><td class="num">{formatCents(item.openingCents)}</td></tr>
+                <tr><td>Top-ups received</td><td class="num">+{formatCents(item.topUpsCents)}</td></tr>
+                {#each item.disbursements as line}<tr><td>{fmtDate(line.date)}, {line.description}</td><td class="num">−{formatCents(line.amountCents)}</td></tr>{/each}
+                <tr><td><strong>Closing balance</strong></td><td class="num"><strong>{formatCents(item.closingCents)}</strong></td></tr>
+              </tbody>
+            </table>
+          </details>
+        </li>
+      {:else}<li class="faint">No statement issued yet. Finance issues one each month, and on request.</li>{/each}
+    </ul>
+  </section>
 
   <div class="wallet-grid">
     <section class="panel">

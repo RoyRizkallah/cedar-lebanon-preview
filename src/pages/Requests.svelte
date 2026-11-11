@@ -13,6 +13,7 @@
   import { dialogFocus } from '../lib/dialogFocus.js';
   import { go, say, takeIntent } from '../lib/ui.svelte.js';
   import { todayISO } from '../lib/dates.js';
+  import CashCounts from '../components/CashCounts.svelte';
 
   let { args = [] } = $props();
   const me = session.staffId;
@@ -20,7 +21,9 @@
   const startPatient = args[0] === 'new' ? args[1] : '';
 
   let view = $state('Open');
-  const tab = $derived(args[0] === 'checkins' ? 'checkins' : 'requests');
+  // The weekly cash count belongs to Georgio and the two people who witness it.
+  const countsCash = canDo(me, 'pettyCash') || ['omar', 'melyssa'].includes(me);
+  const tab = $derived(args[0] === 'checkins' ? 'checkins' : args[0] === 'cash' && countsCash ? 'cash' : 'requests');
   const today = todayISO(session.now);
   let checkin = $state({ patientId: '', mood: 'Settled', note: '' });
   const residents = $derived(patients.filter(p => p.program !== 'Outpatient'));
@@ -73,9 +76,12 @@
   <nav class="tabs" aria-label="Resident support" style="margin-bottom: 18px">
     <a href="#/requests" aria-current={tab === 'requests' ? 'page' : undefined}>Requests</a>
     <a href="#/requests/checkins" aria-current={tab === 'checkins' ? 'page' : undefined}>Daily check-ins{notYet.length ? ` (${notYet.length} to do)` : ''}</a>
+    {#if countsCash}<a href="#/requests/cash" aria-current={tab === 'cash' ? 'page' : undefined}>Weekly cash count</a>{/if}
   </nav>
 
-  {#if tab === 'checkins'}
+  {#if tab === 'cash'}
+    <CashCounts />
+  {:else if tab === 'checkins'}
     <div class="checkin-grid">
       <form class="panel panel-body stack" onsubmit={event => { event.preventDefault(); saveCheckin(); }}>
         <h3>Record a check-in</h3>

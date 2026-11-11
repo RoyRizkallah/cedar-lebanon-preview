@@ -9,6 +9,8 @@ import { openStore, initialState } from '../server/store.mjs';
 import { STAFF, RESIDENTS, pagesFor, tabsFor, visiblePatients } from '../src/lib/people.js';
 
 const PASSWORD = 'roles check password';
+// Screens inside a page that only some people have.
+const EXTRA = { georgio: ['requests/cash'], omar: ['requests/cash'], melyssa: ['requests/cash'], kteish: ['finance/cash'], rabih: ['finance/cash'], amer: ['finance/cash'] };
 const dir = mkdtempSync(join(tmpdir(), 'cedar-roles-'));
 const state = initialState({ demo: true });
 { const store = openStore(dir); store.saveState(state); for (const person of [...STAFF, ...RESIDENTS]) store.setPassword(person.id, PASSWORD); store.close(); }
@@ -68,6 +70,7 @@ try {
     const pages = pagesFor(person.id).map(page => page.id);
     let count = 0;
     for (const page of pages) { await visit(person.id, page); count++; }
+    for (const extra of EXTRA[person.id] || []) { await visit(person.id, extra); count++; }
     // The patient file, every tab this person has, on the first patient they look after.
     const patient = pages.includes('patients') ? visiblePatients(state, person.id)[0] : null;
     if (patient) for (const tab of tabsFor(person.id)) { await visit(person.id, `patients/${patient.id}/${tab.id}`); count++; }

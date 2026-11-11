@@ -69,7 +69,7 @@ export function seed(now = new Date()) {
     version: SEED_VERSION, leads: [], inquiries: [], onboardings: [], patients: [], rooms: ROOMS.map(room => ({ ...room })),
     appointments: [], forms: [], documents: [], wallet: { transactions: [] }, requests: [], tasks: [], notifications: [], activity: [],
     finance: { invoices: [], expenses: [], manualEntries: [], bankEntries: [] }, medication: { orders: [], doses: [], tests: [] }, visits: [], leaves: [], incidents: [], checkins: [], comments: [], programs: [], programAssignments: [],
-    orders: [], kitchenCeiling: null
+    orders: [], kitchenCeiling: null, cashCounts: [], statements: []
   };
   let taskSeq = 0, docSeq = 0, apptSeq = 0, walletSeq = 0;
   const task = fields => state.tasks.push({ id: `T-${String(++taskSeq).padStart(4, '0')}`, status: 'open', ...fields });

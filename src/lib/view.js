@@ -65,6 +65,9 @@ export function viewFor(state, staffId) {
     visits: careTeam ? full.visits : [],
     leaves: careTeam ? full.leaves : [],
     orders: canSee(staffId, 'orders') ? full.orders : [],
+    // The custodian and witnesses see the counts they made or signed, never the expected balance or variance; Finance and Amer see all.
+    cashCounts: canSee(staffId, 'finance') ? full.cashCounts || [] : canDo(staffId, 'pettyCash') || ['omar', 'melyssa'].includes(staffId) ? (full.cashCounts || []).map(({ expectedCents, varianceCents, ...count }) => count) : [],
+    statements: canSee(staffId, 'finance') || canSeeTab(staffId, 'wallet') ? full.statements || [] : [],
     kitchenCeiling: canSee(staffId, 'orders') ? full.kitchenCeiling : null
   };
 }

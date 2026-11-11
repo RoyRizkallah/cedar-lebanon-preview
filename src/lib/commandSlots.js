@@ -88,6 +88,10 @@ export const SLOTS = {
   addComment: ['arg', 'me'],
   completeTask: ['arg', 'me', 'arg'],
   reviewPrescription: ['arg', 'me'],
+  recordCashCount: ['arg', 'me', 'now'],
+  witnessCashCount: ['arg', 'me', 'now'],
+  reconcileCashCount: ['arg', 'arg', 'me', 'now'],
+  issueStatement: ['arg', 'arg', 'me', 'now'],
   markRead: ['arg', 'me'],
   markAllRead: ['me']
 };
