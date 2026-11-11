@@ -1,9 +1,10 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
   import FormView from '../components/FormView.svelte';
   import { FORMS } from '../lib/forms/engine.js';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { ROUTES, SUBSTANCES, roundFor, recordDose, correctDose, addOrder, stopOrder, recordTest } from '../lib/medication.js';
   import { staffName, canDo } from '../lib/people.js';
   import { addDays, todayISO, fmtDate, fmtDay } from '../lib/dates.js';
@@ -35,9 +36,9 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
-  const mark = (item, status, note = '') => run(state => recordDose(state, { orderId: item.orderId, date, time: item.time, status, note }, me), `${patient(item.patientId).clinicalName}: ${status.toLowerCase()}`);
+  const mark = (item, status, note = '') => run(() => act('recordDose', { orderId: item.orderId, date, time: item.time, status, note }), `${patient(item.patientId).clinicalName}: ${status.toLowerCase()}`);
 </script>
 
 <main class="content wide">
@@ -131,7 +132,7 @@
               <td data-label="Rounds" class="num">{order.times.join(', ')}</td>
               <td data-label="Since">{fmtDate(order.startDate)}</td>
               <td data-label="Status"><span class="pill {order.status === 'Active' ? 'ok' : ''}">{order.status}</span></td>
-              <td>{#if records && order.status === 'Active'}<button class="btn sm ghost danger" onclick={() => run(state => stopOrder(state, order.id, me), 'Medication stopped')}>Stop</button>{/if}</td>
+              <td>{#if records && order.status === 'Active'}<button class="btn sm ghost danger" onclick={() => run(() => act('stopOrder', order.id), 'Medication stopped')}>Stop</button>{/if}</td>
             </tr>
           {/each}
         </tbody>
@@ -185,7 +186,7 @@
 
 {#if noting}
   <div class="scrim" onclick={() => { noting = null; }} aria-hidden="true"></div>
-  <form class="dialog" use:dialogFocus={{ onClose: () => { noting = null; } }} onsubmit={event => { event.preventDefault(); const ok = noting.correcting ? run(state => correctDose(state, noting.item.record.id, { status: noting.status, note: noting.note, reason: noting.reason }, me), 'Dose corrected') : mark(noting.item, noting.status, noting.note); if (ok) noting = null; }}>
+  <form class="dialog" use:dialogFocus={{ onClose: () => { noting = null; } }} onsubmit={event => { event.preventDefault(); const ok = noting.correcting ? run(() => act('correctDose', noting.item.record.id, { status: noting.status, note: noting.note, reason: noting.reason }), 'Dose corrected') : mark(noting.item, noting.status, noting.note); if (ok) noting = null; }}>
     <header class="drawer-head"><div class="grow"><h2>{noting.correcting ? 'Correct the dose record' : 'Dose not given'}</h2><p class="muted" style="margin-top: 4px">{patient(noting.item.patientId).clinicalName}, {noting.item.drug} {noting.item.dose} at {noting.item.time}. Fadia and Ahmed are told about refused and missed doses.</p></div></header>
     <div class="drawer-body stack">
       <div class="choices">{#each noting.correcting ? ['Given', 'Refused', 'Missed', 'Held'] : ['Refused', 'Missed', 'Held'] as option}<label class="choice"><input type="radio" name="dose" value={option} bind:group={noting.status} /><span>{option}</span></label>{/each}</div>
@@ -203,8 +204,8 @@
     event.preventDefault();
     const d = $state.snapshot(dialog);
     const ok = d.kind === 'order'
-      ? run(state => addOrder(state, { ...d, times: d.times.split(/[,\s]+/) }, me), 'Medication added to the rounds')
-      : run(state => recordTest(state, d, me), d.result === 'Positive' ? 'Positive screen recorded. Ahmed and the Clinical Director are notified.' : 'Drug screen recorded');
+      ? run(() => act('addOrder', { ...d, times: d.times.split(/[,\s]+/) }), 'Medication added to the rounds')
+      : run(() => act('recordTest', d), d.result === 'Positive' ? 'Positive screen recorded. Ahmed and the Clinical Director are notified.' : 'Drug screen recorded');
     if (ok) dialog = null;
   }}>
     <header class="drawer-head"><div class="grow"><h2>{dialog.kind === 'order' ? 'Start medication' : 'Record drug screen'}</h2></div></header>

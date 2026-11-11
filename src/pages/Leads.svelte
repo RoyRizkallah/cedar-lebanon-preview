@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import ChannelBadge from '../components/ChannelBadge.svelte';
   import InquiryFields from '../components/InquiryFields.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { CHANNELS, CLOSE_REASONS, leadStats, replyToLead, convertLead, closeLead, reopenLead, lastMessage } from '../lib/leads.js';
   import { CLARIFICATION_REPLY } from '../lib/pipeline.js';
   import { staffName } from '../lib/people.js';
@@ -32,7 +33,7 @@
 
   function send() {
     error = '';
-    try { commit(state => replyToLead(state, lead.id, reply, session.staffId)); reply = ''; say(`Reply queued on ${lead.channel}`); } catch (e) { error = e.message; }
+    try { act('replyToLead', lead.id, reply); reply = ''; say(`Reply queued on ${lead.channel}`); } catch (e) { error = e.message; }
   }
   function startConvert() {
     converting = { name: lead.name, phone: /^\+?\d/.test(lead.handle) ? lead.handle : '', email: lead.handle.includes('@') && !lead.handle.startsWith('@') ? lead.handle : '', source: lead.channel, contactPerson: session.staffId === 'ahmed' ? 'melyssa' : session.staffId, commPreference: lead.channel === 'WhatsApp' ? 'WhatsApp' : lead.channel === 'Email' ? 'Email' : 'Phone call', program: 'Inpatient', drugOfChoice: '', yearsOfUse: '', previousDetox: '', urgency: 'Normal', potentialRevenue: 0, notes: lastMessage(lead).text };
@@ -40,7 +41,7 @@
   function convert() {
     error = '';
     try {
-      const inquiry = commit(state => convertLead(state, lead.id, $state.snapshot(converting), session.staffId));
+      const inquiry = act('convertLead', lead.id, $state.snapshot(converting));
       converting = null;
       say(`${inquiry.name} added to New Inquiry`);
     } catch (e) { error = e.message; }
@@ -108,14 +109,14 @@
             {#if closing !== lead.id}<button class="btn ghost" onclick={() => { closing = lead.id; }}>Close</button>
             {:else}
               <span class="close-as" role="group" aria-label="Why is this lead closing?">
-                {#each CLOSE_REASONS as why}<button class="btn sm ghost" onclick={() => { commit(state => closeLead(state, lead.id, why, session.staffId)); closing = ''; say(`Lead closed: ${why.toLowerCase()}`); }}>{why}</button>{/each}
+                {#each CLOSE_REASONS as why}<button class="btn sm ghost" onclick={() => { act('closeLead', lead.id, why); closing = ''; say(`Lead closed: ${why.toLowerCase()}`); }}>{why}</button>{/each}
                 <button class="btn sm ghost icon" aria-label="Keep it open" onclick={() => { closing = ''; }}><Icon name="close" size={14} /></button>
               </span>
             {/if}
             <button class="btn primary" onclick={startConvert}><Icon name="plus" size={16} />Create inquiry</button>
           {:else}
             <span class="pill">Closed: {lead.closeReason || 'Not relevant'}</span>
-            <button class="btn" onclick={() => { commit(state => reopenLead(state, lead.id, session.staffId)); say('Lead reopened'); }}>Reopen</button>
+            <button class="btn" onclick={() => { act('reopenLead', lead.id); say('Lead reopened'); }}>Reopen</button>
           {/if}
           </div>
         </header>

@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import InquiryDrawer from '../components/InquiryDrawer.svelte';
   import AssessmentDialog from '../components/AssessmentDialog.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { FIRST_FOLLOW_UP_DAYS, INACTIVE, CALL_OUTCOMES, recordFollowUp, startFollowUp, declineInquiry, money, followUpPotential, noPhone } from '../lib/pipeline.js';
   import { staffName } from '../lib/people.js';
   import { fmtDay, todayISO, daysBetween } from '../lib/dates.js';
@@ -30,13 +31,13 @@
 
   function run(action, message) {
     error = '';
-    try { commit(action); say(message); return true; } catch (e) { error = e.message; return false; }
+    try { action(); say(message); return true; } catch (e) { error = e.message; return false; }
   }
   function save() {
     const d = $state.snapshot(dialog);
     const ok = d.kind === 'log'
-      ? run(state => recordFollowUp(state, d.id, { outcome: d.outcome, note: d.note }, me), 'Follow-up logged. With no assessment booked, it moves to the inactive log.')
-      : run(state => declineInquiry(state, d.id, d.reason, me), 'Inquiry closed');
+      ? run(() => act('recordFollowUp', d.id, { outcome: d.outcome, note: d.note }), 'Follow-up logged. With no assessment booked, it moves to the inactive log.')
+      : run(() => act('declineInquiry', d.id, d.reason), 'Inquiry closed');
     if (ok) dialog = null;
   }
 </script>
@@ -95,7 +96,7 @@
             <td data-label="Potential" class="num">{money(item.potentialRevenue)}</td>
             <td><div class="row" style="justify-content: flex-end; gap: 6px; flex-wrap: wrap">
               <button class="btn sm dark" onclick={() => { assessing = item.id; }}>Book assessment</button>
-              <button class="btn sm" onclick={() => run(state => startFollowUp(state, item.id, { days: FIRST_FOLLOW_UP_DAYS, note: 'Back from the inactive log' }, me), `${item.name} is back in follow-up`)}>Follow up again</button>
+              <button class="btn sm" onclick={() => run(() => act('startFollowUp', item.id, { days: FIRST_FOLLOW_UP_DAYS, note: 'Back from the inactive log' }), `${item.name} is back in follow-up`)}>Follow up again</button>
               <button class="btn sm ghost danger" onclick={() => { error = ''; dialog = { kind: 'close', id: item.id, name: item.name, reason: '' }; }}>Close</button>
             </div></td>
           </tr>

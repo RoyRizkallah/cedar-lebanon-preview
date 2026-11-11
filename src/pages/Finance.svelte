@@ -1,13 +1,14 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { canDo } from '../lib/people.js';
-  import { ACCOUNTS, EXPENSE_CATEGORIES, PAYMENT_METHODS, PAYERS, usd, accountName, paidOf, openBalance, invoiceStatus, createInvoice, invoiceMonth, recordPayment, reversePayment, addBankLine, voidInvoice, createExpense, approveExpense, rejectExpense, payExpense, addManualEntry, buildJournal, trialBalance, totals, bankJournalLines, matchBank, payerBalances } from '../lib/finance.js';
+  import { ACCOUNTS, EXPENSE_CATEGORIES, PAYMENT_METHODS, PAYERS, usd, accountName, paidOf, openBalance, invoiceStatus, createInvoice, recordPayment, reversePayment, addBankLine, voidInvoice, createExpense, approveExpense, rejectExpense, payExpense, addManualEntry, buildJournal, trialBalance, totals, bankJournalLines, matchBank, payerBalances } from '../lib/finance.js';
   import { fmtDate, todayISO } from '../lib/dates.js';
   import { downloadCsv } from '../lib/csv.js';
   import { dialogFocus } from '../lib/dialogFocus.js';
-  import { go, say } from '../lib/ui.svelte.js';
+  import { say } from '../lib/ui.svelte.js';
 
   let { args = [] } = $props();
   const me = session.staffId;
@@ -36,12 +37,12 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
   const close = () => { dialog = null; error = ''; };
   function invoiceAll() {
     let count = 0;
-    run(state => { for (const patient of uninvoiced) { invoiceMonth(state, patient.id, month, me); count++; } });
+    run(() => { count = act('invoiceMonths', uninvoiced.map(patient => patient.id), month); });
     say(`${count} invoice${count === 1 ? '' : 's'} issued for this month`);
   }
   const exportInvoices = () => downloadCsv('cedar-invoices', [
@@ -145,7 +146,7 @@
               <td data-label="Category">{accountName(item.category)}</td><td data-label="Due">{fmtDate(item.due)}</td><td data-label="Amount" class="num">{usd(item.amount)}</td>
               <td data-label="Status"><span class="pill {item.status === 'Paid' ? 'ok' : item.status === 'Approved' ? 'info' : item.status === 'Rejected' ? '' : 'warn'}" title={item.rejectReason || ''}>{item.status}</span></td>
               <td><div class="row" style="justify-content: flex-end">
-                {#if item.status === 'Pending approval' && canDo(me, 'approveExpense')}<button class="btn sm ghost danger" onclick={() => { dialog = { kind: 'reject', id: item.id, reason: '' }; }}>Reject</button><button class="btn sm dark" onclick={() => run(state => approveExpense(state, item.id, me), 'Bill approved')}>Approve</button>{/if}
+                {#if item.status === 'Pending approval' && canDo(me, 'approveExpense')}<button class="btn sm ghost danger" onclick={() => { dialog = { kind: 'reject', id: item.id, reason: '' }; }}>Reject</button><button class="btn sm dark" onclick={() => run(() => act('approveExpense', item.id), 'Bill approved')}>Approve</button>{/if}
                 {#if item.status === 'Approved'}<button class="btn sm dark" onclick={() => { dialog = { kind: 'bill-payment', id: item.id, amount: item.amount - item.payments.reduce((s, p) => s + p.amount, 0), method: 'Bank transfer', date: today, reference: '' }; }}>Pay</button>{/if}
               </div></td>
             </tr>
@@ -199,7 +200,7 @@
               <td class="lead-cell"><strong>{line.description}</strong><div class="faint" style="font-size: 12px">{line.reference}</div></td>
               <td data-label="Date">{fmtDate(line.date)}</td><td data-label="Amount" class="num" style:color={line.amount < 0 ? 'var(--urgent)' : 'var(--ok)'}>{usd(line.amount)}</td>
               <td data-label="Matched to">
-                <select class="select" style="height: 34px; min-width: 240px" aria-label={`Match ${line.description}`} value={line.matchedJournalId} onchange={event => run(state => matchBank(state, line.id, event.currentTarget.value, me), event.currentTarget.value ? 'Matched' : 'Unmatched')}>
+                <select class="select" style="height: 34px; min-width: 240px" aria-label={`Match ${line.description}`} value={line.matchedJournalId} onchange={event => run(() => act('matchBank', line.id, event.currentTarget.value), event.currentTarget.value ? 'Matched' : 'Unmatched')}>
                   <option value="">Not matched</option>
                   {#each bankLines.filter(entry => entry.amount === line.amount || entry.id === line.matchedJournalId) as entry (entry.id)}<option value={entry.id}>{fmtDate(entry.date)}: {entry.description}</option>{/each}
                 </select>
@@ -228,15 +229,15 @@
     event.preventDefault();
     const d = $state.snapshot(dialog);
     const done = {
-      invoice: () => run(state => createInvoice(state, d, me), 'Invoice issued'),
-      payment: () => run(state => recordPayment(state, d.id, d, me), 'Payment recorded'),
-      void: () => run(state => voidInvoice(state, d.id, d.reason, me), 'Invoice voided'),
-      reverse: () => run(state => reversePayment(state, d.id, d.paymentId, d.reason, me), 'Payment reversed'),
-      reject: () => run(state => rejectExpense(state, d.id, d.reason, me), 'Bill rejected'),
-      bank: () => run(state => addBankLine(state, d, me), 'Statement line added'),
-      expense: () => run(state => createExpense(state, d, me), 'Bill recorded and sent to Amer and Rabih for approval'),
-      'bill-payment': () => run(state => payExpense(state, d.id, d, me), 'Bill paid'),
-      manual: () => run(state => addManualEntry(state, d, me), 'Journal entry posted')
+      invoice: () => run(() => act('createInvoice', d), 'Invoice issued'),
+      payment: () => run(() => act('recordPayment', d.id, d), 'Payment recorded'),
+      void: () => run(() => act('voidInvoice', d.id, d.reason), 'Invoice voided'),
+      reverse: () => run(() => act('reversePayment', d.id, d.paymentId, d.reason), 'Payment reversed'),
+      reject: () => run(() => act('rejectExpense', d.id, d.reason), 'Bill rejected'),
+      bank: () => run(() => act('addBankLine', d), 'Statement line added'),
+      expense: () => run(() => act('createExpense', d), 'Bill recorded and sent to Amer and Rabih for approval'),
+      'bill-payment': () => run(() => act('payExpense', d.id, d), 'Bill paid'),
+      manual: () => run(() => act('addManualEntry', d), 'Journal entry posted')
     }[d.kind]();
     if (done) close();
   }}>

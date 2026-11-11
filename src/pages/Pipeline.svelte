@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import InquiryDrawer from '../components/InquiryDrawer.svelte';
   import InquiryFields from '../components/InquiryFields.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { STAGES, PROGRAMS, createInquiry, moveInquiry, reviewDue, timeInStageHours, noPhone, money, isOpen, potentialTotals, startFollowUp, FOLLOW_UP_DAYS, assessmentFor, markNoShow, drugLabel, assessorName } from '../lib/pipeline.js';
   import AssessmentDialog from '../components/AssessmentDialog.svelte';
   import { dashboard } from '../lib/kpis.js';
@@ -46,11 +47,11 @@
     if (stage === 'Assessment') { assessing = id; return; }
     try {
       if (stage === 'Follow-up') {
-        commit(state => startFollowUp(state, id, {}, me));
+        act('startFollowUp', id, {});
         say(`${db.inquiries.find(item => item.id === id)?.name} moved to Follow-ups. Reminder in ${FOLLOW_UP_DAYS} days.`);
         return;
       }
-      commit(state => moveInquiry(state, id, stage, me));
+      act('moveInquiry', id, stage);
       const name = db.inquiries.find(item => item.id === id)?.name;
       say(stage === 'Agreement' ? `${name} moved to Agreement. Admission started.` : `${name} moved to ${stage}`);
     } catch (e) { error = e.message; }
@@ -67,7 +68,7 @@
   function create() {
     error = '';
     try {
-      const inquiry = commit(state => createInquiry(state, $state.snapshot(creating), me));
+      const inquiry = act('createInquiry', $state.snapshot(creating));
       creating = null;
       say(`${inquiry.name} added to New Inquiry`);
     } catch (e) { error = e.message; }
@@ -127,7 +128,7 @@
                 {#if item.stage === 'Assessment'}
                   {@const booked = assessmentFor(db, item.id)}
                   {#if item.noShows}<span class="pill warn">No-show{item.noShows > 1 ? ` ×${item.noShows}` : ''}</span>{/if}
-                  {#if booked && editable && booked.status === 'Booked'}<button class="book-next" onclick={() => { error = ''; try { commit(state => markNoShow(state, item.id, me)); say(`${item.name} marked as no-show. Rebook when you reach them.`); } catch (e) { error = e.message; } }}>Mark no-show</button>{/if}
+                  {#if booked && editable && booked.status === 'Booked'}<button class="book-next" onclick={() => { error = ''; try { act('markNoShow', item.id); say(`${item.name} marked as no-show. Rebook when you reach them.`); } catch (e) { error = e.message; } }}>Mark no-show</button>{/if}
                   {#if booked}<span class="booked"><Icon name="calendar" size={13} />{fmtDay(booked.date)}, {booked.start}, {assessorName(booked)}{booked.mode && booked.mode !== 'In person' ? ` (${booked.mode.toLowerCase()})` : ''}</span>
                   {:else if editable}<button class="pill warn as-button" onclick={() => { assessing = item.id; }}>Not booked: book it</button>{:else}<span class="pill warn">Not booked</span>{/if}
                 {/if}

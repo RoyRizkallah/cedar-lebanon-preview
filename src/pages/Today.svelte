@@ -1,7 +1,8 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import FormView from '../components/FormView.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { tasksFor, completeTask, reviewPrescription } from '../lib/tasks.js';
   import { staffById, staffName, canSeeTab } from '../lib/people.js';
   import { houseToday, milestonesFor, floorNotes, teamFeed, daysAway } from '../lib/today.js';
@@ -46,11 +47,11 @@
   const hours = $derived(Array.from({ length: Math.floor((END - START) / 60) + 1 }, (_, index) => START + index * 60));
 
   let note = $state(null);
-  function act(item) {
+  function handle(item) {
     if (item.kind === 'note') { note = { formId: 'session', patientId: item.patientId, appointmentId: item.appointmentId }; return; }
     if (CALLS.includes(item.kind)) { go(item.link); return; }
-    if (item.taskId) { commit(state => completeTask(state, item.taskId, me)); say('Marked done'); return; }
-    if (item.kind === 'prescription') { commit(state => reviewPrescription(state, item.docId, me)); say('Prescription reviewed'); return; }
+    if (item.taskId) { act('completeTask', item.taskId); say('Marked done'); return; }
+    if (item.kind === 'prescription') { act('reviewPrescription', item.docId); say('Prescription reviewed'); return; }
     go(item.link);
   }
   const actionLabel = item => CALLS.includes(item.kind) ? 'Log call' : item.taskId ? 'Mark done' : item.kind === 'prescription' ? 'Mark reviewed' : item.kind === 'note' ? 'Write note' : item.kind === 'sign' ? 'Sign' : 'Open';
@@ -105,7 +106,7 @@
               <span class="kind"><Icon name={ICONS[item.kind] || 'check'} size={17} /></span>
               <a class="grow task-link" href={item.link}><strong>{item.title}</strong><span>{item.sub}</span></a>
             </div>
-            <footer><span class="when">{column.key === 'today' ? 'Today' : fmtDay(item.due)}</span><button class="btn sm" class:dark={column.key !== 'upcoming'} onclick={() => act(item)}>{actionLabel(item)}</button></footer>
+            <footer><span class="when">{column.key === 'today' ? 'Today' : fmtDay(item.due)}</span><button class="btn sm" class:dark={column.key !== 'upcoming'} onclick={() => handle(item)}>{actionLabel(item)}</button></footer>
           </article>
         {:else}
           <p class="clear">{column.key === 'overdue' ? 'Nothing overdue.' : column.key === 'today' ? 'You’re clear for today.' : 'Nothing scheduled yet.'}</p>

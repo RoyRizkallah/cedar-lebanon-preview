@@ -1,7 +1,8 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { canDo } from '../lib/people.js';
   import { ROOM_STATUSES, WINGS, roomBoard, setRoomStatus, addRoom, updateRoom, removeRoom } from '../lib/rooms.js';
   import { fmtDate } from '../lib/dates.js';
@@ -21,11 +22,11 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
   function save() {
     const d = $state.snapshot(editing);
-    const ok = d.isNew ? run(state => addRoom(state, d, me), `Room ${d.id} added`) : run(state => updateRoom(state, d.id, d, me), `Room ${d.id} updated`);
+    const ok = d.isNew ? run(() => act('addRoom', d), `Room ${d.id} added`) : run(() => act('updateRoom', d.id, d), `Room ${d.id} updated`);
     if (ok) editing = null;
   }
 </script>
@@ -69,7 +70,7 @@
                 <header>
                   <div class="grow"><h3><span class="door"><Icon name="door" size={14} /></span>Room {room.id}</h3><span class="faint">{room.beds.length} {room.beds.length === 1 ? 'bed' : 'beds'}{room.access === 'Step-free' ? ', step-free' : ''}</span></div>
                   {#if manage}
-                    <select class="status-select s-{room.status.toLowerCase()}" aria-label={`Room ${room.id} status`} value={room.status} onchange={event => { const value = event.currentTarget.value; if (!run(state => setRoomStatus(state, room.id, value, me), `Room ${room.id}: ${value}`)) event.currentTarget.value = room.status; }}>
+                    <select class="status-select s-{room.status.toLowerCase()}" aria-label={`Room ${room.id} status`} value={room.status} onchange={event => { const value = event.currentTarget.value; if (!run(() => act('setRoomStatus', room.id, value), `Room ${room.id}: ${value}`)) event.currentTarget.value = room.status; }}>
                       {#each ROOM_STATUSES as status}<option>{status}</option>{/each}
                     </select>
                   {:else}<span class="pill {room.status === 'Ready' ? 'ok' : 'warn'}">{room.status}</span>{/if}
@@ -118,7 +119,7 @@
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>
     <footer class="drawer-foot">
-      {#if !editing.isNew}<button class="btn ghost danger" type="button" style="margin-right: auto" onclick={() => { if (run(state => removeRoom(state, editing.id, me), `Room ${editing.id} removed`)) editing = null; }}>Remove room</button>{/if}
+      {#if !editing.isNew}<button class="btn ghost danger" type="button" style="margin-right: auto" onclick={() => { if (run(() => act('removeRoom', editing.id), `Room ${editing.id} removed`)) editing = null; }}>Remove room</button>{/if}
       <button class="btn" type="button" onclick={() => { editing = null; }}>Cancel</button><button class="btn primary" type="submit">Save</button>
     </footer>
   </form>

@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from './Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { notificationsFor, markRead, markAllRead } from '../lib/notifications.js';
   import { fmtAgo } from '../lib/dates.js';
   import { go } from '../lib/ui.svelte.js';
@@ -10,7 +11,7 @@
   const items = $derived(notificationsFor(db, session.staffId).slice(0, 30));
 
   function open(item) {
-    commit(state => markRead(state, item.id));
+    act('markRead', item.id);
     onclose();
     if (item.link) go(item.link);
   }
@@ -20,7 +21,7 @@
 <section class="popover notifications" aria-label="Notifications" use:dialogFocus={{ onClose: onclose }}>
   <header class="row between" style="padding: 8px 10px 10px">
     <h2 style="font-size: 15px">Notifications</h2>
-    {#if items.some(item => !item.read)}<button class="btn ghost sm" style="width: auto" onclick={() => commit(state => markAllRead(state, session.staffId))}>Mark all read</button>{/if}
+    {#if items.some(item => !item.read)}<button class="btn ghost sm" style="width: auto" onclick={() => act('markAllRead')}>Mark all read</button>{/if}
   </header>
   <div style="overflow-y: auto; max-height: min(70vh, 560px)">
     {#each items as item (item.id)}

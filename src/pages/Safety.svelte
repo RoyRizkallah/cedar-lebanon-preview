@@ -1,7 +1,8 @@
 <script>
+  import { act } from '../lib/act.js';
   import { onMount } from 'svelte';
   import Icon from '../components/Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { INCIDENT_TYPES, LEVELS, levelName, incidentCalls, canReview, logVisit, startLeave, returnLeave, leaveStatus, reportIncident, reviewIncident } from '../lib/safety.js';
   import { staffName, visiblePatients, canDo } from '../lib/people.js';
   import { incidentsFor } from '../lib/safety.js';
@@ -41,15 +42,15 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
   function submit() {
     const d = $state.snapshot(dialog);
     const ok = {
-      incident: () => run(state => reportIncident(state, d, me), `Incident reported to ${incidentCalls(Number(d.level), d.type).map(staffName).join(', ')}`),
-      visit: () => run(state => logVisit(state, d, me), 'Visit logged'),
-      leave: () => run(state => startLeave(state, d, me), 'Leave started'),
-      review: () => run(state => reviewIncident(state, d.id, d, me), 'Incident reviewed')
+      incident: () => run(() => act('reportIncident', d), `Incident reported to ${incidentCalls(Number(d.level), d.type).map(staffName).join(', ')}`),
+      visit: () => run(() => act('logVisit', d), 'Visit logged'),
+      leave: () => run(() => act('startLeave', d), 'Leave started'),
+      review: () => run(() => act('reviewIncident', d.id, d), 'Incident reviewed')
     }[d.kind]();
     if (ok) dialog = null;
   }
@@ -80,7 +81,7 @@
             <div class="out-top"><span class="live"></span><span class="out-label">{leave.state === 'Overdue' ? 'Overdue' : 'On leave'}</span><span class="countdown num">{left < 0 ? `${clock(-left)} late` : `${clock(left)} left`}</span></div>
             <strong>{name(leave.patientId)}</strong>
             <span class="out-sub">{leave.state === 'Overdue' ? 'Overdue, was due' : 'Out, due back'} {fmtDateTime(leave.dueBack)}{leave.escort ? `. With ${leave.escort}` : ''}</span>
-            {#if logsVisits}<button class="btn sm back" onclick={() => run(state => returnLeave(state, leave.id, me), `${name(leave.patientId)} is back`)}><Icon name="enter" size={14} />Back now</button>{/if}
+            {#if logsVisits}<button class="btn sm back" onclick={() => run(() => act('returnLeave', leave.id), `${name(leave.patientId)} is back`)}><Icon name="enter" size={14} />Back now</button>{/if}
             {#if leave.state === 'Overdue'}<button class="btn sm ghost danger" onclick={() => { error = ''; dialog = { kind: 'incident', patientId: leave.patientId, type: 'Absconding', level: 3, description: `Did not return from leave; was due back ${fmtDateTime(leave.dueBack)}${leave.escort ? `, out with ${leave.escort}` : ''}.`, actionTaken: '', date: today }; }}><Icon name="alert" size={14} />Report absconding</button>{/if}
           </div>
         {/each}

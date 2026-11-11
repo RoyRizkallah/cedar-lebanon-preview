@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from './Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { ASSESSMENT_MODES, ASSESSORS, scheduleAssessment, assessmentFor } from '../lib/pipeline.js';
   import { earliestSlot } from '../lib/scheduling.js';
   import { staffName } from '../lib/people.js';
@@ -23,7 +24,7 @@
   function save() {
     error = '';
     try {
-      commit(state => scheduleAssessment(state, id, $state.snapshot(booking), me, session.now));
+      act('scheduleAssessment', id, $state.snapshot(booking));
       say(`Assessment booked for ${inquiry.name}: ${fmtDay(booking.date)} at ${booking.start}`);
       onclose();
     } catch (e) { error = e.message; }

@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from './Icon.svelte';
   import InquiryFields from './InquiryFields.svelte';
   import ChannelBadge from './ChannelBadge.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { assessmentFor, assessorName, drugLabel, markNoShow, startFollowUp, FOLLOW_UP_DAYS, updateInquiry, declineInquiry, reopenInquiry, logCall, sendClarification, clarificationChannel, noPhone, money, timeInStageHours, reviewDue, CALL_OUTCOMES } from '../lib/pipeline.js';
   import { completeTask } from '../lib/tasks.js';
   import AssessmentDialog from './AssessmentDialog.svelte';
@@ -32,10 +33,10 @@
 
   function run(action, message) {
     error = '';
-    try { commit(action); if (message) say(message); return true; } catch (e) { error = e.message; return false; }
+    try { action(); if (message) say(message); return true; } catch (e) { error = e.message; return false; }
   }
-  const save = () => run(state => updateInquiry(state, id, $state.snapshot(fields), me), 'Inquiry saved');
-  const addCall = () => { if (run(state => logCall(state, id, $state.snapshot(call), me), 'Call logged')) call = { outcome: 'Reached', notes: '' }; };
+  const save = () => run(() => act('updateInquiry', id, $state.snapshot(fields)), 'Inquiry saved');
+  const addCall = () => { if (run(() => act('logCall', id, $state.snapshot(call)), 'Call logged')) call = { outcome: 'Reached', notes: '' }; };
 </script>
 
 <div class="scrim" onclick={onclose} aria-hidden="true"></div>
@@ -65,31 +66,31 @@
       <div class="row wrap">
         {#if inquiry.phone && !noPhone(inquiry)}<a class="btn" href={`tel:${inquiry.phone.replace(/\s/g, '')}`}><Icon name="phone" size={16} />Call {inquiry.phone}</a>{/if}
         {#if editable}
-          <button class="btn" onclick={() => run(state => sendClarification(state, id, me), `Clarification reply queued on ${clarificationChannel(inquiry)}`)} title="Sends the standard reply and keeps the inquiry where it is">
+          <button class="btn" onclick={() => run(() => act('sendClarification', id), `Clarification reply queued on ${clarificationChannel(inquiry)}`)} title="Sends the standard reply and keeps the inquiry where it is">
             <Icon name="send" size={15} />Answer &amp; keep
           </button>
           {#if inquiry.stage !== 'Agreement'}<button class="btn" onclick={() => { assessing = true; }}><Icon name="calendar" size={15} />{assessment ? 'Rebook assessment' : 'Book assessment'}</button>{/if}
           <button class="btn" onclick={() => { following = following ? null : { days: FOLLOW_UP_DAYS, note: '' }; }}><Icon name="clock" size={15} />Follow up later</button>
           <button class="btn ghost danger" onclick={() => { declining = !declining; }}>Decline</button>
         {/if}
-        {#if inquiry.outcome === 'Declined' && canDo(me, 'editInquiry')}<button class="btn" onclick={() => run(state => reopenInquiry(state, id, me), 'Inquiry reopened')}>Reopen</button>{/if}
+        {#if inquiry.outcome === 'Declined' && canDo(me, 'editInquiry')}<button class="btn" onclick={() => run(() => act('reopenInquiry', id), 'Inquiry reopened')}>Reopen</button>{/if}
         {#if onboarding}<a class="btn" href="#/admissions">Open admission</a>{/if}
         {#if lead}<a class="btn ghost" href={`#/leads/${lead.id}`}><ChannelBadge channel={lead.channel} small />Conversation</a>{/if}
       </div>
 
       {#if following}
-        <form class="panel panel-body stack" style="gap: 10px; padding-top: 18px" onsubmit={event => { event.preventDefault(); if (run(state => startFollowUp(state, id, $state.snapshot(following), me), `Moved to Follow-ups. Reminder in ${following.days} days.`)) { following = null; onclose(); } }}>
+        <form class="panel panel-body stack" style="gap: 10px; padding-top: 18px" onsubmit={event => { event.preventDefault(); if (run(() => act('startFollowUp', id, $state.snapshot(following)), `Moved to Follow-ups. Reminder in ${following.days} days.`)) { following = null; onclose(); } }}>
           <strong>Not ready for an assessment yet</strong>
           <div class="grid-2"><label class="field"><span>Remind me in <span class="hint">days</span></span><input class="input" type="number" min="1" max="60" bind:value={following.days} /></label><label class="field"><span>Why, or what to ask next time</span><input class="input" bind:value={following.note} /></label></div>
           <div class="row"><button class="btn dark" type="submit">Move to follow-up</button><button class="btn ghost" type="button" onclick={() => { following = null; }}>Cancel</button></div>
         </form>
       {/if}
-      {#if assessment?.status === 'Booked' && editable}<button class="btn sm ghost" onclick={() => run(state => markNoShow(state, id, me), 'Marked as no-show. Rebook when you reach them.')}>They didn't come: mark no-show</button>{/if}
+      {#if assessment?.status === 'Booked' && editable}<button class="btn sm ghost" onclick={() => run(() => act('markNoShow', id), 'Marked as no-show. Rebook when you reach them.')}>They didn't come: mark no-show</button>{/if}
       {#if assessment}<p class="notice ok"><Icon name="calendar" size={15} />Assessment {assessment.status === 'Completed' ? 'done' : 'booked'}: {fmtDay(assessment.date)} at {assessment.start} with {assessorName(assessment)}, {(assessment.mode || 'In person').toLowerCase()}.</p>
       {:else if inquiry.stage === 'Assessment'}<p class="notice warn"><Icon name="calendar" size={15} />In Assessment, but nothing is booked yet.</p>{/if}
       {#if inquiry.followUp}<p class="notice warn"><Icon name="clock" size={15} />In follow-up until {inquiry.followUp.due}. {inquiry.followUp.note}</p>{/if}
       {#if declining}
-        <form class="panel panel-body stack" style="gap: 10px" onsubmit={event => { event.preventDefault(); if (run(state => declineInquiry(state, id, reason, me), 'Inquiry closed as declined')) onclose(); }}>
+        <form class="panel panel-body stack" style="gap: 10px" onsubmit={event => { event.preventDefault(); if (run(() => act('declineInquiry', id, reason), 'Inquiry closed as declined')) onclose(); }}>
           <label class="field"><span>Why is this inquiry closing?</span><input class="input" bind:value={reason} placeholder="For example: chose another center" /></label>
           <p class="faint" style="font-size: 12px">Its follow-up calls are cancelled.</p>
           <div class="row"><button class="btn danger" type="submit">Close as declined</button><button class="btn ghost" type="button" onclick={() => { declining = false; }}>Cancel</button></div>
@@ -127,7 +128,7 @@
               <div class="grow"><div class="title">{task.title}</div><div class="sub">{task.status === 'done' ? `Done by ${staffName(task.doneBy)}, ${fmtDateTime(task.doneAt)}` : task.status === 'cancelled' ? 'Cancelled' : `Due ${fmtDay(task.due)}, ${staffName(task.owner)}`}</div></div>
               {#if task.status === 'open'}
                 {#if task.due < today}<span class="pill urgent">Overdue</span>{:else if task.due === today}<span class="pill warn">Today</span>{/if}
-                {#if editable}<button class="btn sm" onclick={() => run(state => completeTask(state, task.id, me), 'Follow-up recorded')}>Mark done</button>{/if}
+                {#if editable}<button class="btn sm" onclick={() => run(() => act('completeTask', task.id), 'Follow-up recorded')}>Mark done</button>{/if}
               {/if}
             </li>
           {/each}

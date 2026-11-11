@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import FormView from '../components/FormView.svelte';
   import { formById } from '../lib/forms/engine.js';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { SERVICES, noteFormFor, serviceByName, earliestSlot, book, cancelAppointment, completeAppointment, needsNote, recordPsychiatrist, recordPrescription, scheduleScope, canCancel } from '../lib/scheduling.js';
   import { staffName, canDo, canSeeTab, visiblePatients, hasRole } from '../lib/people.js';
   import { addDays, todayISO, weekday, fmtDay, fmtDate, minutesOf, hhmm } from '../lib/dates.js';
@@ -66,7 +67,7 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return false; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return false; }
   }
 
   function startBooking() {
@@ -88,12 +89,12 @@
   function confirmBooking() {
     const group = ['Group', 'Fitness session'].includes(booking.service);
     const fields = { ...$state.snapshot(booking), ...(group ? { patientIds: patients.filter(p => p.program !== 'Outpatient').map(p => p.id), patientId: undefined, title: booking.service === 'Group' ? 'Therapy group' : 'Gym' } : {}) };
-    if (run(state => book(state, fields, me), `${booking.service} booked for ${fmtDay(booking.date)} at ${booking.start}`)) booking = null;
+    if (run(() => act('book', fields), `${booking.service} booked for ${fmtDay(booking.date)} at ${booking.start}`)) booking = null;
   }
   async function savePrescription() {
     let stored = { id: '', name: '' };
     if (file) stored = await putFile(file);
-    if (run(state => recordPrescription(state, { patientId: selected.patientId, appointmentId: selected.id, fileId: stored.id, fileName: stored.name, note: prescriptionNote }, me), 'Prescription linked to the patient')) {
+    if (run(() => act('recordPrescription', { patientId: selected.patientId, appointmentId: selected.id, fileId: stored.id, fileName: stored.name, note: prescriptionNote }), 'Prescription linked to the patient')) {
       selected = null; file = null; prescriptionNote = '';
     }
   }
@@ -199,8 +200,8 @@
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>
     <footer class="drawer-foot">
-      {#if item.status === 'Booked' && canCancel(me, item)}<button class="btn ghost danger" style="margin-right: auto" onclick={() => { if (run(state => cancelAppointment(state, item.id, me), 'Appointment cancelled')) selected = null; }}>Cancel appointment</button>{/if}
-      {#if item.status === 'Booked' && mine && item.provider !== 'external'}<button class="btn" onclick={() => { if (run(state => completeAppointment(state, item.id, me), 'Marked completed')) selected = db.appointments.find(a => a.id === item.id); }}>Mark completed</button>{/if}
+      {#if item.status === 'Booked' && canCancel(me, item)}<button class="btn ghost danger" style="margin-right: auto" onclick={() => { if (run(() => act('cancelAppointment', item.id), 'Appointment cancelled')) selected = null; }}>Cancel appointment</button>{/if}
+      {#if item.status === 'Booked' && mine && item.provider !== 'external'}<button class="btn" onclick={() => { if (run(() => act('completeAppointment', item.id), 'Marked completed')) selected = db.appointments.find(a => a.id === item.id); }}>Mark completed</button>{/if}
       {#if item.status === 'Completed' && noteFormFor(item.service)}
         {@const formId = noteFormFor(item.service)}
         {@const family = formById(formId).family}
@@ -242,7 +243,7 @@
       <div class="grid-2"><label class="field"><span>Date</span><input class="input" type="date" bind:value={psychiatrist.date} /></label><label class="field"><span>Time</span><input class="input" type="time" bind:value={psychiatrist.start} /></label></div>
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>
-    <footer class="drawer-foot"><button class="btn" onclick={() => { psychiatrist = null; }}>Cancel</button><button class="btn primary" onclick={() => { if (run(state => recordPsychiatrist(state, $state.snapshot(psychiatrist), me), 'Psychiatrist appointment recorded')) psychiatrist = null; }}>Save</button></footer>
+    <footer class="drawer-foot"><button class="btn" onclick={() => { psychiatrist = null; }}>Cancel</button><button class="btn primary" onclick={() => { if (run(() => act('recordPsychiatrist', $state.snapshot(psychiatrist)), 'Psychiatrist appointment recorded')) psychiatrist = null; }}>Save</button></footer>
   </section>
 {/if}
 

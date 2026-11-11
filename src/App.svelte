@@ -1,8 +1,9 @@
 <script>
+  import { act } from './lib/act.js';
   import Sidebar from './components/Sidebar.svelte';
   import Topbar from './components/Topbar.svelte';
   import TabBar from './components/TabBar.svelte';
-  import { db, session, commit } from './lib/store.svelte.js';
+  import { db, session } from './lib/store.svelte.js';
   import { runFollowUpAlerts, runInquiryAging, inquiriesToAge } from './lib/pipeline.js';
   import { runLeaveAlerts, leaveAlertsDue } from './lib/safety.js';
   import { canSee, homePage, PAGES } from './lib/people.js';
@@ -39,11 +40,11 @@
     Object.assign(route, readHash(typeof location === 'undefined' ? '' : location.hash));
     session.now = new Date();
     // Follow-ups that came due since the last look notify their contact person once.
-    if (typeof window !== 'undefined' && db.inquiries.some(item => item.stage === 'Follow-up' && !item.followUp?.notified)) commit(state => runFollowUpAlerts(state, session.now));
+    if (typeof window !== 'undefined' && db.inquiries.some(item => item.stage === 'Follow-up' && !item.followUp?.notified)) act('runFollowUpAlerts');
     // New inquiries untouched for 72 hours move to the follow-up log.
-    if (typeof window !== 'undefined' && inquiriesToAge(db, session.now)) commit(state => runInquiryAging(state, session.now));
+    if (typeof window !== 'undefined' && inquiriesToAge(db, session.now)) act('runInquiryAging');
     // Residents late back from leave raise an urgent alert once.
-    if (typeof window !== 'undefined' && leaveAlertsDue(db, session.now)) commit(state => runLeaveAlerts(state, session.now));
+    if (typeof window !== 'undefined' && leaveAlertsDue(db, session.now)) act('runLeaveAlerts');
     menuOpen = false;
   }
   sync();

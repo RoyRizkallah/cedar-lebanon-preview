@@ -10,12 +10,14 @@ import { closeLead, convertLead, reopenLead, replyToLead } from './leads.js';
 import { addOrder, correctDose, recordDose, recordTest, stopOrder } from './medication.js';
 import { approveOrder, raiseOrder, receiveOrder, rejectOrder, setKitchenCeiling } from './orders.js';
 import { createInquiry, declineInquiry, logCall, markNoShow, moveInquiry, recordFollowUp, reopenInquiry, runFollowUpAlerts, runInquiryAging, scheduleAssessment, sendClarification, startFollowUp, updateInquiry } from './pipeline.js';
-import { archiveProgram, endAssignment, restoreProgram, updateProgram } from './programs.js';
+import { archiveProgram, assignProgram, createProgram, endAssignment, restoreProgram, updateProgram } from './programs.js';
+import { addWalletDeposit, addWalletPurchase } from './wallet.js';
 import { approveRequest, cancelRequest, completeRequest, createRequest, declineRequest, uploadInvoice } from './requests.js';
 import { addRoom, removeRoom, setRoomStatus, updateRoom } from './rooms.js';
 import { logVisit, reportIncident, returnLeave, reviewIncident, runLeaveAlerts, startLeave } from './safety.js';
 import { book, cancelAppointment, completeAppointment, recordPrescription, recordPsychiatrist } from './scheduling.js';
 import { addCheckin, addComment } from './support.js';
+import { SLOTS } from './commandSlots.js';
 import { completeTask, reviewPrescription } from './tasks.js';
 
 // A notification is marked read only by the person it was sent to.
@@ -25,14 +27,22 @@ function markRead(state, id, staffId) {
   if (item) item.read = true;
 }
 function markAllRead(state, staffId) { for (const item of state.notifications) if (item.to === staffId) item.read = true; }
+// The wallet records who handled the money; that is always the person signed in.
+const walletDeposit = (state, payload, staffId) => addWalletDeposit(state, { ...payload, recordedBy: staffId });
+const walletPurchase = (state, payload, staffId) => addWalletPurchase(state, { ...payload, recordedBy: staffId });
+// Finance issues the month's invoices for everyone not yet invoiced, as one change.
+function invoiceMonths(state, patientIds, month, staffId) {
+  for (const patientId of patientIds) invoiceMonth(state, patientId, month, staffId);
+  return patientIds.length;
+}
 
-const FUNCTIONS = {
+export const FUNCTIONS = {
   admit, completeStep, rebookPsychologist, undoStep, addContact, removeContact, updateContact, dischargePatient, addDocument, attachScan, signDocument,
   addBankLine, addManualEntry, approveExpense, createExpense, createInvoice, invoiceMonth, matchBank, payExpense, recordPayment, rejectExpense, reversePayment, voidInvoice,
   appendRow, fileForm, reviewRisk, signLater, closeLead, convertLead, reopenLead, replyToLead, addOrder, correctDose, recordDose, recordTest, stopOrder,
   approveOrder, raiseOrder, receiveOrder, rejectOrder, setKitchenCeiling,
   createInquiry, declineInquiry, logCall, markNoShow, moveInquiry, recordFollowUp, reopenInquiry, runFollowUpAlerts, runInquiryAging, scheduleAssessment, sendClarification, startFollowUp, updateInquiry,
-  archiveProgram, endAssignment, restoreProgram, updateProgram, approveRequest, cancelRequest, completeRequest, createRequest, declineRequest, uploadInvoice,
+  archiveProgram, assignProgram, createProgram, endAssignment, restoreProgram, updateProgram, walletDeposit, walletPurchase, invoiceMonths, approveRequest, cancelRequest, completeRequest, createRequest, declineRequest, uploadInvoice,
   addRoom, removeRoom, setRoomStatus, updateRoom, logVisit, reportIncident, returnLeave, reviewIncident, runLeaveAlerts, startLeave,
   book, cancelAppointment, completeAppointment, recordPrescription, recordPsychiatrist, addCheckin, addComment, completeTask, reviewPrescription,
   markRead, markAllRead
@@ -41,30 +51,8 @@ const FUNCTIONS = {
 // Run by the server's clock, never on request from a browser.
 export const SYSTEM = new Set(['runFollowUpAlerts', 'runInquiryAging', 'runLeaveAlerts']);
 
-// The parameters after `state`, split at top-level commas, as written in the function itself.
-function parameters(fn) {
-  const source = fn.toString();
-  const start = source.indexOf('(');
-  let depth = 0, end = start;
-  for (let i = start; i < source.length; i++) {
-    if ('([{'.includes(source[i])) depth++;
-    else if (')]}'.includes(source[i]) && --depth === 0) { end = i; break; }
-  }
-  const names = [];
-  let part = '', level = 0;
-  for (const char of source.slice(start + 1, end)) {
-    if ('([{'.includes(char)) level++;
-    if (')]}'.includes(char)) level--;
-    if (char === ',' && level === 0) { names.push(part); part = ''; } else part += char;
-  }
-  if (part.trim()) names.push(part);
-  // A destructured options object is kept whole; a plain parameter loses its default value.
-  return names.map(name => (name.trim().startsWith('{') ? name.trim() : name.split('=')[0].trim())).slice(1);
-}
-// A parameter named staffId is the actor; an options object that carries staffId gets the actor written into it.
-const slotOf = name => (name === 'staffId' || name === 'by' ? 'me' : name === 'now' ? 'now' : name.startsWith('{') && /\bstaffId\b/.test(name) ? 'arg+me' : 'arg');
-
-export const COMMANDS = Object.fromEntries(Object.entries(FUNCTIONS).map(([name, fn]) => [name, { fn, slots: parameters(fn).map(slotOf) }]));
+// Which argument is the actor and which the clock, generated from the source (built code renames parameters).
+export const COMMANDS = Object.fromEntries(Object.entries(FUNCTIONS).map(([name, fn]) => [name, { fn, slots: SLOTS[name] || [] }]));
 
 export function applyCommand(state, name, args = [], staffId, now = new Date()) {
   const command = Object.hasOwn(COMMANDS, name) ? COMMANDS[name] : null;

@@ -1,8 +1,9 @@
 <script>
   import Icon from '../Icon.svelte';
+  import { act } from '../../lib/act.js';
   import SignaturePad from '../SignaturePad.svelte';
-  import { db, session, commit } from '../../lib/store.svelte.js';
-  import { walletBalanceCents, walletTransactionsFor, addWalletDeposit, addWalletPurchase, formatCents, hasWallet } from '../../lib/wallet.js';
+  import { db, session } from '../../lib/store.svelte.js';
+  import { walletBalanceCents, walletTransactionsFor, formatCents, hasWallet } from '../../lib/wallet.js';
   import { staffName, canDo } from '../../lib/people.js';
   import { fmtDate } from '../../lib/dates.js';
   import { say } from '../../lib/ui.svelte.js';
@@ -20,8 +21,8 @@
   function save(signature) {
     error = '';
     try {
-      const payload = { patientId: patient.id, amount: entry.amount, description: entry.description, recordedBy: me, signature };
-      commit(state => (entry.kind === 'credit' ? addWalletDeposit : addWalletPurchase)(state, payload));
+      const payload = { patientId: patient.id, amount: entry.amount, description: entry.description, signature };
+      act(entry.kind === 'credit' ? 'walletDeposit' : 'walletPurchase', payload);
       say(entry.kind === 'credit' ? 'Top-up recorded' : 'Purchase recorded');
       entry = null;
     } catch (e) { error = e.message; }

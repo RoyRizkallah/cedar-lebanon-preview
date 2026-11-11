@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from './Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { DISCHARGE_TYPES, dischargePatient, dischargePreview, dischargeDay } from '../lib/discharge.js';
   import { formatCents } from '../lib/wallet.js';
   import { placeLabel } from '../lib/admission.js';
@@ -21,7 +22,7 @@
   function confirm() {
     error = '';
     try {
-      commit(state => dischargePatient(state, patient.id, { date, type, note }, me, session.now));
+      act('dischargePatient', patient.id, { date, type, note });
       say(`${patient.clinicalName} discharged`);
       onclose();
     } catch (e) { error = e.message; }
