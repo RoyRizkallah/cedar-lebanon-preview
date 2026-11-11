@@ -4,6 +4,7 @@
   import { STAFF, RESIDENTS, staffById, canDo } from '../lib/people.js';
   import { session, switchStaff, resetData } from '../lib/store.svelte.js';
   import { say } from '../lib/ui.svelte.js';
+  import { backend, signOut } from '../lib/backend.svelte.js';
 
   let { onmenu, unread = 0, onbell, title = '' } = $props();
 
@@ -51,6 +52,10 @@
     </button>
     {#if profileOpen}
       <div class="popover profile-menu" role="menu" tabindex="-1" onclick={event => event.stopPropagation()} onkeydown={() => {}}>
+        {#if backend.on}
+        <p class="menu-label">Signed in as {me?.name}</p>
+        <button role="menuitem" onclick={() => { profileOpen = false; signOut(); }}><Icon name="close" size={16} /> Sign out</button>
+        {:else}
         <p class="menu-label">Preview: view the workspace as</p>
         {#each teams as team (team)}
         <p class="menu-team">{team}</p>
@@ -76,6 +81,7 @@
         {/if}
         <hr />
         <p class="menu-label" style="padding-bottom: 6px">Preview with fictional patients; changes stay in this browser. Switching views is not a sign-in.</p>
+        {/if}
       </div>
     {/if}
   </div>
