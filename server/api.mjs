@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, existsSync
 import { join } from 'node:path';
 import { openStore } from './store.mjs';
 import { applyCommand, SYSTEM } from '../src/lib/commands.js';
-import { viewFor } from '../src/lib/view.js';
+import { viewFor, resultFor } from '../src/lib/view.js';
 import { runInquiryAging, runFollowUpAlerts } from '../src/lib/pipeline.js';
 import { runLeaveAlerts } from '../src/lib/safety.js';
 import { todayISO } from '../src/lib/dates.js';
@@ -15,6 +15,10 @@ const MAX_FILE = 15 * 1024 * 1024;
 const LOCK_AFTER = 5;
 const LOCK_MINUTES = 15;
 const KEEP_BACKUPS = 30;
+// Pictures and PDFs open in the browser; anything else downloads, so an uploaded page can never run as the person opening it.
+const INLINE = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'];
+// Only this computer's own address is answered, so another site cannot pose as it.
+const LOCAL_HOST = /^(localhost|127[.]0[.]0[.]1|[[]::1[]])(:[0-9]+)?$/;
 
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
@@ -29,24 +33,30 @@ export function createApi(dir) {
   const listeners = new Set();
   const failures = new Map();
 
-  function save() {
-    version = store.saveState(state);
-    // The first save of each day leaves a copy of the database; the newest 30 are kept.
-    const today = join(backups, `cedar-${todayISO()}.db`);
-    if (!existsSync(today)) {
-      store.backup(today);
-      for (const old of readdirSync(backups).filter(name => /^cedar-\d{4}-\d{2}-\d{2}\.db$/.test(name)).sort().slice(0, -KEEP_BACKUPS)) rmSync(join(backups, old));
-    }
+  // The new state is written to disk first; only then does it replace what the server holds in memory.
+  function commitState(next) {
+    version = store.saveState(next);
+    state = next;
+    // The first save of each day leaves a copy of the database; the newest 30 are kept. A failed copy never undoes the save.
+    try {
+      const today = join(backups, `cedar-${todayISO()}.db`);
+      if (!existsSync(today)) {
+        store.backup(today);
+        for (const old of readdirSync(backups).filter(name => /^cedar-\d{4}-\d{2}-\d{2}\.db$/.test(name)).sort().slice(0, -KEEP_BACKUPS)) rmSync(join(backups, old));
+      }
+    } catch (error) { console.error('Daily backup failed:', error.message); }
     for (const response of listeners) response.write(`event: version\ndata: ${version}\n\n`);
   }
 
-  // Follow-up alerts, inquiry ageing and late returns run on the server's clock.
+  // Follow-up alerts, inquiry ageing and late returns run on the server's clock, on a copy like any change.
   function runJobs(now = new Date()) {
-    const before = JSON.stringify(state);
-    runInquiryAging(state, now);
-    runFollowUpAlerts(state, now);
-    runLeaveAlerts(state, now);
-    if (JSON.stringify(state) !== before) save();
+    try {
+      const next = structuredClone(state);
+      runInquiryAging(next, now);
+      runFollowUpAlerts(next, now);
+      runLeaveAlerts(next, now);
+      if (JSON.stringify(next) !== JSON.stringify(state)) commitState(next);
+    } catch (error) { console.error('Scheduled checks failed:', error.message); }
   }
   const timer = setInterval(runJobs, 60 * 1000);
   timer.unref();
@@ -67,7 +77,7 @@ export function createApi(dir) {
         size += chunk.length;
         if (size <= limit) chunks.push(chunk);
       });
-      request.on('end', () => (size > limit ? reject(new HttpError(413, `Files can be up to ${Math.round(limit / 1024 / 1024)} MB.`)) : resolve(Buffer.concat(chunks))));
+      request.on('end', () => (size > limit ? reject(new HttpError(413, `Too large: the limit is ${Math.round(limit / 1024 / 1024)} MB.`)) : resolve(Buffer.concat(chunks))));
       request.on('error', reject);
     });
   }
@@ -83,6 +93,7 @@ export function createApi(dir) {
   }
 
   async function handle(request, response, path) {
+    if (!LOCAL_HOST.test(String(request.headers.host || ''))) throw new HttpError(403, 'Not allowed.');
     // A change can only come from a page this server served.
     if (request.method === 'POST' && request.headers.origin) {
       let host = '';
@@ -111,20 +122,21 @@ export function createApi(dir) {
 
     if (path === '/api/act' && request.method === 'POST') {
       const { name, args } = await readJson(request);
+      if (typeof name !== 'string' || !Array.isArray(args ?? [])) throw new HttpError(400, 'Unreadable request.');
       if (SYSTEM.has(name)) throw new HttpError(400, 'That runs on its own schedule.');
       // Work on a copy, so a rule that throws halfway leaves nothing behind.
       const next = structuredClone(state);
       let result;
       try {
-        result = applyCommand(next, String(name), Array.isArray(args) ? args : [], me, new Date());
+        result = applyCommand(next, name, args || [], me, new Date());
       } catch (error) {
         store.audit({ staffId: me, command: String(name), args, ok: false, error: error.message });
         throw new HttpError(400, error.message);
       }
-      state = next;
+      commitState(next);
       store.audit({ staffId: me, command: name, args, ok: true });
-      save();
-      return send(response, 200, { ok: true, result: result === undefined ? null : JSON.parse(JSON.stringify(result)), version, state: viewFor(state, me) });
+      const view = viewFor(state, me);
+      return send(response, 200, { ok: true, result: resultFor(JSON.parse(JSON.stringify(result ?? null)), view), version, state: view });
     }
 
     if (path === '/api/events' && request.method === 'GET') {
@@ -150,7 +162,8 @@ export function createApi(dir) {
       const meta = store.file(fileMatch[1]);
       // A file is readable only by someone whose view of the workspace refers to it.
       if (!meta || !JSON.stringify(viewFor(state, me)).includes(meta.id)) throw new HttpError(404, 'Not found.');
-      response.writeHead(200, { 'content-type': meta.type, 'content-disposition': `inline; filename*=UTF-8''${encodeURIComponent(meta.name)}`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' });
+      const inline = INLINE.includes(meta.type);
+      response.writeHead(200, { 'content-type': inline ? meta.type : 'application/octet-stream', 'content-disposition': `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(meta.name)}`, 'content-security-policy': "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox", 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' });
       return response.end(readFileSync(join(files, meta.id)));
     }
     throw new HttpError(404, 'Not found.');

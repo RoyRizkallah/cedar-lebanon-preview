@@ -4,7 +4,7 @@ import { FITNESS_FORMS } from './fitness.js';
 import { NURSING_FORMS } from './nursing.js';
 import { addDays, fmtDate, todayISO } from '../dates.js';
 import { nextId } from '../ids.js';
-import { staffName, isResident, RESIDENTS } from '../people.js';
+import { staffName, isResident, RESIDENTS, canSeeTab } from '../people.js';
 import { notify } from '../notifications.js';
 import { log } from '../activity.js';
 
@@ -213,7 +213,17 @@ export function fileForm(state, { entryId, formId, patientId = null, patientIds,
   if (!form) throw new Error('Unknown form.');
   if (!completes(form, staffId, patientId)) throw new Error(`${form.title} is completed by ${nameList(form.owners)}.`);
   let entry = entryId ? state.forms.find(item => item.id === entryId) : null;
+  if (entryId && !entry) throw new Error('This form was not found.');
+  // Saving goes back to the same record: the same form, about the same patient.
+  if (entry && (entry.formId !== formId || (!entry.patientIds && (entry.patientId || null) !== (patientId || null)))) throw new Error('This is a different record.');
   if (entry?.status === 'Filed' && !form.living) throw new Error('This form is already filed.');
+  // A signature is always the person saving it; signatures already on the record keep who made them.
+  values = { ...values };
+  for (const field of allFields(form).filter(item => item.type === 'signature')) {
+    const value = values[field.id], before = entry?.values?.[field.id];
+    if (!value?.at) continue;
+    values[field.id] = before?.at === value.at ? before : { ...value, by: staffId };
+  }
   const computed = computeAuto(form, values);
   const errors = validateForm(form, computed, { final });
   if (errors.length) throw new Error(errors.join(' '));
@@ -243,6 +253,9 @@ export function signLater(state, entryId, fieldId, signature, staffId) {
   const field = entry && fieldOf(formById(entry.formId), fieldId);
   if (field?.type !== 'signature') throw new Error('This signature line was not found.');
   if (field.signer && !field.signer.includes(staffId)) throw new Error(`Only ${nameList(field.signer)} can sign this.`);
+  // A line with no named signer is signed by someone who completes this form or works on its tab.
+  const form = formById(entry.formId);
+  if (!field.signer && !completes(form, staffId, entry.patientId) && !canSeeTab(staffId, entry.formId === 'aftercare' ? 'followup' : form.family)) throw new Error('You cannot sign this form.');
   entry.values[fieldId] = { ...signature, by: staffId };
   log(state, staffId, `Signed ${field.label} on ${formById(entry.formId).title}`);
   return entry;

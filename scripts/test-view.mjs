@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { viewFor } from '../src/lib/view.js';
+import { viewFor, resultFor } from '../src/lib/view.js';
 import { formById } from '../src/lib/forms/engine.js';
 import { seed } from '../src/lib/seed.js';
 
@@ -46,4 +46,13 @@ assert.ok(resident.forms.every(entry => entry.formId === 'wellbeing' && entry.pa
 for (const key of ['leads', 'inquiries', 'incidents', 'documents', 'activity', 'orders']) assert.equal(resident[key].length, 0, key);
 
 assert.equal(JSON.stringify(state), before, 'the full state is never changed by making a view');
+
+// What a change sends back is the person's own copy of the record, or nothing.
+{
+  const note = state.forms.find(entry => entry.formId === 'session');
+  assert.equal(resultFor(note, viewFor(state, 'melyssa')), null, 'a session note never comes back to admin');
+  assert.equal(resultFor(note, viewFor(state, 'nabila'))?.id, note.id);
+  assert.equal(resultFor(3, melyssa), 3);
+  assert.equal(resultFor({ conflicts: [] }, melyssa), null, 'an unnamed object is not passed on');
+}
 console.log('View checks passed.');

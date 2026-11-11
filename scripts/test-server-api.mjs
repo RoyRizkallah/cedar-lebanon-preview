@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import http from 'node:http';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -58,6 +59,7 @@ try {
   const made = await call('/api/act', { cookie: melyssa, body: { name: 'createInquiry', args: [{ name: 'Test Person', program: 'Inpatient' }] } });
   assert.equal(made.status, 200);
   assert.equal(made.json.result.stageHistory[0].by, 'melyssa');
+  assert.ok(made.json.state.inquiries.some(item => item.id === made.json.result.id), 'the result is her own view of the record');
   assert.equal(made.json.version, first.json.version + 1);
   assert.ok(made.json.state.inquiries.some(item => item.name === 'Test Person'));
 
@@ -66,7 +68,7 @@ try {
   const order = first.json.state.orders.find(item => item.status === 'Awaiting approval');
   const forged = await call('/api/act', { cookie: georgio, body: { name: 'approveOrder', args: [order.id, 'amer'] } });
   assert.equal(forged.status, 400);
-  assert.match(forged.json.error, /Amer/);
+  assert.match(forged.json.error, /role cannot/);
   // Clock jobs are the server's, never a browser's.
   assert.equal((await call('/api/act', { cookie: georgio, body: { name: 'runInquiryAging', args: [] } })).status, 400);
   assert.equal((await call('/api/act', { cookie: georgio, body: { name: 'nope', args: [] } })).json.error, 'Unknown command: nope');
@@ -74,8 +76,12 @@ try {
   // Two people work in turn; each sees the other's change.
   const both = await call('/api/act', { cookie: georgio, body: { name: 'reportIncident', args: [{ type: 'Rule breach', level: 1, description: 'Smoking indoors.' }] } });
   assert.equal(both.status, 200);
-  assert.ok((await call('/api/state', { cookie: melyssa })).json.state.inquiries.some(item => item.name === 'Test Person'));
-  assert.ok((await call('/api/state', { cookie: georgio })).json.state.inquiries.some(item => item.name === 'Test Person'));
+  const melyssaNow = (await call('/api/state', { cookie: melyssa })).json.state;
+  assert.ok(melyssaNow.inquiries.some(item => item.name === 'Test Person'));
+  assert.ok(melyssaNow.incidents.some(item => item.id === both.json.result.id), 'she sees the incident Georgio just reported');
+  const georgioNow = (await call('/api/state', { cookie: georgio })).json.state;
+  assert.ok(georgioNow.incidents.some(item => item.id === both.json.result.id));
+  assert.equal(georgioNow.inquiries.length, 0, 'the floor never receives inquiries');
 
   // Only JSON posts, and not from another site.
   assert.equal((await call('/api/act', { cookie: melyssa, body: 'name=createInquiry', headers: { 'content-type': 'text/plain' } })).status, 415);
@@ -94,6 +100,22 @@ try {
   assert.equal(got.status, 200);
   assert.deepEqual(new Uint8Array(await got.arrayBuffer()), bytes);
   assert.equal((await call('/api/files', { cookie: fadia, body: new Uint8Array(16 * 1024 * 1024), headers: { 'x-cedar-upload': '1', 'x-file-name': 'big.bin', 'content-type': 'application/octet-stream' } })).status, 413);
+
+  // A command name must be a plain name; nothing runs, nothing is skipped in the audit.
+  const sneaky = await call('/api/act', { cookie: georgio, body: { name: ['runLeaveAlerts'], args: [] } });
+  assert.equal(sneaky.status, 400);
+  // A resident cannot top up their own wallet by calling the server directly.
+  // A file is shown in the browser only if it is a picture or a PDF; anything else downloads, so it can never run as the person opening it.
+  const page = await call('/api/files', { cookie: fadia, body: new TextEncoder().encode('<script>alert(1)</script>'), headers: { 'x-cedar-upload': '1', 'x-file-name': 'x.html', 'content-type': 'text/html' } });
+  await call('/api/act', { cookie: fadia, body: { name: 'recordPrescription', args: [{ patientId: patient.id, fileId: page.json.id, fileName: 'x.html', note: 'x' }] } });
+  const served = await fetch(`${base}/api/files/${page.json.id}`, { headers: { cookie: fadia } });
+  assert.equal(served.headers.get('content-type'), 'application/octet-stream');
+  assert.match(served.headers.get('content-disposition'), /^attachment/);
+  assert.equal(got.headers.get('content-type'), 'application/pdf');
+  assert.match(got.headers.get('content-disposition'), /^inline/);
+  // Only this computer's own address is answered (no other site can pose as it).
+  const foreign = await new Promise(resolve => { const request = http.request({ host: '127.0.0.1', port, path: '/api/me', headers: { host: 'evil.example', cookie: melyssa } }, response => { response.resume(); resolve(response.statusCode); }); request.on('error', error => resolve(`error: ${error.message}`)); request.end(); });
+  assert.equal(foreign, 403);
 
   // State and sessions survive a restart; signing out ends the session.
   await stop();

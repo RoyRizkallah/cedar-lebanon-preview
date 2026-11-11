@@ -8,6 +8,7 @@ import { STAFF, RESIDENTS } from '../src/lib/people.js';
 
 const SESSION_HOURS = 12;
 const SCRYPT = { N: 16384, r: 8, p: 1 };
+const DUMMY_SALT = randomBytes(16);
 const hashToken = token => createHash('sha256').update(token).digest('hex');
 const derive = (password, salt) => scryptSync(password, salt, 64, SCRYPT);
 
@@ -63,7 +64,8 @@ export function openStore(dir) {
     },
     checkPassword(staffId, password) {
       const row = db.prepare('SELECT hash, salt, disabled FROM users WHERE staff_id = ?').get(String(staffId));
-      if (!row || row.disabled) return false;
+      // An unknown name costs the same time as a known one, so timing does not reveal who has an account.
+      if (!row || row.disabled) { derive(String(password || ''), DUMMY_SALT); return false; }
       const expected = Buffer.from(row.hash, 'hex');
       const given = derive(String(password || ''), Buffer.from(row.salt, 'hex'));
       return given.length === expected.length && timingSafeEqual(given, expected);

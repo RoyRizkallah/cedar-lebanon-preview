@@ -1,6 +1,5 @@
 // The local server, when there is one. Without it (the static preview) the app keeps working in the browser alone.
-import { db, session, replaceState, storage } from './store.svelte.js';
-import { say } from './ui.svelte.js';
+import { session, replaceState, storage } from './store.svelte.js';
 import { homePage } from './people.js';
 
 export const backend = $state({ on: false, checked: false, user: null, version: 0 });
@@ -20,7 +19,7 @@ function listen() {
   events?.close();
   events = new EventSource('/api/events');
   // Someone else changed something: fetch this person's fresh view.
-  events.addEventListener('version', event => { if (Number(event.data) > backend.version && !queue.busy) load(); });
+  events.addEventListener('version', event => { if (Number(event.data) > backend.version) load(); });
 }
 
 function signedIn(staffId) {
@@ -61,27 +60,20 @@ export async function signOut() {
   signedOut();
 }
 
-// Changes go to the server one at a time, in the order they were made here.
-const queue = { busy: 0, tail: Promise.resolve() };
-export function push(name, args) {
-  queue.busy++;
-  queue.tail = queue.tail.then(async () => {
-    try {
-      const response = await json('/api/act', { name, args });
-      const body = await response.json().catch(() => ({}));
-      if (response.status === 401) { signedOut(); say('Signed out. Sign in again to carry on.'); return; }
-      if (!response.ok) { say(body.error || 'The server did not accept that change.'); await load(); return; }
-      backend.version = body.version;
-      if (queue.busy === 1) replaceState(body.state);
-    } catch {
-      say('The server could not be reached. Your last change was not saved.');
-      await load().catch(() => {});
-    } finally {
-      queue.busy--;
-    }
-  });
-  return queue.tail;
+// A change goes to the server and the screen waits for the answer, so what it shows is always what the server holds.
+// (A synchronous request: on this computer it takes milliseconds, and it keeps every screen's code as it was.)
+export function sendNow(name, args) {
+  const request = new XMLHttpRequest();
+  request.open('POST', '/api/act', false);
+  request.setRequestHeader('content-type', 'application/json');
+  try { request.send(JSON.stringify({ name, args })); } catch { throw new Error('The server could not be reached, so nothing was saved. Try again.'); }
+  let body = {};
+  try { body = JSON.parse(request.responseText); } catch { /* not JSON */ }
+  if (request.status === 401) { signedOut(); throw new Error('Signed out. Sign in again to carry on.'); }
+  if (request.status !== 200) throw new Error(body.error || 'The server did not accept that change.');
+  backend.version = body.version;
+  replaceState(body.state);
+  return body.result;
 }
 
 export const filesUrl = id => `/api/files/${encodeURIComponent(id)}`;
-void db;

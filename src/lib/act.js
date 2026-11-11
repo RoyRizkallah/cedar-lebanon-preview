@@ -1,13 +1,12 @@
 // The one way the screens change data: a named command, run as the person using the app.
-// In the preview it runs here and is saved in this browser; with the local server it also goes to the server (backend.svelte.js).
+// Preview: it runs here and is saved in this browser.
+// Local server: the server runs it and answers at once (a local round trip of a few milliseconds); the screen then
+// shows the server's own view, the server's record numbers, and the server's reason when it refuses.
 import { commit, session } from './store.svelte.js';
 import { applyCommand } from './commands.js';
-import { backend, push } from './backend.svelte.js';
+import { backend, sendNow } from './backend.svelte.js';
 
-// The change runs here first, so the screen answers at once and a rule's error shows straight away;
-// with the server on, the server then runs it for real and sends back this person's view.
 export function act(name, ...args) {
-  const result = commit(state => applyCommand(state, name, args, session.staffId, backend.on ? new Date() : session.now));
-  if (backend.on) push(name, JSON.parse(JSON.stringify(args)));
-  return result;
+  if (backend.on) return sendNow(name, JSON.parse(JSON.stringify(args)));
+  return commit(state => applyCommand(state, name, args, session.staffId, session.now));
 }
