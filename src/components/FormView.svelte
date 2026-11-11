@@ -1,10 +1,11 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from './Icon.svelte';
   import SignaturePad from './SignaturePad.svelte';
   import DictatePanel from './DictatePanel.svelte';
   import CaseReviewPrep from './CaseReviewPrep.svelte';
   import { dialogFocus } from '../lib/dialogFocus.js';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { formById, prefillValues, computeAuto, isSectionLocked, isRequired, fileForm, signLater, appendRow, progressSummary, allFields, riskLevel } from '../lib/forms/engine.js';
   import { staffName } from '../lib/people.js';
   import { fmtDate, fmtDateTime } from '../lib/dates.js';
@@ -51,7 +52,7 @@
     try {
       const rows = values.attendance || values.patients;
       const patientIds = form.multi && Array.isArray(rows) ? rows.map(row => row.patientId).filter(Boolean) : undefined;
-      const saved = commit(state => fileForm(state, { entryId: currentId, formId, patientId: form.multi ? null : patient?.id, patientIds, appointmentId: appointment?.id, values: $state.snapshot(values), staffId: me, final }));
+      const saved = act('fileForm', { entryId: currentId, formId, patientId: form.multi ? null : patient?.id, patientIds, appointmentId: appointment?.id, values: $state.snapshot(values), staffId: me, final });
       currentId = saved.id;
       say(final ? (form.living ? 'Saved' : `${form.title} filed`) : 'Draft saved');
       if (final && !form.living) onclose();
@@ -64,7 +65,7 @@
     const { field } = signing;
     signing = null;
     if (filed && field.later) {
-      try { commit(state => signLater(state, currentId, field.id, signature, me)); say('Signed'); } catch (error) { errors = [error.message]; }
+      try { act('signLater', currentId, field.id, signature); say('Signed'); } catch (error) { errors = [error.message]; }
     } else {
       values[field.id] = { ...signature, by: me };
     }
@@ -72,7 +73,7 @@
 
   function addReview(field) {
     try {
-      commit(state => appendRow(state, currentId, field.id, $state.snapshot(draftRow), me));
+      act('appendRow', currentId, field.id, $state.snapshot(draftRow));
       draftRow = {};
       say('Review entry added');
     } catch (error) { errors = [error.message]; }

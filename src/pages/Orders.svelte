@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { ORDER_KINDS, APPROVAL_LIMIT, raiseOrder, approveOrder, rejectOrder, receiveOrder, setKitchenCeiling, kitchenSpend } from '../lib/orders.js';
   import { staffName, canDo } from '../lib/people.js';
   import { fmtDate, todayISO } from '../lib/dates.js';
@@ -25,17 +26,17 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
   async function save() {
     const d = $state.snapshot(dialog);
     let ok;
-    if (d.type === 'raise') ok = run(state => raiseOrder(state, d, me, session.now), 'Order raised');
-    else if (d.type === 'ceiling') ok = run(state => setKitchenCeiling(state, d.amount, me), 'Kitchen ceiling set');
-    else if (d.type === 'reject') ok = run(state => rejectOrder(state, d.id, d.reason, me, session.now), 'Order not approved');
+    if (d.type === 'raise') ok = run(() => act('raiseOrder', d), 'Order raised');
+    else if (d.type === 'ceiling') ok = run(() => act('setKitchenCeiling', d.amount), 'Kitchen ceiling set');
+    else if (d.type === 'reject') ok = run(() => act('rejectOrder', d.id, d.reason), 'Order not approved');
     else {
       const stored = dialog.file ? await putFile(dialog.file) : { id: '', name: '' };
-      ok = run(state => receiveOrder(state, d.id, { amount: d.amount, fileId: stored.id, fileName: stored.name }, me, session.now), 'Received, receipt attached');
+      ok = run(() => act('receiveOrder', d.id, { amount: d.amount, fileId: stored.id, fileName: stored.name }), 'Received, receipt attached');
     }
     if (ok) dialog = null;
   }
@@ -75,7 +76,7 @@
             <td>
               <div class="row" style="gap: 6px; justify-content: flex-end">
                 {#if order.status === 'Awaiting approval' && approves}
-                  <button class="btn sm dark" onclick={() => run(state => approveOrder(state, order.id, me, session.now), 'Order approved')}>Approve</button>
+                  <button class="btn sm dark" onclick={() => run(() => act('approveOrder', order.id), 'Order approved')}>Approve</button>
                   <button class="btn sm ghost" onclick={() => { error = ''; dialog = { type: 'reject', id: order.id, reason: '' }; }}>Decline</button>
                 {:else if order.status === 'Approved' && (order.requestedBy === me || raises)}
                   <button class="btn sm" onclick={() => { error = ''; dialog = { type: 'receive', id: order.id, amount: order.amount, file: null }; }}>Received</button>

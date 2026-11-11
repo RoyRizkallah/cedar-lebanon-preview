@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import InquiryDrawer from '../components/InquiryDrawer.svelte';
   import InquiryFields from '../components/InquiryFields.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { STAGES, PROGRAMS, createInquiry, moveInquiry, reviewDue, timeInStageHours, noPhone, money, isOpen, potentialTotals, startFollowUp, FOLLOW_UP_DAYS, assessmentFor, markNoShow, drugLabel, assessorName } from '../lib/pipeline.js';
   import AssessmentDialog from '../components/AssessmentDialog.svelte';
   import { dashboard } from '../lib/kpis.js';
@@ -46,11 +47,11 @@
     if (stage === 'Assessment') { assessing = id; return; }
     try {
       if (stage === 'Follow-up') {
-        commit(state => startFollowUp(state, id, {}, me));
+        act('startFollowUp', id, {});
         say(`${db.inquiries.find(item => item.id === id)?.name} moved to Follow-ups. Reminder in ${FOLLOW_UP_DAYS} days.`);
         return;
       }
-      commit(state => moveInquiry(state, id, stage, me));
+      act('moveInquiry', id, stage);
       const name = db.inquiries.find(item => item.id === id)?.name;
       say(stage === 'Agreement' ? `${name} moved to Agreement. Admission started.` : `${name} moved to ${stage}`);
     } catch (e) { error = e.message; }
@@ -67,7 +68,7 @@
   function create() {
     error = '';
     try {
-      const inquiry = commit(state => createInquiry(state, $state.snapshot(creating), me));
+      const inquiry = act('createInquiry', $state.snapshot(creating));
       creating = null;
       say(`${inquiry.name} added to New Inquiry`);
     } catch (e) { error = e.message; }
@@ -127,7 +128,7 @@
                 {#if item.stage === 'Assessment'}
                   {@const booked = assessmentFor(db, item.id)}
                   {#if item.noShows}<span class="pill warn">No-show{item.noShows > 1 ? ` ×${item.noShows}` : ''}</span>{/if}
-                  {#if booked && editable && booked.status === 'Booked'}<button class="book-next" onclick={() => { error = ''; try { commit(state => markNoShow(state, item.id, me)); say(`${item.name} marked as no-show. Rebook when you reach them.`); } catch (e) { error = e.message; } }}>Mark no-show</button>{/if}
+                  {#if booked && editable && booked.status === 'Booked'}<button class="book-next" onclick={() => { error = ''; try { act('markNoShow', item.id); say(`${item.name} marked as no-show. Rebook when you reach them.`); } catch (e) { error = e.message; } }}>Mark no-show</button>{/if}
                   {#if booked}<span class="booked"><Icon name="calendar" size={13} />{fmtDay(booked.date)}, {booked.start}, {assessorName(booked)}{booked.mode && booked.mode !== 'In person' ? ` (${booked.mode.toLowerCase()})` : ''}</span>
                   {:else if editable}<button class="pill warn as-button" onclick={() => { assessing = item.id; }}>Not booked: book it</button>{:else}<span class="pill warn">Not booked</span>{/if}
                 {/if}
@@ -196,7 +197,8 @@
   .split i:first-child { background: var(--lime); }
   .split i:last-child { flex: 1; background: #c5f59a; }
   /* Columns stand full height, so a card can be dropped anywhere in them */
-  .board { display: grid; grid-template-columns: repeat(3, minmax(250px, 1fr)); gap: 10px; align-items: stretch; overflow-x: auto; padding-bottom: 8px; }
+  /* Positioned, so the hidden labels inside the cards scroll with the board instead of widening the page. */
+  .board { position: relative; display: grid; grid-template-columns: repeat(3, minmax(250px, 1fr)); gap: 10px; align-items: stretch; overflow-x: auto; padding-bottom: 8px; }
   .column { background: var(--sunk); border-radius: 18px; padding: 8px; min-height: 300px; transition: box-shadow 0.15s, background 0.15s; }
   .column.over { background: var(--leaf); box-shadow: inset 0 0 0 2px var(--lime); }
   /* While a card is held over a column, the column opens a slot for it */
@@ -227,7 +229,7 @@
   @media (max-width: 1200px) { .money { grid-template-columns: repeat(3, minmax(0, 1fr)); } .money .hero { grid-column: span 3; } }
   @media (max-width: 900px) {
     .money { grid-template-columns: repeat(2, minmax(0, 1fr)); } .money .hero { grid-column: span 2; }
-    .board { grid-template-columns: repeat(3, 84vw); scroll-snap-type: x mandatory; margin: 0 -16px; padding: 0 16px 8px; }
+    .board { grid-template-columns: repeat(3, 84vw); scroll-snap-type: x mandatory; margin: 0 -14px; padding: 0 14px 8px; }
     .column { scroll-snap-align: start; }
   }
 </style>

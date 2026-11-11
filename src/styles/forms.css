@@ -8,7 +8,7 @@
 .form-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 6px; }
 .form-section-head h3 { font-size: var(--t-md); }
 .form-row { display: grid; grid-template-columns: minmax(180px, 34%) 1fr; gap: 6px 20px; padding: 12px 0; border-top: 1px solid var(--line); align-items: start; }
-.form-row.table-row { grid-template-columns: 1fr; }
+.form-row.table-row { grid-template-columns: minmax(0, 1fr); }
 .form-label { display: flex; flex-direction: column; gap: 2px; padding-top: 7px; font-weight: 600; font-size: var(--t-sm); }
 .form-label small { color: var(--text-3); font-weight: 400; font-size: var(--t-xs); }
 .form-label .req { color: var(--urgent); margin-left: 3px; }
@@ -30,6 +30,6 @@
 .form-list .num-badge { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--sunk); font-weight: 700; font-size: var(--t-xs); flex: none; }
 
 @media (max-width: 700px) {
-  .form-row { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: minmax(0, 1fr); }
   .form-label { padding-top: 0; }
 }

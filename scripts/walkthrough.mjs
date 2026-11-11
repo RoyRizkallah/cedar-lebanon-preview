@@ -28,10 +28,26 @@ async function run(expression) {
   if (exceptionDetails) throw new Error(exceptionDetails.exception?.description || exceptionDetails.text);
   return result.value;
 }
+// Against the local server (CEDAR_PASSWORD set, every account using it) each step signs in as that person; the preview uses ?as=.
+let signedInAs = null;
 async function open(path, as) {
-  await send('Page.navigate', { url: `${base}/?as=${as}#/${path}` });
-  await sleep(900);
+  if (!process.env.CEDAR_PASSWORD) {
+    await send('Page.navigate', { url: `${base}/?as=${as}#/${path}` });
+    await sleep(900);
+    return;
+  }
+  if (as !== signedInAs) {
+    if (signedInAs === null) { await send('Page.navigate', { url: `${base}/` }); await sleep(900); }
+    const ok = await run(`await fetch('/api/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
+      const response = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ staffId: '${as}', password: ${JSON.stringify(process.env.CEDAR_PASSWORD)} }) });
+      return response.ok;`);
+    if (!ok) throw new Error(`Could not sign in as ${as}`);
+    signedInAs = as;
+  }
+  await send('Page.navigate', { url: `${base}/?visit=${++visits}#/${path}` });
+  await sleep(1100);
 }
+let visits = 0;
 // Click the first visible element inside `scope` whose text includes `text`.
 const click = (text, scope = 'document', selector = 'button, a, label, [role=button]') => run(`
   const root = ${scope};

@@ -183,9 +183,12 @@ export function undoStep(state, onboardingId, step, staffId) {
   const onboarding = find(state, onboardingId);
   if (onboarding.admittedPatientId) throw new Error('This patient is already admitted.');
   if (!STEP_OWNERS[step].includes(staffId)) throw new Error(`This step belongs to ${STEP_OWNERS[step].map(staffName).join(', ')}.`);
+  // A payment Finance has recorded is never wiped by reopening the terms; Finance reopens it first.
+  if (step === 'financial' && onboarding.steps.payment?.done) throw new Error('Finance has recorded the payment. Ask them to reopen the payment step first.');
   onboarding.steps[step] = { done: false };
-  // Whatever waited on this step is undone with it: readiness was signed for that bed.
+  // Readiness was signed for that bed, so it is undone with the bed.
   for (const [later, need] of Object.entries(STEP_NEEDS)) if (need === step) onboarding.steps[later] = { done: false };
+  log(state, staffId, `${STEP_LABELS[step]} reopened for ${inquiryOf(state, onboarding)?.name || 'an admission'}`, '#/admissions');
   return onboarding;
 }
 

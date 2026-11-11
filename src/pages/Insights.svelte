@@ -109,9 +109,9 @@
   .gap small { font-size: 12px; font-weight: 600; color: var(--text-3); }
   .gap .faint { font-size: 11.5px; text-align: center; }
   @media (max-width: 900px) {
-    .brain { grid-template-columns: 1fr; padding: 17px; }
+    .brain { grid-template-columns: minmax(0, 1fr); padding: 17px; }
     .big { font-size: 44px; }
-    .two { grid-template-columns: 1fr; }
+    .two { grid-template-columns: minmax(0, 1fr); }
     .journey { flex-direction: column; align-items: stretch; }
     .journey li { flex-direction: column; align-items: stretch; }
     .gap { padding: 8px 0 10px; }

@@ -1,9 +1,10 @@
 <script>
+  import { act } from '../../lib/act.js';
   import Icon from '../Icon.svelte';
   import FormList from '../FormList.svelte';
   import WeekSummary from '../WeekSummary.svelte';
   import CaseReport from '../CaseReport.svelte';
-  import { db, session, commit } from '../../lib/store.svelte.js';
+  import { db, session } from '../../lib/store.svelte.js';
   import { riskLevel, reviewRisk } from '../../lib/forms/engine.js';
   import { staffName, hasRole } from '../../lib/people.js';
   import { fmtDateTime } from '../../lib/dates.js';
@@ -21,7 +22,7 @@
 
   function save() {
     error = '';
-    try { commit(state => reviewRisk(state, patient.id, level, note, me)); reviewing = false; note = ''; say(`Risk reviewed to ${level}`); } catch (e) { error = e.message; }
+    try { act('reviewRisk', patient.id, level, note); reviewing = false; note = ''; say(`Risk reviewed to ${level}`); } catch (e) { error = e.message; }
   }
 </script>
 

@@ -1,7 +1,8 @@
 <script>
+  import { act } from '../../lib/act.js';
   import Icon from '../Icon.svelte';
   import SignaturePad from '../SignaturePad.svelte';
-  import { db, session, commit } from '../../lib/store.svelte.js';
+  import { db, session } from '../../lib/store.svelte.js';
   import { DOC_TYPES, SIGNED, addDocument, signDocument, attachScan, documentsVisibleTo } from '../../lib/documents.js';
   import { staffName, canDo } from '../../lib/people.js';
   import { fmtDateTime } from '../../lib/dates.js';
@@ -18,16 +19,16 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); say(message); return result; } catch (e) { error = e.message; return null; }
+    try { const result = action(); say(message); return result; } catch (e) { error = e.message; return null; }
   }
   async function upload(event, doc) {
     const file = event.currentTarget.files?.[0];
     if (!file) return;
     const stored = await putFile(file);
-    run(state => attachScan(state, doc.id, { fileId: stored.id, fileName: stored.name }, me), 'Signed scan uploaded');
+    run(() => act('attachScan', doc.id, { fileId: stored.id, fileName: stored.name }), 'Signed scan uploaded');
   }
   function create() {
-    const doc = run(state => addDocument(state, { patientId: patient.id, ...$state.snapshot(adding) }, me), 'Document added. It is waiting for a signature.');
+    const doc = run(() => act('addDocument', { patientId: patient.id, ...$state.snapshot(adding) }), 'Document added. It is waiting for a signature.');
     if (doc) adding = null;
   }
 </script>
@@ -77,5 +78,5 @@
 </div>
 
 {#if signing}
-  <SignaturePad title={signing.title} signerName={patient.fullName} onclose={() => { signing = null; }} onsign={signature => { const doc = signing; signing = null; run(state => signDocument(state, doc.id, signature, me), `${doc.title} signed`); }} />
+  <SignaturePad title={signing.title} signerName={patient.fullName} onclose={() => { signing = null; }} onsign={signature => { const doc = signing; signing = null; run(() => act('signDocument', doc.id, signature), `${doc.title} signed`); }} />
 {/if}

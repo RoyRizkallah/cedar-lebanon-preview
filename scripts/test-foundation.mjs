@@ -50,7 +50,7 @@ assert.equal(canDo('alaa', 'pettyCash'), false);
 // Old preview data or a corrupt copy must never crash the new workspace.
 for (const raw of ['{"inquiries":[1]}', 'not json', null]) {
   const state = loadState(raw);
-  assert.equal(state.version, 8);
+  assert.equal(state.version, 9);
   assert.equal(state.leads.length, 14);
 }
 const fresh = seed();

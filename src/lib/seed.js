@@ -7,7 +7,7 @@ import { seedPrograms } from './seedPrograms.js';
 import { book, earliestSlot } from './scheduling.js';
 
 // Raised whenever the sample data changes shape, so saved previews reload fresh.
-export const SEED_VERSION = 8;
+export const SEED_VERSION = 9;
 
 // The centre's layout: Upper floor rooms 1–4 (beds a, b); Ground floor Bungalow 1 (one bed); Lower floor room 5 (a, b, c) and rooms 6, 7 (a, b).
 const ROOMS = [
@@ -69,7 +69,7 @@ export function seed(now = new Date()) {
     version: SEED_VERSION, leads: [], inquiries: [], onboardings: [], patients: [], rooms: ROOMS.map(room => ({ ...room })),
     appointments: [], forms: [], documents: [], wallet: { transactions: [] }, requests: [], tasks: [], notifications: [], activity: [],
     finance: { invoices: [], expenses: [], manualEntries: [], bankEntries: [] }, medication: { orders: [], doses: [], tests: [] }, visits: [], leaves: [], incidents: [], checkins: [], comments: [], programs: [], programAssignments: [],
-    orders: [], kitchenCeiling: null
+    orders: [], kitchenCeiling: null, cashCounts: [], statements: []
   };
   let taskSeq = 0, docSeq = 0, apptSeq = 0, walletSeq = 0;
   const task = fields => state.tasks.push({ id: `T-${String(++taskSeq).padStart(4, '0')}`, status: 'open', ...fields });

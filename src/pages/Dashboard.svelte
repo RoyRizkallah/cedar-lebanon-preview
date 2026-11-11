@@ -8,7 +8,8 @@
   import { fmtDate, todayISO } from '../lib/dates.js';
 
   let { args = [] } = $props();
-  const k = $derived(dashboard(db, session.now));
+  // With the local server the figures arrive worked out from the full records; the preview counts them here.
+  const k = $derived(db.derived?.dashboard || dashboard(db, session.now));
   // Partners both see the money headline; only Finance and Amer open the books.
   const books = canSee(session.staffId, 'finance') ? '#/finance/invoices' : undefined;
   const show = (value, suffix = '') => (value === null || value === undefined ? '—' : `${value}${suffix}`);
@@ -176,8 +177,8 @@
     .hero-tile { padding: 24px 22px; }
     .hero-figure strong { font-size: 44px; }
     .hero-row { grid-template-columns: repeat(2, 1fr); }
-    .money-tile { grid-template-columns: 1fr; }
+    .money-tile { grid-template-columns: minmax(0, 1fr); }
     .collect { flex-direction: row; max-width: none; text-align: left; }
-    .rings { grid-template-columns: 1fr; }
+    .rings { grid-template-columns: minmax(0, 1fr); }
   }
 </style>

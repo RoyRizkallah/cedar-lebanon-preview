@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { RESIDENTS } from '../lib/people.js';
   import { walletBalanceCents, walletTransactionsFor, formatCents } from '../lib/wallet.js';
   import { createRequest, cancelRequest } from '../lib/requests.js';
@@ -25,7 +26,7 @@
 
   function ask() {
     error = '';
-    try { commit(state => createRequest(state, { patientId, item, quantity, note }, me)); item = ''; quantity = 1; note = ''; say('Request sent to the support team'); } catch (e) { error = e.message; }
+    try { act('createRequest', { patientId, item, quantity, note }); item = ''; quantity = 1; note = ''; say('Request sent to the support team'); } catch (e) { error = e.message; }
   }
   // Once each calendar week (from Monday) the resident rates their week; John sees it with their fitness progress.
   const SCALES = [['energy', 'Energy'], ['sleep', 'Sleep'], ['mood', 'Mood'], ['activityFeel', 'Activity']];
@@ -35,7 +36,7 @@
     error = '';
     if (SCALES.some(([id]) => !week[id])) { error = 'Rate each of the four, from 1 to 5.'; return; }
     try {
-      commit(state => fileForm(state, { formId: 'wellbeing', patientId, values: { weekEnding: todayISO(session.now), ...$state.snapshot(week), completedBy: { name: patient.fullName, by: me, at: new Date().toISOString() } }, staffId: me, final: true }));
+      act('fileForm', { formId: 'wellbeing', patientId, values: { weekEnding: todayISO(session.now), ...$state.snapshot(week), completedBy: { name: patient.fullName, by: me, at: new Date().toISOString() } }, staffId: me, final: true });
       say('Thank you. John will see your check-in.');
     } catch (e) { error = e.message; }
   }
@@ -88,7 +89,7 @@
               <div class="grow"><div class="title">{request.quantity} × {request.item}</div><div class="sub">Asked {fmtDate(request.createdAt)}{request.amountCents ? `, cost ${formatCents(request.amountCents)}` : ''}</div></div>
               <span class="pill {STATUS[request.status][0]}">{STATUS[request.status][1]}</span>
               {#if request.declineReason}<span class="faint" style="font-size: 12px">{request.declineReason}</span>{/if}
-              {#if ['Open', 'Awaiting approval'].includes(request.status)}<button class="btn sm ghost" onclick={() => { commit(state => cancelRequest(state, request.id, me)); say('Request cancelled'); }}>Cancel</button>{/if}
+              {#if ['Open', 'Awaiting approval'].includes(request.status)}<button class="btn sm ghost" onclick={() => { act('cancelRequest', request.id); say('Request cancelled'); }}>Cancel</button>{/if}
             </li>
           {:else}<li class="faint">You have not asked for anything yet.</li>{/each}
         </ul>
@@ -122,5 +123,5 @@
   .wallet-card .label { color: var(--on-ink-2); font-weight: 600; }
   .wallet-card strong { font: 800 52px/1 var(--font); color: var(--lime); letter-spacing: -0.04em; }
   .wallet-card .hint { color: var(--on-ink-2); font-size: 13px; margin-top: auto; }
-  @media (max-width: 900px) { .home-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .home-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

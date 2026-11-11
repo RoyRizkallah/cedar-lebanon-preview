@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { DAYS, DAY_NAMES, SESSION_KINDS, createProgram, updateProgram, archiveProgram, restoreProgram, assignProgram, endAssignment, programWeek, patientsOn, activeAssignment, programBookings } from '../lib/programs.js';
   import { STAFF, canDo, hasRole, staffName } from '../lib/people.js';
   import { fmtDay, todayISO, addDays, daysBetween } from '../lib/dates.js';
@@ -35,7 +36,7 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); say(message); return result ?? true; } catch (e) { error = e.message; return false; }
+    try { const result = action(); say(message); return result ?? true; } catch (e) { error = e.message; return false; }
   }
   function openProgram(existing) {
     error = '';
@@ -51,23 +52,23 @@
   function save() {
     const d = $state.snapshot(dialog);
     if (d.kind === 'program') {
-      if (d.id) { if (run(state => updateProgram(state, d.id, { name: d.name, focus: d.focus, weeks: Number(d.weeks) }, me, session.now), 'Program updated')) dialog = null; return; }
+      if (d.id) { if (run(() => act('updateProgram', d.id, { name: d.name, focus: d.focus, weeks: Number(d.weeks) }), 'Program updated')) dialog = null; return; }
       const source = db.programs.find(item => item.id === d.from);
       let created;
-      const ok = run(state => { created = createProgram(state, { name: d.name, focus: d.focus, weeks: Number(d.weeks), goals: source?.goals || [], sessions: (source?.sessions || []).map(({ id, ...rest }) => rest) }, me, session.now); }, 'Program created');
+      const ok = run(() => { created = act('createProgram', { name: d.name, focus: d.focus, weeks: Number(d.weeks), goals: source?.goals || [], sessions: (source?.sessions || []).map(({ id, ...rest }) => rest) }); }, 'Program created');
       if (ok) { dialog = null; go(`programs/${created.id}`); }
       return;
     }
     const entry = { id: d.id, day: d.day, time: d.time, minutes: Number(d.minutes), kind: d.kind2, title: d.title, leader: d.leader };
     const sessions = d.id ? program.sessions.map(item => (item.id === d.id ? entry : item)) : [...program.sessions, entry];
-    if (run(state => updateProgram(state, program.id, { sessions }, me, session.now), d.id ? 'Session updated' : `Added to ${DAY_NAMES[d.day]}`)) dialog = null;
+    if (run(() => act('updateProgram', program.id, { sessions }), d.id ? 'Session updated' : `Added to ${DAY_NAMES[d.day]}`)) dialog = null;
   }
   function removeSession(id) {
-    if (run(state => updateProgram(state, program.id, { sessions: program.sessions.filter(item => item.id !== id) }, me, session.now), 'Session removed')) dialog = null;
+    if (run(() => act('updateProgram', program.id, { sessions: program.sessions.filter(item => item.id !== id) }), 'Session removed')) dialog = null;
   }
   function addGoal() {
     if (!goal.trim()) return;
-    if (run(state => updateProgram(state, program.id, { goals: [...program.goals, goal] }, me, session.now), 'Goal added')) goal = '';
+    if (run(() => act('updateProgram', program.id, { goals: [...program.goals, goal] }), 'Goal added')) goal = '';
   }
   function giveProgram() {
     const patient = patientOf(assign.patientId);
@@ -76,7 +77,7 @@
     error = '';
     try {
       let made;
-      commit(state => { made = assignProgram(state, program.id, assign.patientId, { start: assign.start }, me, session.now); });
+      made = act('assignProgram', program.id, assign.patientId, { start: assign.start });
       say(`${patient.clinicalName} starts ${fmtDay(assign.start)}: ${programBookings(db, made).length} sessions booked${made.conflicts.length ? `, ${made.conflicts.length} need a time` : ''}`);
       assign.patientId = '';
     } catch (e) { error = e.message; }
@@ -124,8 +125,8 @@
           {#if manage}
             <div class="hero-actions">
               <button class="btn sm" onclick={() => openProgram(program)}><Icon name="pen" size={14} />Edit details</button>
-              {#if program.status === 'Active'}<button class="btn sm ghost-ink" onclick={() => { if (confirm('Archive this program? Patients on it stay on it until you end it.')) run(state => archiveProgram(state, program.id, me, session.now), 'Program archived'); }}>Archive</button>
-              {:else}<button class="btn sm ghost-ink" onclick={() => run(state => restoreProgram(state, program.id, me), 'Program restored')}>Restore</button>{/if}
+              {#if program.status === 'Active'}<button class="btn sm ghost-ink" onclick={() => { if (confirm('Archive this program? Patients on it stay on it until you end it.')) run(() => act('archiveProgram', program.id), 'Program archived'); }}>Archive</button>
+              {:else}<button class="btn sm ghost-ink" onclick={() => run(() => act('restoreProgram', program.id), 'Program restored')}>Restore</button>{/if}
             </div>
           {/if}
         </section>
@@ -134,7 +135,7 @@
           <div class="panel-head"><h3>Goals</h3><span class="faint" style="font-size: 13px">What a patient should leave this program with</span></div>
           <ul class="goal-list">
             {#each program.goals as item, index (index)}
-              <li><Icon name="check-circle" size={16} /><span class="grow">{item}</span>{#if manage}<button class="btn icon sm ghost" aria-label={`Remove goal: ${item}`} onclick={() => run(state => updateProgram(state, program.id, { goals: program.goals.filter((_, at) => at !== index) }, me, session.now), 'Goal removed')}><Icon name="close" size={14} /></button>{/if}</li>
+              <li><Icon name="check-circle" size={16} /><span class="grow">{item}</span>{#if manage}<button class="btn icon sm ghost" aria-label={`Remove goal: ${item}`} onclick={() => run(() => act('updateProgram', program.id, { goals: program.goals.filter((_, at) => at !== index) }), 'Goal removed')}><Icon name="close" size={14} /></button>{/if}</li>
             {:else}<li class="faint">No goals yet.</li>{/each}
           </ul>
           {#if manage}<form class="goal-add" onsubmit={event => { event.preventDefault(); addGoal(); }}><input class="input" bind:value={goal} placeholder="Add a goal, for example: name three triggers" /><button class="btn" type="submit">Add</button></form>{/if}
@@ -173,7 +174,7 @@
                     <ul>{#each item.conflicts.filter(entry => entry.date >= today) as miss (`${miss.date}${miss.time}${miss.title}`)}<li>{fmtDay(miss.date)} {miss.time}, {miss.title}: {miss.reason}. <a href="#/schedule">Book by hand</a></li>{/each}</ul>
                   </details>
                 {/if}
-                {#if manage}<button class="btn sm ghost" onclick={() => { if (confirm(`End ${patient?.clinicalName}'s program today? Their sessions from tomorrow come off the Schedule.`)) run(state => endAssignment(state, item.id, me, session.now), 'Program ended'); }}>End</button>{/if}
+                {#if manage}<button class="btn sm ghost" onclick={() => { if (confirm(`End ${patient?.clinicalName}'s program today? Their sessions from tomorrow come off the Schedule.`)) run(() => act('endAssignment', item.id), 'Program ended'); }}>End</button>{/if}
               </li>
             {:else}<li class="faint">Nobody is on this program yet.</li>{/each}
           </ul>
@@ -305,13 +306,13 @@
 
   /* Below very wide screens the shelf sits above, so the whole week fits across */
   @media (max-width: 1500px) {
-    .prog-layout { grid-template-columns: 1fr; }
+    .prog-layout { grid-template-columns: minmax(0, 1fr); }
     .prog-list { position: static; flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
     .prog-card { flex: 0 0 min(270px, 78vw); scroll-snap-align: start; }
     .archived { flex: 0 0 auto; }
   }
   @media (max-width: 1000px) {
-    .prog-hero { grid-template-columns: 1fr; padding: 15px; }
+    .prog-hero { grid-template-columns: minmax(0, 1fr); padding: 15px; }
   }
   @media (max-width: 720px) {
     .week { grid-template-columns: repeat(6, 78vw); scroll-snap-type: x mandatory; margin: 0; }

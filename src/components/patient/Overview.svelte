@@ -1,5 +1,6 @@
 <script>
-  import { db, session, commit } from '../../lib/store.svelte.js';
+  import { act } from '../../lib/act.js';
+  import { db, session } from '../../lib/store.svelte.js';
   import { addComment } from '../../lib/support.js';
   import { placeLabel } from '../../lib/admission.js';
   import Contacts from './Contacts.svelte';
@@ -20,7 +21,7 @@
   const todays = $derived(plan ? plan.program.sessions.filter(item => item.day === todayKey).sort((a, b) => a.time.localeCompare(b.time)) : []);
   let comment = $state('');
   let error = $state('');
-  function post() { error = ''; try { commit(state => addComment(state, { patientId: patient.id, text: comment }, me)); comment = ''; } catch (e) { error = e.message; } }
+  function post() { error = ''; try { act('addComment', { patientId: patient.id, text: comment }); comment = ''; } catch (e) { error = e.message; } }
   const team = [['Psychologist', 'psychologist'], ['Therapist', 'therapist'], ['Nurse', 'nurse'], ['Physical therapy & fitness', 'fitness'], ['Resident support', 'rsa']];
 </script>
 
@@ -93,5 +94,5 @@
 <style>
   .comment-box { padding: 14px 20px; border-bottom: 1px solid var(--line); }
   .overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  @media (max-width: 800px) { .overview { grid-template-columns: 1fr; } }
+  @media (max-width: 800px) { .overview { grid-template-columns: minmax(0, 1fr); } }
 </style>

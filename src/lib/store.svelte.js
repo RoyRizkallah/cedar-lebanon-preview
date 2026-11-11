@@ -2,9 +2,11 @@ import { loadState, STORAGE_KEY } from './persist.js';
 import { seed } from './seed.js';
 import { homePage, staffById } from './people.js';
 
-const storage = typeof localStorage === 'undefined' ? null : localStorage;
-const read = key => { try { return storage?.getItem(key) ?? null; } catch { return null; } };
-const write = (key, value) => { try { storage?.setItem(key, value); } catch { /* private mode: keep working in memory */ } };
+const browserStorage = typeof localStorage === 'undefined' ? null : localStorage;
+const read = key => { try { return browserStorage?.getItem(key) ?? null; } catch { return null; } };
+// With the local server, data lives on the server only; nothing is written to this browser's storage.
+export const storage = { off: false };
+const write = (key, value) => { if (storage.off) return; try { browserStorage?.setItem(key, value); } catch { /* private mode: keep working in memory */ } };
 
 export const db = $state(loadState(read(STORAGE_KEY)));
 // ?as=<staff id> opens the preview as that person (used for review links and screenshots).
@@ -16,6 +18,12 @@ export function commit(change) {
   const result = change(db);
   write(STORAGE_KEY, JSON.stringify($state.snapshot(db)));
   return result;
+}
+
+// The server sends a whole new view of the data; the screen follows it.
+export function replaceState(next) {
+  for (const key of Object.keys(db)) delete db[key];
+  Object.assign(db, next);
 }
 
 export function switchStaff(staffId) {

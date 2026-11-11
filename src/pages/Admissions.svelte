@@ -1,8 +1,9 @@
 <script>
+  import { act } from '../lib/act.js';
   import Icon from '../components/Icon.svelte';
   import Ring from '../components/Ring.svelte';
   import SignaturePad from '../components/SignaturePad.svelte';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { PAYERS, PAYMENT_METHODS } from '../lib/finance.js';
   import { STEPS, STEP_LABELS, STEP_OWNERS, PAYMENT_TERMS, STEP_NEEDS, isWaiting, completeStep, undoStep, canAdmit, admit, freeBeds, placeLabel, inquiryOf, isOutpatient, isActive, linkedPsychologist, rebookPsychologist } from '../lib/admission.js';
   import { money, ROOM_RATES } from '../lib/pipeline.js';
@@ -27,7 +28,7 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return false; }
+    try { const result = action(); if (message) say(message); return result ?? true; } catch (e) { error = e.message; return false; }
   }
   function toggle(onboarding, step) {
     error = '';
@@ -39,7 +40,7 @@
       amount: onboarding.steps.financial?.monthlyAmount || '', method: PAYMENT_METHODS[0], date: todayISO(session.now), reference: '', sponsorReference: '', bed: freeBeds(db, onboarding.id, inquiry?.roomPreference || '')[0]?.join('/') || '' };
   }
   function done(onboarding, step, payload) {
-    if (run(state => completeStep(state, onboarding.id, step, payload, me), `${STEP_LABELS[step]} done`)) openStep = null;
+    if (run(() => act('completeStep', onboarding.id, step, payload), `${STEP_LABELS[step]} done`)) openStep = null;
   }
   async function upload(event, onboarding) {
     const file = event.currentTarget.files?.[0];
@@ -51,7 +52,7 @@
 
 <main class="content">
   <div class="page-head">
-    <div><h1>Admissions</h1><p>Six steps for each person in Agreement. When all are done, admitting creates the patient file and their wallet.</p></div>
+    <div><h1>Admissions</h1><p>The steps for each person in Agreement, each by the person who owns it. When all are done, admitting creates the patient file and their wallet.</p></div>
   </div>
   {#if error && !openStep}<p class="error" role="alert" style="margin-bottom: 12px">{error}</p>{/if}
 
@@ -64,11 +65,11 @@
           <span class="person-avatar">{inquiry.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span>
           <div class="grow">
             <div class="row wrap" style="gap: 8px"><h2>{inquiry.name}</h2><span class="pill">{inquiry.program}</span>{#if inquiry.urgency === 'Urgent'}<span class="pill urgent">Urgent</span>{/if}</div>
-            <p class="muted" style="font-size: 13px; margin-top: 2px">Started {fmtDate(onboarding.openedAt)}. Offer {money(inquiry.potentialRevenue)} a month. <a href={`#/pipeline/${inquiry.id}`}>Inquiry</a></p>
+            <p class="muted" style="font-size: 13px; margin-top: 2px">Started {fmtDate(onboarding.openedAt)}.{#if inquiry.potentialRevenue !== undefined} Offer {money(inquiry.potentialRevenue)} a month.{/if} <a href={`#/pipeline/${inquiry.id}`}>Inquiry</a></p>
           </div>
           <div class="progress" aria-label={`${count} of ${STEPS.length} steps done`}><Ring value={Math.round((count / STEPS.length) * 100)} size={64} stroke={7} tone={count === STEPS.length ? 'lime' : 'ink'} /><span><strong class="num">{count}/{STEPS.length}</strong>steps done</span></div>
           {#if canDo(me, 'confirmAdmission')}
-            <button class="btn admit" class:ready={canAdmit(onboarding)} disabled={!canAdmit(onboarding)} onclick={() => { const patient = run(state => admit(state, onboarding.id, me), `${inquiry.name} admitted. Wallet created.`); if (patient) go(`patients/${patient.id}`); }}><Icon name="check-circle" size={17} />Admit patient</button>
+            <button class="btn admit" class:ready={canAdmit(onboarding)} disabled={!canAdmit(onboarding)} onclick={() => { const patient = run(() => act('admit', onboarding.id), `${inquiry.name} admitted. Wallet created.`); if (patient) go(`patients/${patient.id}`); }}><Icon name="check-circle" size={17} />Admit patient</button>
           {/if}
         </header>
 
@@ -96,7 +97,7 @@
                       {#if step === 'room' && !state.roomId} Outpatient, no room needed.{/if}
                       {#if state.note} {state.note}{/if}
                     </p>
-                    {#if mine(step)}<button class="btn ghost sm" onclick={() => run(s => undoStep(s, onboarding.id, step, me), 'Step reopened')}>Reopen step</button>{/if}
+                    {#if mine(step)}<button class="btn ghost sm" onclick={() => run(() => act('undoStep', onboarding.id, step), 'Step reopened')}>Reopen step</button>{/if}
                   {:else if isWaiting(onboarding, step)}
                     <p class="muted">Waits for {STEP_LABELS[STEP_NEEDS[step]].toLowerCase()}. Then {STEP_OWNERS[step].map(staffName).join(' or ')} completes it.</p>
                   {:else if !mine(step)}
@@ -112,7 +113,7 @@
                     {@const appointment = psychOf(onboarding)}
                     {#if !appointment}
                       <p class="muted">No session is booked. The last one may have been cancelled.</p>
-                      <button class="btn dark" onclick={() => { const booked = run(state => rebookPsychologist(state, onboarding.id, me)); if (booked) say(`Booked ${fmtDay(booked.date)} at ${booked.start}`); }}>Book earliest session</button>
+                      <button class="btn dark" onclick={() => { const booked = run(() => act('rebookPsychologist', onboarding.id)); if (booked) say(`Booked ${fmtDay(booked.date)} at ${booked.start}`); }}>Book earliest session</button>
                     {:else if appointment.status !== 'Completed'}
                       <p>Session booked automatically for <strong>{fmtDay(appointment.date)} at {appointment.start}</strong> with {staffName(appointment.provider)}. Mark it completed in the schedule, then come back here.</p>
                       <a class="btn sm" href="#/schedule">Open schedule</a>

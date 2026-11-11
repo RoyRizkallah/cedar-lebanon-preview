@@ -65,7 +65,8 @@ export const PAGES = [
   { id: 'rooms', label: 'Rooms & beds', icon: 'bed', group: 'Care', staff: [...INTAKE, 'clinical-director', 'nurse', 'ops', 'rsa', 'house'] },
   { id: 'schedule', label: 'Schedule', icon: 'calendar', group: 'Operations', staff: [...INTAKE, ...CARE.filter(role => role !== 'director')] },
   { id: 'safety', label: 'Visits & incidents', icon: 'shield', group: 'Operations', staff: STAFF_ROLES.filter(role => role !== 'finance') },
-  { id: 'requests', label: 'Resident support', icon: 'bag', group: 'Operations', staff: [...INTAKE, 'ops', 'rsa'] },
+  // Fadia approves restricted items, so the nurse opens Resident support too.
+  { id: 'requests', label: 'Resident support', icon: 'bag', group: 'Operations', staff: [...INTAKE, 'ops', 'rsa', 'nurse'] },
   { id: 'orders', label: 'Orders', icon: 'receipt', group: 'Operations', staff: ['gm', 'admin', 'ops', 'kitchen', 'finance'] },
   { id: 'finance', label: 'Accounts', icon: 'receipt', group: 'Finance', staff: ['gm', 'finance'] },
   // The resident's own space: their wallet and requests.
@@ -95,6 +96,9 @@ const ACTIONS = {
   topUpWallet: [...INTAKE, 'finance'],
   // Finance SOP Part 4: the custodian holds and hands out the cash; nobody else does.
   pettyCash: ['petty-cash'],
+  // Finance owns the ledger: Kteish reconciles the weekly count; Finance issues family statements.
+  reconcileCash: ['ledger', 'finance-head'],
+  issueStatement: ['finance'],
   createRequest: [...INTAKE, 'ops', 'rsa'],
   manageDocuments: [...INTAKE, 'nurse'],
   manageRooms: [...INTAKE, 'ops'],

@@ -1,9 +1,10 @@
 <script>
+  import { act } from '../lib/act.js';
   import { onMount } from 'svelte';
   import Icon from '../components/Icon.svelte';
   import SignaturePad from '../components/SignaturePad.svelte';
   import { MOODS, addCheckin } from '../lib/support.js';
-  import { db, session, commit } from '../lib/store.svelte.js';
+  import { db, session } from '../lib/store.svelte.js';
   import { createRequest, completeRequest, cancelRequest, uploadInvoice, approveRequest, declineRequest } from '../lib/requests.js';
   import { walletBalanceCents, formatCents } from '../lib/wallet.js';
   import { visiblePatients, staffName, canDo } from '../lib/people.js';
@@ -12,6 +13,7 @@
   import { dialogFocus } from '../lib/dialogFocus.js';
   import { go, say, takeIntent } from '../lib/ui.svelte.js';
   import { todayISO } from '../lib/dates.js';
+  import CashCounts from '../components/CashCounts.svelte';
 
   let { args = [] } = $props();
   const me = session.staffId;
@@ -19,14 +21,16 @@
   const startPatient = args[0] === 'new' ? args[1] : '';
 
   let view = $state('Open');
-  const tab = $derived(args[0] === 'checkins' ? 'checkins' : 'requests');
+  // The weekly cash count belongs to Georgio and the two people who witness it.
+  const countsCash = canDo(me, 'pettyCash') || ['omar', 'melyssa'].includes(me);
+  const tab = $derived(args[0] === 'checkins' ? 'checkins' : args[0] === 'cash' && countsCash ? 'cash' : 'requests');
   const today = todayISO(session.now);
   let checkin = $state({ patientId: '', mood: 'Settled', note: '' });
   const residents = $derived(patients.filter(p => p.program !== 'Outpatient'));
   const todays = $derived(db.checkins.filter(item => item.date === today).sort((a, b) => String(b.at).localeCompare(String(a.at))));
   const notYet = $derived(residents.filter(p => !todays.some(item => item.patientId === p.id)));
   function saveCheckin() {
-    if (run(state => addCheckin(state, { ...$state.snapshot(checkin), patientId: checkin.patientId || notYet[0]?.id }, me), 'Check-in recorded')) checkin = { patientId: '', mood: 'Settled', note: '' };
+    if (run(() => act('addCheckin', { ...$state.snapshot(checkin), patientId: checkin.patientId || notYet[0]?.id }), 'Check-in recorded')) checkin = { patientId: '', mood: 'Settled', note: '' };
   }
   onMount(() => { if (takeIntent('new-request')) creating = { patientId: patients[0]?.id || '', item: '', quantity: 1, note: '' }; });
   let creating = $state(args[0] === 'new' ? { patientId: startPatient || '', item: '', quantity: 1, note: '' } : null);
@@ -43,7 +47,7 @@
 
   function run(action, message) {
     error = '';
-    try { const result = commit(action); say(message); return result ?? true; } catch (e) { error = e.message; return null; }
+    try { const result = action(); say(message); return result ?? true; } catch (e) { error = e.message; return null; }
   }
   function closeCreate() { creating = null; if (args[0] === 'new') go('requests'); }
   // The resident signs on receiving the item: cash leaves petty cash only against a signature.
@@ -51,12 +55,12 @@
   async function buy(signature) {
     let stored = { id: '', name: '' };
     if (buying.file) stored = await putFile(buying.file);
-    if (run(state => completeRequest(state, buying.id, { amount: buying.amount, fileId: stored.id, fileName: stored.name, signature }, me), 'Purchase recorded and invoice attached')) buying = null;
+    if (run(() => act('completeRequest', buying.id, { amount: buying.amount, fileId: stored.id, fileName: stored.name, signature }), 'Purchase recorded and invoice attached')) buying = null;
   }
   async function saveInvoice() {
     let stored = { id: '', name: '' };
     if (invoice.file) stored = await putFile(invoice.file);
-    if (run(state => uploadInvoice(state, { patientId: invoice.patientId, fileId: stored.id, fileName: stored.name, note: invoice.note }, me), 'Invoice linked to the patient')) invoice = null;
+    if (run(() => act('uploadInvoice', { patientId: invoice.patientId, fileId: stored.id, fileName: stored.name, note: invoice.note }), 'Invoice linked to the patient')) invoice = null;
   }
 </script>
 
@@ -72,9 +76,12 @@
   <nav class="tabs" aria-label="Resident support" style="margin-bottom: 18px">
     <a href="#/requests" aria-current={tab === 'requests' ? 'page' : undefined}>Requests</a>
     <a href="#/requests/checkins" aria-current={tab === 'checkins' ? 'page' : undefined}>Daily check-ins{notYet.length ? ` (${notYet.length} to do)` : ''}</a>
+    {#if countsCash}<a href="#/requests/cash" aria-current={tab === 'cash' ? 'page' : undefined}>Weekly cash count</a>{/if}
   </nav>
 
-  {#if tab === 'checkins'}
+  {#if tab === 'cash'}
+    <CashCounts />
+  {:else if tab === 'checkins'}
     <div class="checkin-grid">
       <form class="panel panel-body stack" onsubmit={event => { event.preventDefault(); saveCheckin(); }}>
         <h3>Record a check-in</h3>
@@ -108,11 +115,11 @@
           <span class="pill warn">{request.restricted ? 'Restricted: needs clinical OK' : 'Needs approval'}</span>
           {#if request.restricted ? canDo(me, 'approveRestricted') : canDo(me, 'createRequest')}
             <button class="btn sm ghost" onclick={() => { error = ''; declining = { id: request.id, reason: '' }; }}>Decline</button>
-            <button class="btn sm dark" onclick={() => run(state => approveRequest(state, request.id, me), 'Approved: Georgio will buy it')}>Approve</button>
+            <button class="btn sm dark" onclick={() => run(() => act('approveRequest', request.id), 'Approved: Georgio will buy it')}>Approve</button>
           {/if}
         {:else if request.status === 'Open'}
           <span class="faint num" style="font-size: 12.5px">Wallet {formatCents(walletBalanceCents(db, request.patientId))}</span>
-          <button class="btn sm ghost" onclick={() => run(state => cancelRequest(state, request.id, me), 'Request cancelled')}>Cancel</button>
+          <button class="btn sm ghost" onclick={() => run(() => act('cancelRequest', request.id), 'Request cancelled')}>Cancel</button>
           {#if canDo(me, 'pettyCash')}<button class="btn sm dark" onclick={() => { error = ''; buying = { id: request.id, amount: '', file: null }; }}>Bought</button>{/if}
         {:else}
           {#if request.amountCents}<strong class="num">{formatCents(request.amountCents)}</strong>{/if}
@@ -120,7 +127,7 @@
           <span class="pill {request.status === 'Done' ? 'ok' : ''}" title={request.declineReason || ''}>{request.status}</span>
         {/if}
         {#if declining?.id === request.id}
-          <form class="buy" onsubmit={event => { event.preventDefault(); if (run(state => declineRequest(state, request.id, declining.reason, me), 'Request declined')) declining = null; }}>
+          <form class="buy" onsubmit={event => { event.preventDefault(); if (run(() => act('declineRequest', request.id, declining.reason), 'Request declined')) declining = null; }}>
             <label class="field grow"><span>Why not <span class="hint">the resident sees this</span></span><input class="input" bind:value={declining.reason} placeholder="For example: alcohol-based; ask for an alcohol-free one" /></label>
             <button class="btn primary" type="submit">Decline request</button>
             <button class="btn ghost" type="button" onclick={() => { declining = null; }}>Keep it</button>
@@ -146,7 +153,7 @@
   <div class="scrim" onclick={closeCreate} aria-hidden="true"></div>
   <section class="dialog" use:dialogFocus={{ onClose: closeCreate }}>
     <header class="drawer-head"><div class="grow"><h2>New request</h2><p class="muted" style="margin-top: 4px">On behalf of a patient. Nothing is charged until it is bought.</p></div></header>
-    <form class="drawer-body stack" id="new-request" onsubmit={event => { event.preventDefault(); if (run(state => createRequest(state, $state.snapshot(creating), me), 'Request added')) closeCreate(); }}>
+    <form class="drawer-body stack" id="new-request" onsubmit={event => { event.preventDefault(); if (run(() => act('createRequest', $state.snapshot(creating)), 'Request added')) closeCreate(); }}>
       <label class="field"><span>Patient</span><select class="select" bind:value={creating.patientId}>{#each patients as patient}<option value={patient.id}>{patient.fullName}{patient.roomId ? `, room ${patient.roomId}` : ''}</option>{/each}</select></label>
       <div class="grid-3">
         <label class="field" style="grid-column: span 2"><span>Item</span><input class="input" bind:value={creating.item} placeholder="What do they need?" /></label>
@@ -179,5 +186,5 @@
   .buy { flex-basis: 100%; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 10px; margin-top: 6px; border-radius: var(--r-md); background: #fafbf9; border: 1px solid var(--line); }
   .buy .field { width: 160px; }
   .checkin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 11px; align-items: start; }
-  @media (max-width: 900px) { .checkin-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .checkin-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

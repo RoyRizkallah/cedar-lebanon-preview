@@ -1,6 +1,7 @@
 <script>
+  import { act } from '../../lib/act.js';
   import Icon from '../Icon.svelte';
-  import { session, commit } from '../../lib/store.svelte.js';
+  import { session } from '../../lib/store.svelte.js';
   import { CONTACT_RELATIONS, addContact, updateContact, removeContact, emergencyContact } from '../../lib/contacts.js';
   import { canDo } from '../../lib/people.js';
   import { say } from '../../lib/ui.svelte.js';
@@ -16,13 +17,13 @@
 
   function run(action, message) {
     error = '';
-    try { commit(action); say(message); return true; } catch (e) { error = e.message; return false; }
+    try { action(); say(message); return true; } catch (e) { error = e.message; return false; }
   }
   function save() {
     const fields = $state.snapshot(editing);
     const ok = fields.id
-      ? run(state => updateContact(state, patient.id, fields.id, fields, me), 'Contact saved')
-      : run(state => addContact(state, patient.id, fields, me), `${fields.name} added`);
+      ? run(() => act('updateContact', patient.id, fields.id, fields), 'Contact saved')
+      : run(() => act('addContact', patient.id, fields), `${fields.name} added`);
     if (ok) editing = null;
   }
 </script>
@@ -62,7 +63,7 @@
       <div class="row">
         <button class="btn primary sm" type="submit">{editing.id ? 'Save contact' : 'Add contact'}</button>
         <button class="btn ghost sm" type="button" onclick={() => { editing = null; }}>Cancel</button>
-        {#if editing.id}<span class="grow"></span><button class="btn ghost danger sm" type="button" onclick={() => { if (run(state => removeContact(state, patient.id, editing.id, me), 'Contact removed')) editing = null; }}>Remove</button>{/if}
+        {#if editing.id}<span class="grow"></span><button class="btn ghost danger sm" type="button" onclick={() => { if (run(() => act('removeContact', patient.id, editing.id), 'Contact removed')) editing = null; }}>Remove</button>{/if}
       </div>
     </form>
   {/if}
