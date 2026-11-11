@@ -39,7 +39,10 @@ npm start                                # http://localhost:4173, now asking for
 - **Accounts:** `node server/admin.mjs users` lists them; `disable <id>` closes one and ends its sessions. Passwords are stored only as scrypt hashes. Five wrong passwords lock a name for 15 minutes; a session lasts 12 hours.
 - **How a change works:** the screen runs it at once for a quick answer, then the server runs the same rules ([src/lib/commands.js](src/lib/commands.js)) as the signed-in person on its own clock, saves it, writes it to the audit log, and sends each open browser its fresh view ([src/lib/view.js](src/lib/view.js)). A change the server refuses is undone on screen, with the reason.
 - **What each person receives:** no clinical records outside the clinical team, no prescriptions outside nursing and the clinical lead, no books outside Finance and Amer, only your own notifications, and residents only their own space. Uploaded files open only for someone whose view refers to them.
-- **Checks:** `npm test` covers the store, the API and the views. `node scripts/smoke-server.mjs` (after `npm run build`) signs in through Chrome, makes a change, reloads and signs out.
+- **Checks:** `npm test` covers the store, the API, the permissions and the views. After `npm run build`, three browser checks run against a scratch server:
+  - `node scripts/smoke-server.mjs`: sign in, make a change, reload, sign out.
+  - `node scripts/walk-server.mjs`: the whole walkthrough (a WhatsApp lead becomes an admitted patient), each step signed in as the person who does it.
+  - `node scripts/roles-server.mjs`: every person opens every page and patient tab their role allows; any error fails it.
 - After adding or changing a command, run `node scripts/gen-command-slots.mjs` (the tests say so if it is stale).
 
 ## Who sees what
